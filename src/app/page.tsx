@@ -1,16 +1,36 @@
+import { Hero } from "@/components/Hero";
+import { Reveal } from "@/components/Reveal";
+import { SectionHeader } from "@/components/SectionHeader";
+import { DISCIPLINE_LIST } from "@/lib/disciplines";
+
 export default function Home() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
-      <p className="mb-4 text-sm font-medium uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
-        Portfolio
-      </p>
-      <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-black sm:text-5xl dark:text-zinc-50">
-        Site under construction
-      </h1>
-      <p className="mt-6 max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-        Multi-disciplinary work across analytics, writing, design, and code.
-        Content coming soon.
-      </p>
-    </main>
+    <>
+      <Hero />
+
+      {/* Discipline highlights — demonstrates Reveal scroll animation */}
+      <section className="mx-auto w-full max-w-5xl px-6 py-20 sm:py-28">
+        <Reveal>
+          <SectionHeader
+            eyebrow="What I do"
+            title="Four disciplines, one practice"
+            description="Each project draws on a different mix of these. Together they let me take an idea from raw data to a shipped, well-told product."
+          />
+        </Reveal>
+
+        <ul className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {DISCIPLINE_LIST.map((d, i) => (
+            <Reveal as="li" key={d.key} delay={i * 90}>
+              <div className="h-full rounded-lg border border-line bg-surface/60 p-6 transition-colors hover:border-line-strong">
+                <h3 className={`text-lg ${d.text}`}>{d.label}</h3>
+                <p className="mt-2 text-sm leading-7 text-ink-muted">
+                  {d.blurb}
+                </p>
+              </div>
+            </Reveal>
+          ))}
+        </ul>
+      </section>
+    </>
   );
 }
