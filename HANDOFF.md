@@ -1,122 +1,94 @@
 # Handoff: Personal Portfolio Website Project
 
-**Date:** 2026-06-23  
-**Current Agent:** Haiku 4.5  
+**Date:** 2026-06-23
 **Project Location:** `C:/Users/AravindKumar/Documents/Local_server/testing`
 
 ---
 
 ## Current Status
 
-✅ **Completed:**
-- Ran grill-with-docs interview to finalize portfolio requirements
-- Created ADR-001 documenting Next.js + static export architecture decision
-- Created implementation-plan-0001.md with 11 vertical slice issues
-- Proposed issue breakdown for user review
+✅ **Implemented (committed on `master`):**
 
-⏳ **Pending:**
-- User approval of issue breakdown
-- Start implementation with Issue 1.1 (Project Setup & Deployment)
+| Issue | What | Status |
+|---|---|---|
+| 1.1 | Next.js 16 + static export (`output: 'export'`) scaffold | ✅ Done |
+| 1.2 | "Midnight Observatory" design system + animated hero | ✅ Done |
+| 2.1 | Header (responsive mobile menu), Footer, layout, routes | ✅ Done |
+| 2.2 | About / home (hero + bio + discipline highlights) | ✅ Done |
+| 2.3 | Projects showcase grid (5 placeholder projects) | ✅ Done |
+| 2.4 | Resume (skills / experience timeline / education) | ✅ Done |
+| 2.5 | Contact (email + social links) | ✅ Done |
+| 3.1 | Static export verified — all routes emit `.html`, no server deps | ✅ Done |
+| 3.3 | SEO: OG/Twitter meta, canonical, `sitemap.xml`, `robots.txt` | ✅ Done |
 
----
+⏳ **Remaining (need you):**
 
-## Project Requirements (Finalized)
-
-| Requirement | Decision |
-|---|---|
-| **Framework** | Next.js with static export (`output: 'export'`) |
-| **Hosting** | Vercel (free tier, subdomain) |
-| **Portfolio Sections** | About, Projects (3-5 featured), Resume/Skills, Contact/Links |
-| **Disciplines** | Analytics, Writing, Design, Code |
-| **Interactivity** | None — purely static/browsable content |
-| **Content** | Placeholder/autopopulated (user to customize) |
-| **Design System** | Tailwind CSS v4 + custom component library (frontend-ui-engineering) |
+- **3.2 Responsive cross-device test** — built mobile-first; live browser
+  verification still wanted (Chrome extension wasn't connected this session).
+  Preview locally with `npm run dev`.
+- **3.4 Content population (HITL)** — replace placeholders (see below).
+- **3.5 Launch (HITL)** — push to GitHub, connect Vercel, set site URL.
 
 ---
 
-## Key References
+## Design Direction (locked in)
 
-### Documentation
-- **ADR-001:** `docs/decisions/ADR-001-next-js-static-export.md` — Architecture decision for Next.js + static export
-- **Implementation Plan:** `implementation-plan-0001.md` — 11 vertical slice issues in dependency order
-
-### Project Structure
-- Root: `C:/Users/AravindKumar/Documents/Local_server/testing` (currently empty, will contain Next.js app)
-- Docs: `docs/decisions/` (ADRs)
-- Plans: `implementation-plan-0001.md`
+- **Theme:** Technical & sleek, **dark only**, celestial/astronomy aesthetic
+  with hero starfield + scroll-reveal animations.
+- **Palette:** Midnight Blue `#191970` base · Star Gold `#D4AF37` accent ·
+  Aged Parchment `#E8DDB5` text · Dusty Plum / Forest Moss / Lilac / Silver.
+- **Type:** Fraunces (serif headings) + Inter (sans body) + Geist Mono (labels).
+- Full reference: `docs/design-system.md`.
 
 ---
 
-## Unresolved Threads
+## How to customize content (Issue 3.4)
 
-1. **User Sign-Off on Issues:** Awaiting user approval of the 11 vertical slices before implementation begins
-2. **Design Direction:** Issue 1.2 marked as HITL — needs user feedback on visual style before components built
-3. **Content Population:** Issue 3.4 marked as HITL — user needs to gather actual portfolio content (images, bios, project descriptions)
+All placeholder content lives in `src/lib/`:
 
----
-
-## Recommended Next Steps
-
-### Immediate (when user approves):
-- [ ] User reviews and approves issue breakdown in `implementation-plan-0001.md`
-- [ ] Adjust any issues if needed (split, combine, reorder)
-- [ ] Confirm readiness to start Issue 1.1 (Project Setup)
-
-### Implementation Phase:
-- [ ] **Issue 1.1:** Initialize Next.js, configure static export, deploy skeleton to Vercel
-- [ ] **Issue 1.2:** Use frontend-ui-engineering skill to design and build component library
-- [ ] Issues 2.1–2.5 (Pages): Build layout, About, Projects, Resume, Contact (can be parallelized)
-- [ ] Issues 3.1–3.5 (Polish): Static export verification, responsive testing, SEO, content population, launch
+- `src/lib/nav.ts` → `SITE` (your **name**, **email**, **role**, **url**) and
+  `SOCIAL_LINKS` (GitHub/LinkedIn/Twitter URLs).
+- `src/lib/projects.ts` → the 5 featured projects (title, summary, links).
+- `src/lib/resume.ts` → skills, experience, education.
+- `src/lib/disciplines.ts` → discipline labels/blurbs (rarely needs changing).
+- Add a real `public/resume.pdf` (Resume page links to `/resume.pdf`).
+- Profile photo: replace the `✦` placeholder circle in `src/app/page.tsx`
+  with a `next/image` (remember `images.unoptimized` is on for static export).
+- Optional: add an Open Graph share image and reference it in `layout.tsx`.
 
 ---
 
-## Recommended Skills for Next Session
-
-**For Implementation:**
-1. **frontend-ui-engineering** — Use for Issue 1.2 (Design System & Components) — finalize visual design and build Tailwind/component library
-2. **run** — Use to start dev server and test locally during Issues 1.1–2.5
-3. **verify** — Use to validate responsive design and functionality before launch
-
-**For Quality:**
-1. **code-review** — Quick review of component structure and Next.js patterns before merge
-2. **test-master** — If adding automated tests (currently planned as manual in 3.2)
-
-**For Documentation:**
-1. **documentation-and-adrs** — If additional ADRs needed during implementation (e.g., component architecture, deployment)
-
----
-
-## Notes for Next Agent
-
-- **User has restricted file access:** "Do not access any files outside root" — stay within `C:/Users/AravindKumar/Documents/Local_server/testing`
-- **Model switch:** User changed model to Haiku 4.5 mid-session for cost/speed (use this or switch back as needed)
-- **Skill invocation:** User will likely invoke skills directly (e.g., `/frontend-ui-engineering`, `/run`, etc.) — be ready to support
-- **No external dependencies:** Project is standalone; no integration with other repos in Local_server monorepo needed
-- **Static deployment:** Remember to test `npm run build` produces valid HTML-only output for Vercel (no Node.js runtime)
-
----
-
-## Quick Start for Next Session
+## Deployment (Issue 3.5 — your accounts)
 
 ```bash
 cd C:/Users/AravindKumar/Documents/Local_server/testing
-
-# Issue 1.1: Initialize Next.js
-npm init --yes
-npx create-next-app@latest . --no-git --typescript --tailwind
-
-# Update next.config.js for static export
-# Add: output: 'export'
-
-# Test local build
-npm run build
-
-# Deploy to Vercel (push to GitHub first, connect Vercel)
-git init
-git add .
-git commit -m "Initial Next.js portfolio setup"
-git push origin main
-# Then connect to Vercel via dashboard
+git remote add origin https://github.com/<you>/<repo>.git
+git branch -M main
+git push -u origin main
+# Then: Vercel → New Project → import repo (auto-detects Next.js static export)
 ```
 
-See `implementation-plan-0001.md` for full details.
+Set `NEXT_PUBLIC_SITE_URL` in Vercel (e.g. `https://your-name.vercel.app`) so
+canonical URLs, sitemap, and OG tags use the real domain.
+
+---
+
+## Commands
+
+```bash
+npm run dev     # local dev server (http://localhost:3000)
+npm run build   # static export → ./out
+npm run lint    # eslint
+```
+
+## Key References
+
+- `docs/decisions/ADR-001-next-js-static-export.md` — architecture decision
+- `docs/design-system.md` — design tokens, components, a11y
+- `implementation-plan-0001.md` — full 11-issue plan
+
+## Notes
+
+- **Stay within project root** (`.../testing`) per user constraint.
+- **Next.js 16** has breaking changes vs. older versions — see `AGENTS.md`.
+- `out/` is git-ignored (build artifact).
