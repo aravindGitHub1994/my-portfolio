@@ -1,94 +1,76 @@
-# Handoff: Personal Portfolio Website Project
+# Handoff: Portfolio → Vercel Deployment
 
 **Date:** 2026-06-23
-**Project Location:** `C:/Users/AravindKumar/Documents/Local_server/testing`
+**Focus:** Get the portfolio live on Vercel
+**Local path:** `C:/Users/AravindKumar/Documents/Local_server/testing`
+**GitHub:** https://github.com/aravindGitHub1994/my-portfolio (branch `main`, pushed)
 
 ---
 
 ## Current Status
 
-✅ **Implemented (committed on `master`):**
+The portfolio is **fully built, committed, and pushed to GitHub** — only deployment remains.
 
-| Issue | What | Status |
-|---|---|---|
-| 1.1 | Next.js 16 + static export (`output: 'export'`) scaffold | ✅ Done |
-| 1.2 | "Midnight Observatory" design system + animated hero | ✅ Done |
-| 2.1 | Header (responsive mobile menu), Footer, layout, routes | ✅ Done |
-| 2.2 | About / home (hero + bio + discipline highlights) | ✅ Done |
-| 2.3 | Projects showcase grid (5 placeholder projects) | ✅ Done |
-| 2.4 | Resume (skills / experience timeline / education) | ✅ Done |
-| 2.5 | Contact (email + social links) | ✅ Done |
-| 3.1 | Static export verified — all routes emit `.html`, no server deps | ✅ Done |
-| 3.3 | SEO: OG/Twitter meta, canonical, `sitemap.xml`, `robots.txt` | ✅ Done |
+- Next.js 16 + TypeScript + Tailwind v4, configured for **static export** (`output: 'export'` → `./out`). See `next.config.ts`.
+- 4 routes (`/`, `/projects`, `/resume`, `/contact`) + `sitemap.xml` + `robots.txt`, all prerender as static HTML. `npm run build` and `npm run lint` are clean.
+- "Midnight Observatory" dark theme (celestial palette, Fraunces/Inter fonts, animated starfield hero + scroll reveals). Full design reference: `docs/design-system.md`.
+- Content is **placeholder** — all isolated in `src/lib/` (`nav.ts`, `projects.ts`, `resume.ts`). Not yet customized (Issue 3.4, HITL).
+- Dev server runs on **port 3004** (`npm run dev`) — ports 3000–3003 are taken by other local services; this project is registered in `../ports_mapping.md`.
 
-⏳ **Remaining (need you):**
-
-- **3.2 Responsive cross-device test** — built mobile-first; live browser
-  verification still wanted (Chrome extension wasn't connected this session).
-  Preview locally with `npm run dev`.
-- **3.4 Content population (HITL)** — replace placeholders (see below).
-- **3.5 Launch (HITL)** — push to GitHub, connect Vercel, set site URL.
+Implementation history (9 of 11 plan issues done): see `implementation-plan-0001.md` and git log (6 commits, HEAD `db8eea8`).
 
 ---
 
-## Design Direction (locked in)
+## Unresolved Threads
 
-- **Theme:** Technical & sleek, **dark only**, celestial/astronomy aesthetic
-  with hero starfield + scroll-reveal animations.
-- **Palette:** Midnight Blue `#191970` base · Star Gold `#D4AF37` accent ·
-  Aged Parchment `#E8DDB5` text · Dusty Plum / Forest Moss / Lilac / Silver.
-- **Type:** Fraunces (serif headings) + Inter (sans body) + Geist Mono (labels).
-- Full reference: `docs/design-system.md`.
+1. **Local folder rename pending (cosmetic, blocked):** User wants the root folder renamed `testing` → `my-portfolio` to match the repo. **Cannot be done from inside a Claude Code session** — the session holds the folder open (Windows lock; both Bash and PowerShell auto-reset cwd into it). User must rename it externally: close the session, `Rename-Item testing my-portfolio` from the parent dir, reopen Claude in the new folder. Git/remote/branch are unaffected.
+2. **`NEXT_PUBLIC_SITE_URL` not set:** SEO (canonical, OG, sitemap, robots) currently emits `https://example.com`. Must be set to the real Vercel URL after the first deploy. Defined in `src/lib/nav.ts` → `SITE.url` (reads the env var).
+3. **`package.json` "name" is `"portfolio"`** (not `my-portfolio`) — offered to rename, user hasn't decided. Harmless for Vercel.
+4. **Content still placeholder** (Issue 3.4) — can deploy first, customize later.
 
 ---
-
-## How to customize content (Issue 3.4)
-
-All placeholder content lives in `src/lib/`:
-
-- `src/lib/nav.ts` → `SITE` (your **name**, **email**, **role**, **url**) and
-  `SOCIAL_LINKS` (GitHub/LinkedIn/Twitter URLs).
-- `src/lib/projects.ts` → the 5 featured projects (title, summary, links).
-- `src/lib/resume.ts` → skills, experience, education.
-- `src/lib/disciplines.ts` → discipline labels/blurbs (rarely needs changing).
-- Add a real `public/resume.pdf` (Resume page links to `/resume.pdf`).
-- Profile photo: replace the `✦` placeholder circle in `src/app/page.tsx`
-  with a `next/image` (remember `images.unoptimized` is on for static export).
-- Optional: add an Open Graph share image and reference it in `layout.tsx`.
-
----
-
-## Deployment (Issue 3.5 — your accounts)
-
-```bash
-cd C:/Users/AravindKumar/Documents/Local_server/testing
-git remote add origin https://github.com/<you>/<repo>.git
-git branch -M main
-git push -u origin main
-# Then: Vercel → New Project → import repo (auto-detects Next.js static export)
-```
-
-Set `NEXT_PUBLIC_SITE_URL` in Vercel (e.g. `https://your-name.vercel.app`) so
-canonical URLs, sitemap, and OG tags use the real domain.
-
----
-
-## Commands
-
-```bash
-npm run dev     # local dev server (http://localhost:3000)
-npm run build   # static export → ./out
-npm run lint    # eslint
-```
 
 ## Key References
 
-- `docs/decisions/ADR-001-next-js-static-export.md` — architecture decision
-- `docs/design-system.md` — design tokens, components, a11y
-- `implementation-plan-0001.md` — full 11-issue plan
+- Architecture decision: `docs/decisions/ADR-001-next-js-static-export.md`
+- Design system: `docs/design-system.md`
+- Implementation plan: `implementation-plan-0001.md`
+- Port registry: `../ports_mapping.md`
+- Repo: https://github.com/aravindGitHub1994/my-portfolio
 
-## Notes
+---
 
-- **Stay within project root** (`.../testing`) per user constraint.
-- **Next.js 16** has breaking changes vs. older versions — see `AGENTS.md`.
-- `out/` is git-ignored (build artifact).
+## Recommended Next Steps — Vercel Deployment
+
+Vercel auto-detects Next.js. Because `output: 'export'` is set, Vercel serves the
+static `out/` directory (no Node runtime). Two paths:
+
+### Option A — Vercel dashboard (recommended, no CLI install)
+- [ ] Go to vercel.com → **New Project** → **Import** `aravindGitHub1994/my-portfolio`.
+- [ ] Framework preset: **Next.js** (auto). Build command `next build`, output is handled automatically for static export. Leave defaults.
+- [ ] Add Environment Variable **`NEXT_PUBLIC_SITE_URL`** = the assigned URL (e.g. `https://my-portfolio-xxxx.vercel.app`). You may need to deploy once to learn the URL, then set the var and redeploy.
+- [ ] Deploy → verify all 4 routes load, hero animation runs, no console errors.
+
+### Option B — Vercel CLI
+- [ ] `gh` is **not installed**, but Vercel CLI is separate: `npm i -g vercel`.
+- [ ] `vercel login`, then `vercel` (preview) / `vercel --prod` from the project root.
+- [ ] Set env var: `vercel env add NEXT_PUBLIC_SITE_URL`.
+
+### Post-deploy
+- [ ] Set `NEXT_PUBLIC_SITE_URL`, redeploy, confirm `sitemap.xml`/`robots.txt`/canonical show the real domain.
+- [ ] (Optional) custom domain, Vercel Analytics.
+- [ ] Then circle back to **content population (Issue 3.4)**.
+
+### Constraints / gotchas
+- **Auth actions are the user's to perform:** creating the Vercel account, OAuth-connecting GitHub, accepting terms, and clicking Deploy must be done by the user — the agent should guide, not perform these. Pushing more commits to `main` (already authed via Git Credential Manager) is fine.
+- Static export: no server-side features (no API routes, no `next/image` optimization — already set `images.unoptimized`). Keep it static.
+- If the GitHub repo was created with a README/initial commit, confirm `main` history matches local (it was a clean push: `[new branch] main -> main`).
+
+---
+
+## Recommended Skills
+
+- **devops-engineer** — Vercel deployment config, env vars, CI/CD wiring.
+- **run** — start the local dev server (port 3004) / preview the static `out/` build before deploy.
+- **verify** — validate the live site (routes, responsive, console) post-deploy; covers the still-open Issue 3.2 responsive check.
+- **frontend-ui-engineering** — when returning to content/polish (Issue 3.4).
