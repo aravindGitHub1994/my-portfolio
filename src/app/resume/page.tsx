@@ -7,8 +7,9 @@ import { DISCIPLINES } from "@/lib/disciplines";
 import { SKILL_GROUPS, EXPERIENCE, EDUCATION } from "@/lib/resume";
 
 export const metadata: Metadata = {
-  title: "Resume — Portfolio",
+  title: "Resume",
   description: "Skills, experience, and education across four disciplines.",
+  alternates: { canonical: "/resume" },
 };
 
 export default function ResumePage() {

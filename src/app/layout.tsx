@@ -3,6 +3,7 @@ import { Fraunces, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { SITE } from "@/lib/nav";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -22,10 +23,31 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+const description =
+  "Personal portfolio — multi-disciplinary work across analytics, writing, design, and code.";
+
 export const metadata: Metadata = {
-  title: "Portfolio",
-  description:
-    "Personal portfolio — multi-disciplinary work across analytics, writing, design, and code.",
+  metadataBase: new URL(SITE.url),
+  title: {
+    default: `${SITE.name} — Portfolio`,
+    template: `%s · ${SITE.name}`,
+  },
+  description,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    siteName: `${SITE.name} — Portfolio`,
+    title: `${SITE.name} — Portfolio`,
+    description,
+    url: SITE.url,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE.name} — Portfolio`,
+    description,
+  },
 };
 
 export default function RootLayout({

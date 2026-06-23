@@ -5,8 +5,9 @@ import { ButtonLink } from "@/components/Button";
 import { SOCIAL_LINKS, SITE } from "@/lib/nav";
 
 export const metadata: Metadata = {
-  title: "Contact — Portfolio",
+  title: "Contact",
   description: "Get in touch — email and social links.",
+  alternates: { canonical: "/contact" },
 };
 
 export default function ContactPage() {

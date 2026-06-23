@@ -5,9 +5,10 @@ import { Reveal } from "@/components/Reveal";
 import { PROJECTS } from "@/lib/projects";
 
 export const metadata: Metadata = {
-  title: "Projects — Portfolio",
+  title: "Projects",
   description:
     "Featured projects across analytics, writing, design, and code.",
+  alternates: { canonical: "/projects" },
 };
 
 export default function ProjectsPage() {

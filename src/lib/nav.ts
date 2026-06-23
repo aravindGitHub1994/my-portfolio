@@ -15,6 +15,9 @@ export const SITE = {
   name: "Your Name",
   role: "Analytics · Writing · Design · Code",
   email: "you@example.com",
+  // Update to your deployed URL (e.g. https://your-name.vercel.app).
+  // Falls back to env var so it can be set per-deploy without code changes.
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com",
 };
 
 // Social / contact links. Placeholder URLs — update with real profiles.
