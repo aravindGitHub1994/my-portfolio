@@ -10,10 +10,12 @@ import { ButtonLink } from "@/components/Button";
 export function Hero() {
   return (
     <section className="relative isolate overflow-hidden">
-      {/* Vignette so text stays legible over the global starfield */}
+      {/* Vignette so text stays legible over the global starfield. Kept clear
+          through the mid-field so the sun/moon (top-right of the background
+          canvas) aren't washed out; only the outer edge fades to the bg. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,var(--color-bg)_95%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_62%,var(--color-bg)_112%)]"
       />
 
       <div className="relative mx-auto flex min-h-[78vh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center">
@@ -23,14 +25,29 @@ export function Hero() {
             aria-hidden="true"
             className="pointer-events-none absolute -inset-2 rounded-full bg-gold/15 blur-2xl"
           />
-          {/* eslint-disable-next-line @next/next/no-img-element -- static export: plain img, no next/image optimization */}
-          <img
-            src="/aravind.jpg"
-            alt="Portrait of Aravind Krishna Kumar"
-            width={192}
-            height={192}
-            className="relative h-full w-full rounded-full border border-line-strong object-cover object-[center_10%] shadow-[0_0_40px_-8px_rgba(212,175,55,0.45)]"
-          />
+          {/* Flip card: portrait flips around its vertical axis every ~10s to
+              reveal a second photo. Pure CSS (static export safe); the global
+              reduced-motion rule freezes it on the front face. */}
+          <div className="relative h-full w-full [perspective:1200px]">
+            <div className="animate-portrait-flip relative h-full w-full rounded-full [transform-style:preserve-3d]">
+              {/* eslint-disable-next-line @next/next/no-img-element -- static export: plain img, no next/image optimization */}
+              <img
+                src="/aravind.jpg"
+                alt="Portrait of Aravind Krishna Kumar"
+                width={192}
+                height={192}
+                className="absolute inset-0 h-full w-full rounded-full border border-line-strong object-cover object-[center_10%] shadow-[0_0_40px_-8px_var(--color-glow)] [backface-visibility:hidden]"
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element -- static export: plain img, no next/image optimization */}
+              <img
+                src="/aravind-2.jpg"
+                alt="Aravind Krishna Kumar working at his desk"
+                width={192}
+                height={192}
+                className="absolute inset-0 h-full w-full rounded-full border border-line-strong object-cover object-[center_28%] shadow-[0_0_40px_-8px_var(--color-glow)] [transform:rotateY(180deg)] [backface-visibility:hidden]"
+              />
+            </div>
+          </div>
         </div>
 
         <h1 className="mt-10 text-balance text-5xl leading-[1.05] sm:text-6xl md:text-7xl">

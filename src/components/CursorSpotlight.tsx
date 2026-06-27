@@ -1,20 +1,28 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 
 /**
  * Fixed, full-viewport radial-gradient glow that follows the pointer,
- * giving the page a subtle "torchlight" feel. Mounted once in the root
- * layout, above the page content but below interactive elements
- * (pointer-events disabled throughout). Disabled entirely on touch
- * devices (no meaningful pointer to track) and on prefers-reduced-motion.
+ * giving the page a subtle "torchlight in the dark" feel. Night-only
+ * (disabled in day mode per ADR-003 — the metaphor doesn't apply in daylight).
+ * Also disabled on touch devices and prefers-reduced-motion.
  */
 export function CursorSpotlight() {
   const ref = useRef<HTMLDivElement>(null);
+  const { resolved } = useTheme();
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
+
+    // Night-only metaphor — reset visibility and bail in day mode.
+    if (resolved === "day") {
+      node.style.opacity = "0";
+      node.style.background = "";
+      return;
+    }
 
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -49,7 +57,7 @@ export function CursorSpotlight() {
       window.removeEventListener("pointermove", onMove);
       cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [resolved]);
 
   return (
     <div

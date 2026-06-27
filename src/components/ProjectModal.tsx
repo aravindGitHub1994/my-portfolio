@@ -4,6 +4,7 @@ import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import type { Project } from "@/lib/projects";
 import { CapabilityTag } from "@/components/Tag";
+import { useTheme } from "@/components/ThemeProvider";
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
@@ -43,6 +44,15 @@ export function ProjectModal({
   // Portal target is the document body. Gate on a client-only mounted flag so
   // the static-export prerender never touches `document`.
   const mounted = useMounted();
+
+  // Swap diagram src for the light variant in day mode (ADR-003 / ADR-002 amendment).
+  // *.light.svg files are the committed dark SVGs with the palette remapped to the
+  // day (Warm-sunlit) tokens — same geometry, no layout drift. See scripts/diagrams-light.js.
+  const { resolved } = useTheme();
+  const diagSrc =
+    resolved === "day"
+      ? project.diagram.replace(".svg", ".light.svg")
+      : project.diagram;
 
   useEffect(() => {
     previouslyFocused.current = document.activeElement as HTMLElement | null;
@@ -107,7 +117,7 @@ export function ProjectModal({
         aria-modal="true"
         aria-labelledby="project-modal-title"
         tabIndex={-1}
-        className="relative z-10 max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-gold/30 bg-surface p-6 shadow-[0_0_60px_-10px_rgba(212,175,55,0.5)] motion-safe:animate-[modal-in_0.25s_var(--ease-out-soft)] sm:p-8"
+        className="relative z-10 max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-gold/30 bg-surface p-6 shadow-[0_0_60px_-10px_var(--color-glow)] motion-safe:animate-[modal-in_0.25s_var(--ease-out-soft)] sm:p-8"
       >
         <button
           type="button"
@@ -164,7 +174,7 @@ export function ProjectModal({
         <div className="mt-6 overflow-auto rounded-md border border-line bg-bg/40">
           {/* eslint-disable-next-line @next/next/no-img-element -- static export: pre-rendered committed SVG, no next/image */}
           <img
-            src={project.diagram}
+            src={diagSrc}
             alt={`${project.title} architecture diagram`}
             className="mx-auto block max-h-[26rem] w-auto max-w-none p-2"
           />
