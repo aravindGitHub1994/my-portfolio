@@ -155,12 +155,20 @@ export function ProjectModal({
           {project.tagline}
         </p>
 
-        {/* eslint-disable-next-line @next/next/no-img-element -- static export: pre-rendered committed SVG, no next/image */}
-        <img
-          src={project.diagram}
-          alt={`${project.title} architecture diagram`}
-          className="mt-6 w-full rounded-md border border-line bg-bg/40"
-        />
+        {/* Diagrams vary wildly in aspect ratio (wide-short vs narrow-tall), so
+            render each at its natural size capped by a max height, scrolling
+            within this box rather than being stretched to the modal width.
+            `max-w-none` overrides Tailwind preflight's img max-width:100% so a
+            very wide diagram overflows and scrolls horizontally instead of
+            squashing to unreadable text. */}
+        <div className="mt-6 overflow-auto rounded-md border border-line bg-bg/40">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static export: pre-rendered committed SVG, no next/image */}
+          <img
+            src={project.diagram}
+            alt={`${project.title} architecture diagram`}
+            className="mx-auto block max-h-[26rem] w-auto max-w-none p-2"
+          />
+        </div>
 
         <dl className="mt-8 space-y-6">
           <div>

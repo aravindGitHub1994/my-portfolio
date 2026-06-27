@@ -1,8 +1,9 @@
 // Monochrome tool/tech icons orbiting the hero portrait.
 // Path `d` data sourced verbatim from simple-icons (24x24 viewBox), reduced to
 // a single path per glyph. Do not hand-edit the path data.
-// Exception: "SQL" has no simple-icons brand glyph, so it uses a small
-// hand-built database-cylinder path (the one intentionally authored glyph).
+// Exception: "SQL" has no simple-icons brand glyph, so it uses the Material
+// Design Icons (Apache-2.0) "database" cylinder glyph — a single solid path
+// that renders correctly under the default nonzero fill.
 
 export interface TechIcon {
   /** Accessible label, e.g. "React". */
@@ -22,7 +23,7 @@ export const TECH_ICONS: TechIcon[] = [
   },
   {
     name: "SQL",
-    path: "M4 5 L4 19 A8 2.4 0 0 0 20 19 L20 5 A8 2.4 0 0 1 4 5 Z M4 5 A8 2.4 0 0 0 20 5 L20 4.2 A8 1.9 0 0 1 4 4.2 Z M4 9.8 A8 2.4 0 0 0 20 9.8 L20 9 A8 1.9 0 0 1 4 9 Z M4 14.6 A8 2.4 0 0 0 20 14.6 L20 13.8 A8 1.9 0 0 1 4 13.8 Z",
+    path: "M12 3C7.58 3 4 4.79 4 7C4 9.21 7.58 11 12 11C16.42 11 20 9.21 20 7C20 4.79 16.42 3 12 3M4 9V12C4 14.21 7.58 16 12 16C16.42 16 20 14.21 20 12V9C20 11.21 16.42 13 12 13C7.58 13 4 11.21 4 9M4 14V17C4 19.21 7.58 21 12 21C16.42 21 20 19.21 20 17V14C20 16.21 16.42 18 12 18C7.58 18 4 16.21 4 14Z",
   },
   {
     name: "Claude",

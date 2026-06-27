@@ -29,7 +29,7 @@ export function Hero() {
             alt="Portrait of Aravind Krishna Kumar"
             width={192}
             height={192}
-            className="relative h-full w-full rounded-full border border-line-strong object-cover object-[center_15%] shadow-[0_0_40px_-8px_rgba(212,175,55,0.45)]"
+            className="relative h-full w-full rounded-full border border-line-strong object-cover object-[center_10%] shadow-[0_0_40px_-8px_rgba(212,175,55,0.45)]"
           />
         </div>
 
