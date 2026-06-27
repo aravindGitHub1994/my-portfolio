@@ -63,7 +63,7 @@ export function ProjectCard({
         {/* Outer glow border on hover ("gravity" lift) */}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 rounded-lg opacity-0 shadow-[0_0_32px_-6px_rgba(212,175,55,0.45)] transition-opacity duration-300 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 rounded-lg opacity-0 shadow-[0_0_32px_-6px_var(--color-glow)] transition-opacity duration-300 group-hover:opacity-100"
         />
 
         <div className="mb-4 flex flex-wrap gap-2">

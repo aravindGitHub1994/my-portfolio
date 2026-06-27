@@ -1,10 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CursorSpotlight } from "@/components/CursorSpotlight";
-import { Starfield } from "@/components/Starfield";
+import { BackgroundScene } from "@/components/BackgroundScene";
+import { ThemeMetaColor } from "@/components/ThemeMetaColor";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { themeInitScript } from "@/lib/theme";
 import { SITE } from "@/lib/nav";
 
 const fraunces = Fraunces({
@@ -27,6 +30,11 @@ const geistMono = Geist_Mono({
 
 const description =
   "Data Analytics Manager who ships production software by directing AI coding agents — real projects across taxonomy engines, Bayesian budget models, and analytics tooling.";
+
+/** Static default (night); ThemeMetaColor client component updates it live. */
+export const viewport: Viewport = {
+  themeColor: "#07071a",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -61,13 +69,22 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${fraunces.variable} ${inter.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        {/* Pre-paint theme resolution (ADR-003) — runs before first paint to
+            avoid a flash of the wrong theme. Keep in sync via src/lib/theme.ts. */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-full flex flex-col">
-        <Starfield />
-        <CursorSpotlight />
-        <Header />
-        <div className="flex flex-1 flex-col">{children}</div>
-        <Footer />
+        <ThemeProvider>
+          <ThemeMetaColor />
+          <BackgroundScene />
+          <CursorSpotlight />
+          <Header />
+          <div className="flex flex-1 flex-col">{children}</div>
+          <Footer />
+        </ThemeProvider>
       </body>
     </html>
   );

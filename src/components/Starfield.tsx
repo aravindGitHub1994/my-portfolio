@@ -17,6 +17,30 @@ interface Star {
 
 const STAR_HUES = ["#e8ddb5", "#d4af37", "#c0c7d1", "#b8a9d9"]; // parchment, gold, silver, lilac
 
+interface NightCloud {
+  x: number;
+  y: number;
+  baseR: number;
+  alpha: number;
+  speed: number;
+  phase: number;
+}
+
+/** A few drifting clouds for the night sky — dark, moonlit-topped, not white. */
+const NIGHT_CLOUD_COUNT = 4;
+
+/** "Maria" patches + smaller craters for the moon's surface — soft grey blotches
+    (no hard rings). Offsets/sizes relative to the moon radius; `a` is opacity. */
+const MOON_MARIA = [
+  { dx: -0.20, dy: -0.28, r: 0.42, a: 0.34 },
+  { dx: 0.28, dy: 0.12, r: 0.36, a: 0.30 },
+  { dx: -0.04, dy: 0.36, r: 0.30, a: 0.26 },
+  { dx: 0.36, dy: -0.30, r: 0.20, a: 0.24 },
+  { dx: -0.42, dy: 0.16, r: 0.18, a: 0.22 },
+  { dx: 0.10, dy: -0.06, r: 0.14, a: 0.20 },
+  { dx: -0.30, dy: 0.40, r: 0.12, a: 0.20 },
+] as const;
+
 /** Per-layer size/opacity/parallax ranges, far → near. */
 const LAYERS = [
   { rMin: 0.25, rMax: 0.9, alphaMin: 0.12, alphaMax: 0.4, parallax: 6 },
@@ -51,6 +75,7 @@ export function Starfield({ className = "" }: { className?: string }) {
     let width = 0;
     let height = 0;
     let stars: Star[] = [];
+    let nightClouds: NightCloud[] = [];
     let raf = 0;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
@@ -88,6 +113,114 @@ export function Starfield({ className = "" }: { className?: string }) {
           layer,
         };
       });
+
+      // Clouds drift across the upper sky; scaled to viewport width.
+      const cloudScale = Math.max(0.7, Math.min(1.6, width / 1200));
+      nightClouds = Array.from({ length: NIGHT_CLOUD_COUNT }, (_, i) => ({
+        x: (width * (i + 0.5)) / NIGHT_CLOUD_COUNT + (Math.random() - 0.5) * 200,
+        y: height * (0.08 + Math.random() * 0.4),
+        baseR: (34 + Math.random() * 30) * cloudScale,
+        alpha: 0.4 + Math.random() * 0.2,
+        speed: 0.05 + Math.random() * 0.09,
+        phase: Math.random() * Math.PI * 2,
+      }));
+    }
+
+    /** A soft night cloud — moonlit indigo top fading to a shadowed base. */
+    function drawNightCloud(x: number, y: number, baseR: number, alpha: number) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.arc(x - baseR * 0.65, y + baseR * 0.15, baseR * 0.62, 0, Math.PI * 2);
+      ctx.arc(x, y - baseR * 0.1, baseR * 0.85, 0, Math.PI * 2);
+      ctx.arc(x + baseR * 0.75, y + baseR * 0.1, baseR * 0.68, 0, Math.PI * 2);
+      ctx.arc(x + baseR * 0.15, y + baseR * 0.45, baseR * 0.55, 0, Math.PI * 2);
+      const grad = ctx.createLinearGradient(x, y - baseR, x, y + baseR * 0.7);
+      grad.addColorStop(0, "rgba(74, 80, 124, 1)"); // moonlit top
+      grad.addColorStop(1, "rgba(26, 28, 54, 1)"); // shadowed base
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawNightClouds(t: number) {
+      for (const c of nightClouds) {
+        const floatY = reduceMotion
+          ? c.y
+          : c.y + Math.sin(t * 0.0002 + c.phase) * 4;
+        drawNightCloud(c.x, floatY, c.baseR, c.alpha);
+        if (!reduceMotion) {
+          c.x -= c.speed;
+          if (c.x < -c.baseR * 2.2) c.x = width + c.baseR * 2.2;
+        }
+      }
+    }
+
+    function drawMoon(t: number) {
+      const moonX = width * 0.76;
+      const moonY = height * 0.16;
+      const moonR = Math.min(34, width * 0.045);
+
+      // Soft cool glow halo, with a gentle breathing pulse (static if reduce-motion).
+      const pulse = reduceMotion ? 1 : 1 + Math.sin(t * 0.0006) * 0.05;
+      const haloR = moonR * 4.2 * pulse;
+      const halo = ctx.createRadialGradient(
+        moonX, moonY, moonR * 0.6,
+        moonX, moonY, haloR,
+      );
+      halo.addColorStop(0, "rgba(228, 234, 244, 0.40)");
+      halo.addColorStop(0.4, "rgba(198, 206, 220, 0.16)");
+      halo.addColorStop(1, "rgba(190, 200, 220, 0)");
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, haloR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Bright, near-opaque body (centered fill so the whole disc reads bright).
+      const bodyGrad = ctx.createRadialGradient(
+        moonX, moonY, moonR * 0.2,
+        moonX, moonY, moonR,
+      );
+      bodyGrad.addColorStop(0, "rgba(249, 248, 243, 1)");
+      bodyGrad.addColorStop(0.7, "rgba(231, 233, 237, 1)");
+      bodyGrad.addColorStop(1, "rgba(206, 210, 218, 1)");
+      ctx.fillStyle = bodyGrad;
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.clip();
+
+      // Maria — soft grey patches for a natural mottled lunar surface.
+      for (const m of MOON_MARIA) {
+        const mx = moonX + m.dx * moonR;
+        const my = moonY + m.dy * moonR;
+        const mr = m.r * moonR;
+        const patch = ctx.createRadialGradient(mx, my, 0, mx, my, mr);
+        patch.addColorStop(0, `rgba(116, 122, 138, ${m.a})`);
+        patch.addColorStop(0.65, `rgba(132, 138, 152, ${m.a * 0.55})`);
+        patch.addColorStop(1, "rgba(132, 138, 152, 0)");
+        ctx.fillStyle = patch;
+        ctx.beginPath();
+        ctx.arc(mx, my, mr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Gentle terminator — slight shading on the lower-right edge for depth.
+      const term = ctx.createRadialGradient(
+        moonX - moonR * 0.35, moonY - moonR * 0.35, moonR * 0.3,
+        moonX, moonY, moonR * 1.05,
+      );
+      term.addColorStop(0, "rgba(120, 128, 145, 0)");
+      term.addColorStop(1, "rgba(120, 128, 145, 0.28)");
+      ctx.fillStyle = term;
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
 
     function draw(t: number) {
@@ -103,7 +236,9 @@ export function Starfield({ className = "" }: { className?: string }) {
 
         const twinkle =
           0.5 + 0.5 * Math.sin(t * 0.001 * s.twinkleSpeed + s.phase);
-        ctx.globalAlpha = Math.min(1, s.baseAlpha + twinkle * 0.5);
+        // Scale by 0.6 to preserve the previous canvas-wide opacity-60 look,
+        // now that the canvas itself renders at full opacity for the moon.
+        ctx.globalAlpha = Math.min(1, s.baseAlpha + twinkle * 0.5) * 0.6;
         ctx.fillStyle = s.hue;
         ctx.beginPath();
         ctx.arc(s.x + offsetX, s.y + offsetY, s.r, 0, Math.PI * 2);
@@ -118,6 +253,9 @@ export function Starfield({ className = "" }: { className?: string }) {
         }
       }
       ctx.globalAlpha = 1;
+      // Clouds drift over the stars; the moon is drawn last so it stays crisp.
+      drawNightClouds(t);
+      drawMoon(t);
       raf = requestAnimationFrame(draw);
     }
 
@@ -169,7 +307,7 @@ export function Starfield({ className = "" }: { className?: string }) {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className={`pointer-events-none fixed inset-0 -z-10 h-full w-full opacity-60 ${className}`}
+      className={`pointer-events-none fixed inset-0 -z-10 h-full w-full ${className}`}
     />
   );
 }

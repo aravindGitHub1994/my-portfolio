@@ -75,7 +75,7 @@ export function OrbitRing() {
                 }
               >
                 <div
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong bg-surface/90 text-ink-muted shadow-[0_0_18px_-4px_rgba(212,175,55,0.55)] transition-colors hover:border-gold/60 hover:text-gold sm:h-10 sm:w-10"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong bg-surface/90 text-ink-muted shadow-[0_0_18px_-4px_var(--color-glow)] transition-colors hover:border-gold/60 hover:text-gold sm:h-10 sm:w-10"
                   title={icon.name}
                 >
                   <svg

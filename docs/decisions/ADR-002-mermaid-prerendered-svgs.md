@@ -76,6 +76,10 @@ dark page background.
 
 ## Related Decisions
 - ADR-001: Next.js static export (this decision inherits that constraint set).
+- ADR-003: Tri-mode theme — **amends** this decision. Day mode renders light
+  diagram variants (`*.light.svg`) from the same committed `.mmd` sources, using a
+  light `%%{init}%%` theme block, swapped by `data-theme`. The dark SVGs and the
+  `<img>`-via-`images.unoptimized` approach here are unchanged.
 
 ## References
 - [Kroki](https://kroki.io)

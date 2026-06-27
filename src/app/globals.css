@@ -42,6 +42,9 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.875rem;
 
+  /* ---- Glow (used in box-shadow arbitrary values) ---- */
+  --color-glow: rgba(212, 175, 55, 0.50);  /* gold glow — night default */
+
   /* ---- Motion ---- */
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -70,6 +73,52 @@ html {
   color-scheme: dark;
 }
 
+/*
+  Day theme — "Warm sunlit" (ADR-003). Overrides the same semantic token names
+  under [data-theme="day"] so every `bg-bg` / `text-ink` / `border-line` utility
+  flips with zero component edits (Tailwind v4 emits `var(--color-*)` references).
+  This block is unlayered, so it wins over the `:root` defaults in `@layer theme`.
+  All text/accent pairings AA-verified against the cream base (see Slice 1).
+*/
+html[data-theme="day"] {
+  color-scheme: light;
+
+  /* ---- Surfaces (sunlit, layered) ---- */
+  --color-bg: #f4ecd8;          /* warm cream base */
+  --color-surface: #fbf6ea;     /* raised panels / cards */
+  --color-surface-2: #ece0c6;   /* hover / elevated */
+
+  /* ---- Text ---- */
+  --color-ink: #2d2417;         /* espresso — primary text (12.96:1) */
+  --color-ink-muted: #5a4d36;   /* secondary text (7.00:1) */
+  --color-ink-subtle: #6f5f44;  /* captions / meta (5.25:1) */
+
+  /* ---- Accents (warm amber lineage, contrast-darkened for cream) ---- */
+  --color-gold: #82661b;        /* amber accent / links / CTAs (4.61:1) */
+  --color-gold-soft: #6f5616;   /* amber hover (5.91:1) */
+  --color-plum: #6a4a68;        /* dusty plum, darkened (6.39:1) */
+  --color-moss: #4a5d28;        /* forest moss, darkened (6.18:1) */
+  --color-moss-light: #3f5320;  /* moss text on cream (7.22:1) */
+  --color-lilac: #64497e;       /* starlight lilac, darkened (6.38:1) */
+  --color-silver: #4a5563;      /* celestial silver → slate (6.44:1) */
+
+  /* ---- Borders (espresso-tinted) ---- */
+  --color-line: rgba(45, 36, 23, 0.16);
+  --color-line-strong: rgba(45, 36, 23, 0.32);
+
+  /* ---- Glow — soft amber in day (no stray gold on cream) ---- */
+  --color-glow: rgba(160, 105, 20, 0.38);
+}
+
+/* Day replaces the dark celestial wash with a soft warm-sky hint so the cream
+   base reads cleanly (the full day horizon canvas lands in Slice 3). */
+html[data-theme="day"] body::before {
+  background:
+    radial-gradient(900px 600px at 80% -5%, rgba(120, 170, 220, 0.18), transparent 60%),
+    radial-gradient(700px 500px at 5% 10%, rgba(212, 175, 55, 0.10), transparent 55%),
+    radial-gradient(600px 600px at 50% 110%, rgba(180, 150, 90, 0.10), transparent 60%);
+}
+
 body {
   background-color: var(--color-bg);
   color: var(--color-ink);
@@ -78,12 +127,14 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Subtle starfield gradient wash behind everything */
+/* Subtle starfield gradient wash behind everything — sits behind the Starfield/
+   Cloudfield canvas (-z-10) so the sun/moon drawn on the canvas are never veiled
+   by it. Still paints above the body's solid background as the pre-mount fallback. */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: -11;
   pointer-events: none;
   background:
     radial-gradient(900px 600px at 80% -5%, rgba(25, 25, 112, 0.55), transparent 60%),
@@ -115,11 +166,35 @@ h1, h2, h3, h4 {
   animation: shimmer 8s linear infinite;
 }
 
+/*
+  Day variant of .text-gilt — the token vars already flip (--color-gold becomes
+  amber #82661b, --color-gold-soft becomes #6f5616, --color-ink becomes espresso
+  #2d2417), so the gradient automatically becomes an amber → bronze → espresso
+  shimmer that passes large-text AA on cream. No additional overrides needed.
+
+  Day-mode focus ring: amber instead of gold, stays AA on cream.
+*/
+html[data-theme="day"] :focus-visible {
+  outline-color: var(--color-gold);
+}
+
 /* Focus visibility for keyboard users */
 :focus-visible {
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
+}
+
+/* Hero portrait flip — rotates around the vertical axis, holding each face
+   ~9s with a ~1s flip (one flip ≈ every 10s). Reduced-motion freezes it on
+   the front face via the rule below (duration → 0, ends at rotateY(360deg)). */
+@keyframes portrait-flip {
+  0%, 42% { transform: rotateY(0deg); }
+  50%, 92% { transform: rotateY(180deg); }
+  100% { transform: rotateY(360deg); }
+}
+.animate-portrait-flip {
+  animation: portrait-flip 20s ease-in-out infinite;
 }
 
 /* Respect reduced-motion preferences */
