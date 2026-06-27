@@ -12,22 +12,24 @@ export const NAV_LINKS: NavLink[] = [
 ];
 
 export const SITE = {
-  name: "Your Name",
-  role: "Analytics · Writing · Design · Code",
-  email: "you@example.com",
+  name: "Aravind Krishna Kumar",
+  role: "Data Analytics Manager · Builds with AI",
+  email: "krishnakumar.aravind94@gmail.com",
   // Update to your deployed URL (e.g. https://your-name.vercel.app).
   // Falls back to env var so it can be set per-deploy without code changes.
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com",
 };
 
-// Social / contact links. Placeholder URLs — update with real profiles.
+// Social / contact links.
 export interface SocialLink {
   label: string;
   href: string;
 }
 
 export const SOCIAL_LINKS: SocialLink[] = [
-  { label: "GitHub", href: "https://github.com/your-handle" },
-  { label: "LinkedIn", href: "https://linkedin.com/in/your-handle" },
-  { label: "Twitter", href: "https://twitter.com/your-handle" },
+  {
+    label: "LinkedIn",
+    href: "https://linkedin.com/in/aravind-krishna-kumar-91058a10b",
+  },
+  { label: "GitHub", href: "https://github.com/aravindGitHub1994" },
 ];

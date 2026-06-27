@@ -17,7 +17,7 @@ export default function ContactPage() {
         <SectionHeader
           eyebrow="Get in touch"
           title="Let's talk"
-          description="Open to collaborations, writing, and interesting problems across analytics, design, and code."
+          description="Open to analytics and measurement work, and to projects where shipping fast with AI-directed engineering is the point."
           align="center"
         />
       </Reveal>

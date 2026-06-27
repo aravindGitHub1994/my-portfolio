@@ -1,0 +1,39 @@
+%%{init: {'theme': 'dark', 'themeVariables': {
+  'background': '#07071a',
+  'primaryColor': '#181840',
+  'primaryTextColor': '#e8ddb5',
+  'primaryBorderColor': '#d4af37',
+  'lineColor': '#c0c7d1',
+  'secondaryColor': '#0f0f2a',
+  'tertiaryColor': '#0f0f2a',
+  'fontFamily': 'Inter, sans-serif'
+}}}%%
+flowchart TD
+  UI["React FE<br/>Builder &amp; Admin UI"]
+
+  subgraph API["Express API"]
+    AUTH["authMiddleware<br/>JWT cookie"]
+    GUARD["clientContext +<br/>tenant guard"]
+    ENGINE["Taxonomy Engine<br/>recursive DFS"]
+    CACHE[("2-tier cache<br/>versioned, in-memory")]
+    WORKER["Excel worker_threads<br/>import / export"]
+  end
+
+  DB[("PostgreSQL")]
+
+  UI -->|"REST, HttpOnly JWT"| AUTH
+  AUTH --> GUARD
+  GUARD --> ENGINE
+  GUARD --> CACHE
+  GUARD --> WORKER
+  ENGINE <--> DB
+  CACHE <-.->|"miss / invalidate"| DB
+  WORKER <--> DB
+
+  classDef frontend fill:#181840,stroke:#9bb06a,color:#e8ddb5,stroke-width:1.5px
+  classDef backend fill:#0f0f2a,stroke:#d4af37,color:#e8ddb5,stroke-width:1.5px
+  classDef store fill:#07071a,stroke:#c0c7d1,color:#e8ddb5,stroke-width:1.5px
+
+  class UI frontend
+  class AUTH,GUARD,ENGINE,WORKER backend
+  class CACHE,DB store

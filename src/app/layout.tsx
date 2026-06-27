@@ -3,6 +3,8 @@ import { Fraunces, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { CursorSpotlight } from "@/components/CursorSpotlight";
+import { Starfield } from "@/components/Starfield";
 import { SITE } from "@/lib/nav";
 
 const fraunces = Fraunces({
@@ -24,7 +26,7 @@ const geistMono = Geist_Mono({
 });
 
 const description =
-  "Personal portfolio — multi-disciplinary work across analytics, writing, design, and code.";
+  "Data Analytics Manager who ships production software by directing AI coding agents — real projects across taxonomy engines, Bayesian budget models, and analytics tooling.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -61,6 +63,8 @@ export default function RootLayout({
       className={`${fraunces.variable} ${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <Starfield />
+        <CursorSpotlight />
         <Header />
         <div className="flex flex-1 flex-col">{children}</div>
         <Footer />
