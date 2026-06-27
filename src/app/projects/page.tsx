@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { SectionHeader } from "@/components/SectionHeader";
-import { ProjectCard } from "@/components/ProjectCard";
+import { ProjectGrid } from "@/components/ProjectGrid";
 import { Reveal } from "@/components/Reveal";
 import { PROJECTS } from "@/lib/projects";
 
 export const metadata: Metadata = {
   title: "Projects",
   description:
-    "Featured projects across analytics, writing, design, and code.",
+    "Production systems shipped by directing AI coding agents — taxonomy engines, Bayesian budget models, and analytics tooling.",
   alternates: { canonical: "/projects" },
 };
 
@@ -18,17 +18,13 @@ export default function ProjectsPage() {
         <SectionHeader
           eyebrow="Selected work"
           title="Projects"
-          description="A cross-section of recent work. Each project leans on a different blend of analytics, writing, design, and code."
+          description="Real systems I've shipped by directing AI coding agents — each one private/proprietary, shown here as an architecture walkthrough rather than a live link."
         />
       </Reveal>
 
-      <ul className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {PROJECTS.map((project, i) => (
-          <Reveal as="li" key={project.slug} delay={(i % 3) * 90}>
-            <ProjectCard project={project} />
-          </Reveal>
-        ))}
-      </ul>
+      <Reveal delay={120} className="mt-12">
+        <ProjectGrid projects={PROJECTS} />
+      </Reveal>
     </main>
   );
 }

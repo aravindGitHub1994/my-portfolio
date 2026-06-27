@@ -1,0 +1,28 @@
+%%{init: {'theme': 'dark', 'themeVariables': {
+  'background': '#07071a',
+  'primaryColor': '#181840',
+  'primaryTextColor': '#e8ddb5',
+  'primaryBorderColor': '#d4af37',
+  'lineColor': '#c0c7d1',
+  'secondaryColor': '#0f0f2a',
+  'tertiaryColor': '#0f0f2a',
+  'fontFamily': 'Inter, sans-serif'
+}}}%%
+flowchart TD
+  DATA["Nemotron persona dataset<br/>synthetic, privacy-safe"]
+  SELECT["Segment / OCEAN selection"]
+  SIM["LLM persona simulation"]
+  MKT["Marketing use cases<br/>messaging &amp; segmentation tests"]
+  QA["QA use cases<br/>bias &amp; localization checks"]
+
+  DATA --> SELECT --> SIM
+  SIM --> MKT
+  SIM --> QA
+
+  classDef source fill:#0f0f2a,stroke:#d4af37,color:#e8ddb5,stroke-width:1.5px
+  classDef process fill:#181840,stroke:#b8a9d9,color:#e8ddb5,stroke-width:1.5px,stroke-dasharray: 4 3
+  classDef usecase fill:#181840,stroke:#9bb06a,color:#e8ddb5,stroke-width:1.5px,stroke-dasharray: 4 3
+
+  class DATA source
+  class SELECT,SIM process
+  class MKT,QA usecase

@@ -3,12 +3,12 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { Reveal } from "@/components/Reveal";
 import { Tag } from "@/components/Tag";
 import { ButtonLink } from "@/components/Button";
-import { DISCIPLINES } from "@/lib/disciplines";
-import { SKILL_GROUPS, EXPERIENCE, EDUCATION } from "@/lib/resume";
+import { SKILL_TIERS, EXPERIENCE, EDUCATION } from "@/lib/resume";
 
 export const metadata: Metadata = {
   title: "Resume",
-  description: "Skills, experience, and education across four disciplines.",
+  description:
+    "Skills, experience, and education — analytics-first, builds production software with AI agents.",
   alternates: { canonical: "/resume" },
 };
 
@@ -28,27 +28,29 @@ export default function ResumePage() {
         </div>
       </Reveal>
 
-      {/* Skills by discipline */}
+      {/* Skills by proficiency tier */}
       <section className="mt-16">
         <h3 className="text-xl text-ink">Skills</h3>
-        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-          {SKILL_GROUPS.map((group, i) => {
-            const d = DISCIPLINES[group.discipline];
-            return (
-              <Reveal key={group.discipline} delay={i * 80}>
-                <div className="rounded-lg border border-line bg-surface/60 p-5">
-                  <h4 className={`text-base ${d.text}`}>{d.label}</h4>
-                  <ul className="mt-3 flex flex-wrap gap-2">
-                    {group.skills.map((skill) => (
-                      <li key={skill}>
-                        <Tag>{skill}</Tag>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </Reveal>
-            );
-          })}
+        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
+          {SKILL_TIERS.map((tier, i) => (
+            <Reveal key={tier.name} delay={i * 80}>
+              <div className="flex h-full flex-col rounded-lg border border-line bg-surface/60 p-5">
+                <h4 className="text-base text-gold">{tier.name}</h4>
+                {tier.blurb && (
+                  <p className="mt-1.5 text-sm leading-6 text-ink-subtle">
+                    {tier.blurb}
+                  </p>
+                )}
+                <ul className="mt-3 flex flex-wrap gap-2">
+                  {tier.skills.map((skill) => (
+                    <li key={skill}>
+                      <Tag>{skill}</Tag>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+          ))}
         </div>
       </section>
 

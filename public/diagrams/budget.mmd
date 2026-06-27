@@ -1,0 +1,24 @@
+%%{init: {'theme': 'dark', 'themeVariables': {
+  'background': '#07071a',
+  'primaryColor': '#181840',
+  'primaryTextColor': '#e8ddb5',
+  'primaryBorderColor': '#d4af37',
+  'lineColor': '#c0c7d1',
+  'secondaryColor': '#0f0f2a',
+  'tertiaryColor': '#0f0f2a',
+  'fontFamily': 'Inter, sans-serif'
+}}}%%
+flowchart LR
+  RAW["Ingest &amp; clean<br/>multi-market spend + KPI history"]
+  PANEL["Xarray<br/>geo-time panel"]
+  MODEL["Meridian Bayesian model<br/>MCMC sampling, ROI priors"]
+  OPT["BudgetOptimizer<br/>fixed / flexible scenarios"]
+  REPORT["HTML + Excel report<br/>response curves, reallocation"]
+
+  RAW --> PANEL --> MODEL --> OPT --> REPORT
+
+  classDef stage fill:#0f0f2a,stroke:#d4af37,color:#e8ddb5,stroke-width:1.5px
+  classDef output fill:#181840,stroke:#9bb06a,color:#e8ddb5,stroke-width:1.5px
+
+  class RAW,PANEL,MODEL,OPT stage
+  class REPORT output

@@ -1,36 +1,47 @@
-import { Starfield } from "@/components/Starfield";
+import { OrbitRing } from "@/components/OrbitRing";
 import { ButtonLink } from "@/components/Button";
-import { DISCIPLINE_LIST } from "@/lib/disciplines";
 
 /**
- * Landing hero. An animated starfield drifts behind a serif display headline
- * with shimmering gilt text, a short intro, primary CTAs, and the four
- * discipline pills. Server-rendered shell; only the canvas is client-side.
+ * Landing hero. A serif display headline carries the single narrative, with a
+ * circular portrait orbited by a ring of tool icons. The drifting starfield is
+ * a single global background mounted in the root layout, not here; this shell
+ * is server-rendered and the orbit ring is its only client-side piece.
  */
 export function Hero() {
   return (
     <section className="relative isolate overflow-hidden">
-      <Starfield className="opacity-80" />
-
-      {/* Vignette so text stays legible over the starfield */}
+      {/* Vignette so text stays legible over the global starfield */}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,var(--color-bg)_95%)]"
       />
 
       <div className="relative mx-auto flex min-h-[78vh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center">
-        <p className="animate-[float_7s_ease-in-out_infinite] font-mono text-xs uppercase tracking-[0.3em] text-gold">
-          Analytics · Writing · Design · Code
-        </p>
+        <div className="relative h-40 w-40 sm:h-48 sm:w-48">
+          <OrbitRing />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-2 rounded-full bg-gold/15 blur-2xl"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element -- static export: plain img, no next/image optimization */}
+          <img
+            src="/aravind.jpg"
+            alt="Portrait of Aravind Krishna Kumar"
+            width={192}
+            height={192}
+            className="relative h-full w-full rounded-full border border-line-strong object-cover object-[center_15%] shadow-[0_0_40px_-8px_rgba(212,175,55,0.45)]"
+          />
+        </div>
 
-        <h1 className="mt-6 text-balance text-5xl leading-[1.05] sm:text-6xl md:text-7xl">
-          <span className="text-ink">Work across the</span>{" "}
-          <span className="text-gilt">full spectrum</span>
+        <h1 className="mt-10 text-balance text-5xl leading-[1.05] sm:text-6xl md:text-7xl">
+          <span className="text-ink">I turn questions into</span>{" "}
+          <span className="text-gilt">shipped products</span>
         </h1>
 
         <p className="mt-6 max-w-xl text-pretty text-lg leading-8 text-ink-muted">
-          A multi-disciplinary portfolio — measuring with data, building with
-          code, shaping with design, and telling the story in writing.
+          with AI as my engineering team. I lead with data and analytics, then
+          direct AI coding agents to ship real, production software — from
+          taxonomy engines to Bayesian budget models.
         </p>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row">
@@ -41,17 +52,6 @@ export function Hero() {
             Resume &amp; skills
           </ButtonLink>
         </div>
-
-        <ul className="mt-14 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-mono text-xs text-ink-subtle">
-          {DISCIPLINE_LIST.map((d) => (
-            <li key={d.key} className="flex items-center gap-2">
-              <span aria-hidden="true" className="text-gold">
-                ✦
-              </span>
-              {d.label}
-            </li>
-          ))}
-        </ul>
       </div>
     </section>
   );
