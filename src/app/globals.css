@@ -119,6 +119,27 @@ html[data-theme="day"] body::before {
     radial-gradient(600px 600px at 50% 110%, rgba(180, 150, 90, 0.10), transparent 60%);
 }
 
+/*
+  Day-only hero legibility. The SkyScene canvas now paints bright green hills and
+  azure behind the centred hero text (the Hero vignette deliberately keeps the
+  centre clear so the sun/moon show through), so the day text — verified against
+  the cream base — needs help over the busy illustration. A faint cream halo
+  (drop-shadow works on the gradient `.text-gilt` headline, unlike text-shadow on
+  background-clipped text) plus a darker, slightly heavier paragraph. Scoped to
+  the hero so card/surface text (already AA on cream) is untouched; night is
+  unaffected. Neutralised with the rest of motion/effects under reduced-motion is
+  not needed — these are static.
+*/
+html[data-theme="day"] h1.hero-legible {
+  filter: drop-shadow(0 1px 6px rgba(247, 240, 222, 0.78))
+    drop-shadow(0 0 1px rgba(247, 240, 222, 0.6));
+}
+html[data-theme="day"] p.hero-legible {
+  color: #241c10; /* deepened espresso for contrast over green hills */
+  font-weight: 500;
+  text-shadow: 0 1px 8px rgba(247, 240, 222, 0.7);
+}
+
 body {
   background-color: var(--color-bg);
   color: var(--color-ink);
@@ -127,9 +148,9 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Subtle starfield gradient wash behind everything — sits behind the Starfield/
-   Cloudfield canvas (-z-10) so the sun/moon drawn on the canvas are never veiled
-   by it. Still paints above the body's solid background as the pre-mount fallback. */
+/* Subtle starfield gradient wash behind everything — sits behind the SkyScene
+   canvas (-z-10) so the sun/moon drawn on the canvas are never veiled by it.
+   Still paints above the body's solid background as the pre-mount fallback. */
 body::before {
   content: "";
   position: fixed;
@@ -195,6 +216,44 @@ html[data-theme="day"] :focus-visible {
 }
 .animate-portrait-flip {
   animation: portrait-flip 20s ease-in-out infinite;
+}
+
+/* Header theme-toggle sun↔moon morph (ADR-004, S6). The glyph stays a clean
+   Heroicon (the realism lives in the background sky); on an explicit toggle the
+   newly-shown icon does a small rotate + scale "pop" so the swap feels alive.
+   The class is only applied after the first user toggle, so the post-hydration
+   neutral→icon swap stays silent. Under reduced-motion the block below zeroes
+   the duration with !important, collapsing the morph to an instant swap. */
+@keyframes theme-toggle-morph {
+  0%   { transform: rotate(-60deg) scale(0.55); opacity: 0; }
+  55%  { transform: rotate(10deg)  scale(1.12); opacity: 1; }
+  100% { transform: rotate(0)      scale(1);    opacity: 1; }
+}
+.animate-theme-toggle-morph {
+  animation: theme-toggle-morph 340ms var(--ease-out-soft) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/*
+  Mid-arc page-token cross-fade (ADR-004, S3). The `ThemeProvider` adds
+  `theme-animating` to <html> just before it flips `data-theme` at the twilight
+  midpoint, and removes it ~400ms later. While present, page colours ease between
+  the night/day token values so the flip reads as one cross-fade rather than a
+  hard cut. The 400ms here MUST match THEME_CROSSFADE_MS in ThemeProvider.tsx.
+
+  Snap paths (reduced-motion / refocus / first load) never add this class, so they
+  flip instantly. The reduced-motion block below also zeroes transition-duration
+  with !important, so even a stray class can never produce a cross-fade there.
+*/
+html.theme-animating,
+html.theme-animating body,
+html.theme-animating *,
+html.theme-animating *::before,
+html.theme-animating *::after {
+  transition-property: background-color, color, border-color;
+  transition-duration: 400ms;
+  transition-timing-function: var(--ease-out-soft);
 }
 
 /* Respect reduced-motion preferences */

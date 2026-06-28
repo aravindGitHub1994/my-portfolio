@@ -50,12 +50,12 @@ export function Hero() {
           </div>
         </div>
 
-        <h1 className="mt-10 text-balance text-5xl leading-[1.05] sm:text-6xl md:text-7xl">
+        <h1 className="hero-legible mt-10 text-balance text-5xl leading-[1.05] sm:text-6xl md:text-7xl">
           <span className="text-ink">I turn questions into</span>{" "}
           <span className="text-gilt">shipped products</span>
         </h1>
 
-        <p className="mt-6 max-w-xl text-pretty text-lg leading-8 text-ink-muted">
+        <p className="hero-legible mt-6 max-w-xl text-pretty text-lg leading-8 text-ink-muted">
           with AI as my engineering team. I lead with data and analytics, then
           direct AI coding agents to ship real, production software — from
           taxonomy engines to Bayesian budget models.
