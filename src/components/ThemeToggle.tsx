@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 
 const noop = () => () => {};
@@ -56,13 +56,19 @@ function NeutralIcon() {
  *   and shows a small "a" overlay on the icon.
  *
  * Always visible on desktop and mobile (no sm:hidden). Keyboard-operable,
- * correct ARIA, reduced-motion safe (no morph — just instant state swap).
+ * correct ARIA. The sun↔moon glyph swap plays a small CSS "pop" morph on an
+ * explicit toggle; reduced-motion zeroes the animation duration (globals.css),
+ * collapsing it to an instant swap.
  */
 export function ThemeToggle() {
   const { mode, resolved, setMode } = useTheme();
   const mounted = useMounted();
+  // Gates the morph: stays off through the post-hydration neutral→icon swap, so
+  // the icon only animates once the user has actually toggled the theme.
+  const [interacted, setInteracted] = useState(false);
 
   const handleSceneClick = () => {
+    setInteracted(true);
     // Flip to the opposite explicit mode, which also clears Auto.
     setMode(resolved === "night" ? "day" : "night");
   };
@@ -121,9 +127,16 @@ export function ThemeToggle() {
           className="h-5 w-5"
           aria-hidden="true"
         >
-          {/* useMounted gate keeps SSR/client in sync; prerender shows neutral ring */}
+          {/* useMounted gate keeps SSR/client in sync; prerender shows neutral ring.
+              Keying the <g> on `resolved` remounts it each flip, replaying the
+              morph; the class is gated on `interacted` so the first swap is silent. */}
           {mounted ? (
-            resolved === "night" ? <MoonIcon /> : <SunIcon />
+            <g
+              key={resolved}
+              className={interacted ? "animate-theme-toggle-morph" : undefined}
+            >
+              {resolved === "night" ? <MoonIcon /> : <SunIcon />}
+            </g>
           ) : (
             <NeutralIcon />
           )}

@@ -20,6 +20,15 @@ export const DEFAULT_MODE: ThemeMode = "auto";
 export const DAY_START_HOUR = 6;
 export const DAY_END_HOUR = 18;
 
+/**
+ * Duration of the cinematic day↔night transition (ADR-004), in milliseconds.
+ * Single source of truth shared by:
+ *   - the `SkyScene` progress tween (full arc length), and
+ *   - the `ThemeProvider` mid-arc token commit (deferred by THEME_TRANSITION_MS / 2
+ *     so `data-theme` flips at the twilight midpoint, progress ≈ 0.5).
+ */
+export const THEME_TRANSITION_MS = 2200;
+
 export function isDaytime(date: Date = new Date()): boolean {
   const hour = date.getHours();
   return hour >= DAY_START_HOUR && hour < DAY_END_HOUR;

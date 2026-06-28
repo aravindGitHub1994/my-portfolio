@@ -1,7 +1,9 @@
 # ADR-003: Tri-Mode Theme (Night / Day / Auto) with Local-Clock Auto
 
 ## Status
-Accepted
+Accepted — the "exactly one canvas at a time" and "instant theme change, no scene
+morph" points are partially superseded by ADR-004 (animated celestial transition);
+all other decisions here stand.
 
 ## Date
 2026-06-28
@@ -185,6 +187,11 @@ Introduce a **tri-mode theme system** with the resolved theme expressed as a
   no-runtime-dependency constraints this decision inherits.
 - **ADR-002**: Mermaid diagrams pre-rendered to committed SVGs — **amended** by
   this decision to add per-theme (`*.light.svg`) variants swapped by `data-theme`.
+- **ADR-004**: Animated celestial day↔night transition — **partially supersedes**
+  this decision. The two-canvas swap (`Starfield`/`Cloudfield` via
+  `BackgroundScene`) and the instant, no-morph theme change are replaced by a
+  single persistent `SkyScene` canvas that plays a ~2.2 s sunrise/sunset on toggle.
+  Reduced-motion, auto-refocus, and first-load still snap, per this ADR.
 - `docs/design-system.md` — must be updated on implementation: it currently states
   "Single dark theme" / `color-scheme: dark`, which this decision reverses.
 
