@@ -6,6 +6,7 @@ is a full reskin driven by the same semantic token names; every `bg-bg`, `text-i
 `border-line` utility flips automatically via a `[data-theme="day"]` CSS block (zero component edits).
 
 See [ADR-003](decisions/ADR-003-tri-mode-theme.md) for the full design rationale.
+See [ADR-004](decisions/ADR-004-animated-celestial-transition.md) for the unified sky canvas and animated day↔night transition (partially supersedes ADR-003).
 See [ADR-002 (amended)](decisions/ADR-002-mermaid-prerendered-svgs.md) for light diagram variants.
 
 All tokens live in `src/app/globals.css` under Tailwind v4's `@theme` (`:root` night defaults)
@@ -91,10 +92,13 @@ Same semantic tokens used in both themes; colors flip automatically.
 ## Motion
 
 - `Reveal` — scroll-into-view fade + lift (IntersectionObserver).
-- `Starfield` — canvas of drifting, twinkling stars (night only).
-- `Cloudfield` — canvas of a sun + drifting clouds with sky horizon wash (day only).
+- `SkyScene` — single persistent full-viewport canvas driven by a `progress` value (`0` = deep night, `1` = full day). On an explicit theme toggle it plays a ~2.2 s ease-in-out arc: the sun and moon travel crossing arcs through a twilight sky, meeting near the horizon at the midpoint (~progress 0.5), at which point page tokens cross-fade via a scoped `html.theme-animating` transition so the page and sky stay visually consistent throughout. First mount settles gently without an arc; auto refocus and `prefers-reduced-motion` snap instantly. See [ADR-004](decisions/ADR-004-animated-celestial-transition.md).
+  - **Stars:** magnitude follows a power-law distribution (many faint, few bright). The brightest stars carry subtle 4-point diffraction spikes. Occasional shooting stars appear at night (suppressed under reduced-motion). A Pisces asterism is drawn from real relative star positions; its constellation lines brighten as the cursor nears. Stars fade smoothly to invisible by full day.
+  - **Moon:** rendered from `public/celestial/moon.png` (real, transparent, self-lit near-side photo) drawn faithfully — no clip, overscan, or limb/terminator overlays — behind only a faint cool halo/earthshine. Sized ~1.5× and matched to the sun. Falls back silently to the procedural drawing if the asset is absent or fails to load — the build and scene never break.
+  - **Sun:** procedural and themeable; tint lerps through the night→twilight→day palette via `palette.ts`. Limb darkening, finer granulation, a layered multi-stop corona, and gentle limb flicker. Sized ~1.5× and matched to the moon so the two read equal during the cross.
+  - **Horizon:** a **procedural illustrated landscape** (style of `docs/horizon_reference.jpg`) — distant snow-capped mountains, **real conifer silhouettes** (three shapes sliced from `public/celestial/trees.png`, a black-on-white luminance→alpha mask, tinted per layer) placed across **three depth tiers** — small/distant on the foothills, medium on the mid hill, and a few large ones at the foreground left/right edges (kept clear of the centred hero text) — and two rolling green hill layers, each colour-lerping from a dark cool night palette to the bright reference palette by day. The **observatory** is drawn **procedurally** (`drawObservatory` — a domed cylindrical tower with a tapered telescope barrel angled up-left toward the Pisces asterism), right-of-centre, *between* the foothills and front hills so the green hills overlap its base. It's a clean silhouette in the observatory tint — nothing baked in — so the green-tinted conifers and hills around it supply its setting (the earlier `observatory.png` was dropped because its baked-in trees/ground rendered in the wrong tint). A soft contrast scrim behind the terrain protects text legibility while a celestial body dips low during the transition.
 - `float`, `twinkle`, `shimmer` keyframes for subtle ambient motion.
-- All motion respects `prefers-reduced-motion` (neutralized via CSS globally; canvases draw static).
+- All motion respects `prefers-reduced-motion` (neutralized via CSS globally; `SkyScene` draws a single static frame and suppresses the arc, shooting stars, and the mid-arc token cross-fade).
 
 ---
 
@@ -110,10 +114,8 @@ Test at 320 / 768 / 1024 / 1440px.
 | Component | Purpose |
 |---|---|
 | `Hero` | Landing hero with gilt headline, CTAs, orbit ring |
-| `Starfield` | Animated star canvas — **night only** |
-| `Cloudfield` | Animated day sky canvas — **day only** |
-| `BackgroundScene` | Gates Starfield / Cloudfield on `resolved` theme |
-| `ThemeToggle` | Animated sun/moon scene switcher + Auto badge in header |
+| `SkyScene` | Unified full-viewport sky canvas (one RAF loop); `progress` `0`→night, `1`→day; ~2.2 s cinematic arc on explicit toggle; mid-arc token cross-fade; snap on first load / auto refocus / reduced-motion. Draws via `sky/` helpers (`drawStars`, `drawMoon`, `drawSun`, `drawClouds`, `drawHorizon`, `palette`) — replaces the retired `Starfield` / `Cloudfield` / `BackgroundScene` — see [ADR-004](decisions/ADR-004-animated-celestial-transition.md) |
+| `ThemeToggle` | Header switcher — glyph-based Heroicons sun↔moon (small click morph; the celestial realism lives in `SkyScene`, not here) + separate Auto badge |
 | `ThemeProvider` | Client context: `{ mode, resolved, setMode }` |
 | `ThemeMetaColor` | Updates `<meta name="theme-color">` with the active palette |
 | `CursorSpotlight` | Pointer glow — **night only** (torchlight metaphor) |

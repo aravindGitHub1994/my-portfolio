@@ -11,14 +11,17 @@ import { useTheme } from "@/components/ThemeProvider";
  */
 export function CursorSpotlight() {
   const ref = useRef<HTMLDivElement>(null);
-  const { resolved } = useTheme();
+  // Follow the committed (painted) theme, not the target: during an animated
+  // toggle the spotlight must come/go in lockstep with the page at the mid-arc
+  // flip, not eagerly at click (ADR-004).
+  const { committed } = useTheme();
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
 
     // Night-only metaphor — reset visibility and bail in day mode.
-    if (resolved === "day") {
+    if (committed === "day") {
       node.style.opacity = "0";
       node.style.background = "";
       return;
@@ -57,7 +60,7 @@ export function CursorSpotlight() {
       window.removeEventListener("pointermove", onMove);
       cancelAnimationFrame(raf);
     };
-  }, [resolved]);
+  }, [committed]);
 
   return (
     <div

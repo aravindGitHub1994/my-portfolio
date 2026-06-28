@@ -10,21 +10,24 @@ const THEME_BG: Record<"night" | "day", string> = {
 };
 
 /**
- * Updates `<meta name="theme-color">` to match the active resolved theme so
- * the mobile browser chrome (address bar, status bar) reflects the palette.
- * DOM-only side-effect; renders nothing visible.
+ * Updates `<meta name="theme-color">` to match the **committed** (painted) theme
+ * so the mobile browser chrome (address bar, status bar) reflects the palette.
+ *
+ * Reads `committed`, not `resolved` (ADR-004): on an animated toggle the chrome
+ * must flip in lockstep with `<html data-theme>` at the twilight midpoint, not
+ * eagerly when the target changes. DOM-only side-effect; renders nothing visible.
  */
 export function ThemeMetaColor() {
-  const { resolved } = useTheme();
+  const { committed } = useTheme();
 
   useEffect(() => {
     const meta = document.querySelector<HTMLMetaElement>(
       'meta[name="theme-color"]',
     );
     if (meta) {
-      meta.setAttribute("content", THEME_BG[resolved]);
+      meta.setAttribute("content", THEME_BG[committed]);
     }
-  }, [resolved]);
+  }, [committed]);
 
   return null;
 }

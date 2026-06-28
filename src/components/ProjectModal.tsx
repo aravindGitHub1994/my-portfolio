@@ -48,9 +48,11 @@ export function ProjectModal({
   // Swap diagram src for the light variant in day mode (ADR-003 / ADR-002 amendment).
   // *.light.svg files are the committed dark SVGs with the palette remapped to the
   // day (Warm-sunlit) tokens — same geometry, no layout drift. See scripts/diagrams-light.js.
-  const { resolved } = useTheme();
+  // Follow the committed (painted) theme so the diagram matches the page through a
+  // mid-arc transition, not the target (ADR-004).
+  const { committed } = useTheme();
   const diagSrc =
-    resolved === "day"
+    committed === "day"
       ? project.diagram.replace(".svg", ".light.svg")
       : project.diagram;
 
