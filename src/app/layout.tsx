@@ -4,7 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CursorSpotlight } from "@/components/CursorSpotlight";
-import { BackgroundScene } from "@/components/BackgroundScene";
+import { SkyScene } from "@/components/sky/SkyScene";
 import { ThemeMetaColor } from "@/components/ThemeMetaColor";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { themeInitScript } from "@/lib/theme";
@@ -79,7 +79,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
           <ThemeMetaColor />
-          <BackgroundScene />
+          <SkyScene />
           <CursorSpotlight />
           <Header />
           <div className="flex flex-1 flex-col">{children}</div>
