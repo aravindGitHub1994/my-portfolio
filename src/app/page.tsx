@@ -2,6 +2,7 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { ButtonLink } from "@/components/Button";
 import { CubeCanvas } from "@/components/cube/CubeCanvas";
 import { Hero } from "@/components/acts/Hero";
+import { Magnetic } from "@/components/ui/Magnetic";
 import { PROJECTS } from "@/lib/projects";
 import { EXPERIENCE } from "@/lib/resume";
 import { SITE, SOCIAL_LINKS } from "@/lib/nav";
@@ -92,17 +93,23 @@ export default function Home() {
           <span className="text-electric">exceptional</span>.
         </h2>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <ButtonLink href={`mailto:${SITE.email}`} variant="primary">
-            Email me
-          </ButtonLink>
-          {SOCIAL_LINKS.map((link) => (
-            <ButtonLink key={link.label} href={link.href} external variant="outline">
-              {link.label}
+          <Magnetic>
+            <ButtonLink href={`mailto:${SITE.email}`} variant="primary">
+              Email me
             </ButtonLink>
+          </Magnetic>
+          {SOCIAL_LINKS.map((link) => (
+            <Magnetic key={link.label}>
+              <ButtonLink href={link.href} external variant="outline">
+                {link.label}
+              </ButtonLink>
+            </Magnetic>
           ))}
-          <ButtonLink href="/resume.pdf" variant="outline" download>
-            Resume
-          </ButtonLink>
+          <Magnetic>
+            <ButtonLink href="/resume.pdf" variant="outline" download>
+              Resume
+            </ButtonLink>
+          </Magnetic>
         </div>
       </section>
     </main>

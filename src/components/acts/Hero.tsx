@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ButtonLink } from "@/components/Button";
+import { Magnetic } from "@/components/ui/Magnetic";
 import { cubeState } from "@/components/cube/cubeState";
 import { SITE } from "@/lib/nav";
 
@@ -71,12 +72,16 @@ export function Hero() {
           and the review.
         </p>
         <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-          <ButtonLink href="#work" variant="primary">
-            See the work
-          </ButtonLink>
-          <ButtonLink href="#contact" variant="outline">
-            Get in touch
-          </ButtonLink>
+          <Magnetic>
+            <ButtonLink href="#work" variant="primary">
+              See the work
+            </ButtonLink>
+          </Magnetic>
+          <Magnetic>
+            <ButtonLink href="#contact" variant="outline">
+              Get in touch
+            </ButtonLink>
+          </Magnetic>
         </div>
       </div>
 
