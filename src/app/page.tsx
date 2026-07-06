@@ -2,8 +2,8 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { ButtonLink } from "@/components/Button";
 import { CubeCanvas } from "@/components/cube/CubeCanvas";
 import { Hero } from "@/components/acts/Hero";
+import { Work } from "@/components/acts/Work";
 import { Magnetic } from "@/components/ui/Magnetic";
-import { PROJECTS } from "@/lib/projects";
 import { EXPERIENCE } from "@/lib/resume";
 import { SITE, SOCIAL_LINKS } from "@/lib/nav";
 
@@ -33,36 +33,7 @@ export default function Home() {
       </section>
 
       {/* Act 3 — Work (P2) */}
-      <section
-        id="work"
-        className="mx-auto w-full max-w-5xl px-6 py-24 sm:py-32"
-      >
-        <SectionHeader
-          eyebrow="Work"
-          title="Four systems, shipped by directing AI"
-          description="Real production systems — taxonomy engines, Bayesian budget models, feed monitoring, synthetic personas."
-        />
-        <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {PROJECTS.map((project) => (
-            <li
-              key={project.slug}
-              className="rounded-lg border border-line bg-surface/60 p-6"
-            >
-              <h3 className="text-lg text-ink">
-                {project.title}
-                {project.status === "in-progress" && (
-                  <span className="ml-2 font-mono text-xs uppercase tracking-wide text-ink-subtle">
-                    in progress
-                  </span>
-                )}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-ink-muted">
-                {project.tagline}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <Work />
 
       {/* Act 4 — Trajectory (P3.3) */}
       <section

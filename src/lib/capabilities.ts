@@ -1,7 +1,8 @@
 // Capability tags for projects — what kind of work each project demonstrates,
-// not a language/skill claim. Each maps to a celestial-palette color used
-// consistently for tags and accents. Class strings are written in full
-// (no interpolation) so Tailwind detects them.
+// not a language/skill claim. The Electric Dark system (ADR-005) is
+// single-accent: capability chips all share one quiet accent treatment
+// (distinguishing them from neutral tech Tags) instead of per-key hues.
+// Class strings are written in full (no interpolation) so Tailwind detects them.
 
 export type CapabilityKey =
   | "agentic-build"
@@ -19,36 +20,38 @@ export interface Capability {
   text: string;
 }
 
+const CHIP = "border-line-strong bg-surface/60 text-accent-bright";
+
 export const CAPABILITIES: Record<CapabilityKey, Capability> = {
   "agentic-build": {
     key: "agentic-build",
     label: "Agentic Build",
-    tag: "border-gold/40 bg-gold/10 text-gold",
-    text: "text-gold",
+    tag: CHIP,
+    text: "text-accent-bright",
   },
   "full-stack": {
     key: "full-stack",
     label: "Full-Stack",
-    tag: "border-moss-light/40 bg-moss-light/10 text-moss-light",
-    text: "text-moss-light",
+    tag: CHIP,
+    text: "text-accent-bright",
   },
   "data-pipeline": {
     key: "data-pipeline",
     label: "Data Pipeline",
-    tag: "border-silver/30 bg-silver/10 text-silver",
-    text: "text-silver",
+    tag: CHIP,
+    text: "text-accent-bright",
   },
   automation: {
     key: "automation",
     label: "Automation",
-    tag: "border-lilac/40 bg-lilac/10 text-lilac",
-    text: "text-lilac",
+    tag: CHIP,
+    text: "text-accent-bright",
   },
   "api-integration": {
     key: "api-integration",
     label: "API Integration",
-    tag: "border-plum/40 bg-plum/10 text-plum",
-    text: "text-plum",
+    tag: CHIP,
+    text: "text-accent-bright",
   },
 };
 
