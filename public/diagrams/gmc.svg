@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 580" width="420" height="580" role="img" aria-labelledby="gmc-title" data-diagram="gmc" font-family="Geist, ui-sans-serif, system-ui, sans-serif">
+  <title id="gmc-title">GMC Insights pipeline: a service account authenticated as admin on the parent MCA discovers 44 Merchant Center sub-accounts, aggregates product disapproval statuses, caches results in SQLite, and serves them through a FastAPI backend to a filterable React table.</title>
+
+  <g class="dg-edges">
+    <path class="dg-edge" id="gmc-e1" data-from="sa" data-to="subs" data-step="1" d="M210,78 L210,110" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+    <path class="dg-arrow" data-step="1" d="M205,107 L215,107 L210,116 Z" fill="rgba(162,168,180,0.65)"/>
+
+    <path class="dg-edge" id="gmc-e2" data-from="subs" data-to="agg" data-step="3" d="M210,174 L210,206" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+    <path class="dg-arrow" data-step="3" d="M205,203 L215,203 L210,212 Z" fill="rgba(162,168,180,0.65)"/>
+
+    <path class="dg-edge" id="gmc-e3" data-from="agg" data-to="cache" data-step="5" d="M210,270 L210,302" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+    <path class="dg-arrow" data-step="5" d="M205,299 L215,299 L210,308 Z" fill="rgba(162,168,180,0.65)"/>
+
+    <path class="dg-edge" id="gmc-e4" data-from="cache" data-to="api" data-step="7" d="M210,366 L210,398" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+    <path class="dg-arrow" data-step="7" d="M205,395 L215,395 L210,404 Z" fill="rgba(162,168,180,0.65)"/>
+
+    <path class="dg-edge" id="gmc-e5" data-from="api" data-to="table" data-step="9" d="M210,462 L210,494" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+    <path class="dg-arrow" data-step="9" d="M205,491 L215,491 L210,500 Z" fill="rgba(162,168,180,0.65)"/>
+  </g>
+
+  <g class="dg-nodes">
+    <g class="dg-node" id="gmc-n-sa" data-node="sa" data-step="0">
+      <rect x="90" y="20" width="240" height="58" rx="10" fill="#0e0e14" stroke="rgba(162,168,180,0.35)" stroke-width="1.5"/>
+      <text x="210" y="45" text-anchor="middle" font-size="13.5" font-weight="600" fill="#f2f4f8">Service account</text>
+      <text x="210" y="63" text-anchor="middle" font-size="10.5" fill="#a2a8b4">admin on parent MCA</text>
+    </g>
+
+    <g class="dg-node" id="gmc-n-subs" data-node="subs" data-key="true" data-step="2">
+      <rect x="90" y="116" width="240" height="58" rx="10" fill="#0e0e14" stroke="#3d74ff" stroke-opacity="0.8" stroke-width="1.5"/>
+      <text x="210" y="141" text-anchor="middle" font-size="13.5" font-weight="600" fill="#f2f4f8">44 GMC sub-accounts</text>
+      <text x="210" y="159" text-anchor="middle" font-size="10.5" fill="#a2a8b4">discovered via Merchant API</text>
+    </g>
+
+    <g class="dg-node" id="gmc-n-agg" data-node="agg" data-step="4">
+      <rect x="90" y="212" width="240" height="58" rx="10" fill="#0e0e14" stroke="rgba(162,168,180,0.35)" stroke-width="1.5"/>
+      <text x="210" y="237" text-anchor="middle" font-size="13.5" font-weight="600" fill="#f2f4f8">aggregateProductStatuses</text>
+      <text x="210" y="255" text-anchor="middle" font-size="10.5" fill="#a2a8b4">disapproval data · on demand</text>
+    </g>
+
+    <g class="dg-node" id="gmc-n-cache" data-node="cache" data-step="6">
+      <rect x="90" y="308" width="240" height="58" rx="10" fill="#0e0e14" stroke="rgba(162,168,180,0.5)" stroke-width="1.5"/>
+      <path d="M90,320 A120,10 0 0 0 330,320" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1"/>
+      <text x="210" y="340" text-anchor="middle" font-size="13.5" font-weight="600" fill="#f2f4f8">SQLite cache</text>
+      <text x="210" y="355" text-anchor="middle" font-size="10.5" fill="#a2a8b4">stays inside API quota</text>
+    </g>
+
+    <g class="dg-node" id="gmc-n-api" data-node="api" data-step="8">
+      <rect x="90" y="404" width="240" height="58" rx="10" fill="#0e0e14" stroke="rgba(162,168,180,0.35)" stroke-width="1.5"/>
+      <text x="210" y="429" text-anchor="middle" font-size="13.5" font-weight="600" fill="#f2f4f8">FastAPI backend</text>
+      <text x="210" y="447" text-anchor="middle" font-size="10.5" fill="#a2a8b4">serves cached aggregates</text>
+    </g>
+
+    <g class="dg-node" id="gmc-n-table" data-node="table" data-step="10">
+      <rect x="90" y="500" width="240" height="58" rx="10" fill="#0e0e14" stroke="#8fb3ff" stroke-opacity="0.75" stroke-width="1.5"/>
+      <text x="210" y="525" text-anchor="middle" font-size="13.5" font-weight="600" fill="#f2f4f8">React disapprovals table</text>
+      <text x="210" y="543" text-anchor="middle" font-size="10.5" fill="#a2a8b4">filters + search</text>
+    </g>
+  </g>
+</svg>
