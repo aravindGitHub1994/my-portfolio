@@ -7,6 +7,11 @@ export const cubeState = {
   pointer: { x: 0, y: 0 },
   /** 0 at page top → 1 when the hero act has fully scrolled away (P1.4). */
   heroProgress: 0,
+  /**
+   * Slug of the Work-act project currently pinned — the cube's face projects
+   * that project's diagram (P2.4). Null outside the Work act.
+   */
+  workProject: null as string | null,
   /** True once the WebGL canvas has created its context and drawn. */
   ready: false,
 };

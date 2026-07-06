@@ -11,6 +11,7 @@ import {
 } from "@react-three/drei";
 import { cubeState, markCubeReady } from "./cubeState";
 import { detectTier, type FidelityTier } from "@/lib/gpuTier";
+import { PROJECTS } from "@/lib/projects";
 
 const ACCENT = "#3d74ff";
 const ACCENT_BRIGHT = "#8fb3ff";
@@ -57,6 +58,88 @@ function FauxGlassMaterial() {
       color="#bcd0ff"
       depthWrite={false}
     />
+  );
+}
+
+/**
+ * The Work act's diagram, projected on the cube's camera-facing side (P2.4).
+ * All four SVGs preload through THREE.TextureLoader (the browser rasterizes
+ * them at their authored width/height — why the files carry explicit
+ * dimensions), then the plane crossfades whenever cubeState.workProject
+ * changes. Lives inside the glass shell so the transmission material
+ * refracts it like the core; counter-rotates the hero quarter-turn so the
+ * projection stays on the face the viewer sees.
+ */
+function DiagramFace() {
+  const mesh = useRef<THREE.Mesh>(null);
+  const material = useRef<THREE.MeshBasicMaterial>(null);
+  const gl = useThree((s) => s.gl);
+  const textures = useRef(new Map<string, THREE.Texture>());
+  const showing = useRef<string | null>(null);
+
+  useEffect(() => {
+    const loader = new THREE.TextureLoader();
+    const anisotropy = Math.min(4, gl.capabilities.getMaxAnisotropy());
+    PROJECTS.forEach((project) => {
+      loader.load(project.diagram, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = anisotropy;
+        textures.current.set(project.slug, tex);
+      });
+    });
+    const cache = textures.current;
+    return () => {
+      cache.forEach((tex) => tex.dispose());
+      cache.clear();
+    };
+  }, [gl]);
+
+  useFrame((_, delta) => {
+    const m = material.current;
+    const plane = mesh.current;
+    if (!m || !plane) return;
+
+    const want = cubeState.workProject;
+    const target = want && want === showing.current ? 0.85 : 0;
+    m.opacity = THREE.MathUtils.damp(m.opacity, target, 6, delta);
+
+    // Swap at the fade trough so the change never pops.
+    if (want !== showing.current && m.opacity < 0.03) {
+      const tex = want ? textures.current.get(want) : undefined;
+      if (!want) {
+        showing.current = null;
+      } else if (tex) {
+        m.map = tex;
+        m.needsUpdate = true;
+        showing.current = want;
+        const img = tex.image as { width: number; height: number };
+        const aspect = img.width / img.height;
+        const MAX = 1.35;
+        plane.scale.set(
+          aspect >= 1 ? MAX : MAX * aspect,
+          aspect >= 1 ? MAX / aspect : MAX,
+          1,
+        );
+      }
+      // want set but texture still loading: retry next frame.
+    }
+
+    // Undo the parent group's hero quarter-turn so the diagram faces the
+    // viewer once the cube has drifted into its Work-act pose.
+    plane.rotation.y = -cubeState.heroProgress * Math.PI * 0.5;
+  });
+
+  return (
+    <mesh ref={mesh} position={[0, 0, 0.62]}>
+      <planeGeometry args={[1, 1]} />
+      <meshBasicMaterial
+        ref={material}
+        transparent
+        opacity={0}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </mesh>
   );
 }
 
@@ -153,6 +236,9 @@ function GlassCube({ tier }: { tier: FidelityTier }) {
         <icosahedronGeometry args={[0.52, 1]} />
         <meshBasicMaterial color={ACCENT} wireframe transparent opacity={0.9} />
       </mesh>
+
+      {/* Active Work-act diagram, projected through the glass (P2.4) */}
+      {animated && <DiagramFace />}
 
       {/* Blue kernel glow bleeding through the glass */}
       <pointLight color={ACCENT} intensity={4} distance={5} decay={2} />
