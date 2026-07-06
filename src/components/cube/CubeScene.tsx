@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
@@ -10,6 +10,7 @@ import {
   RoundedBox,
 } from "@react-three/drei";
 import { cubeState, markCubeReady } from "./cubeState";
+import { detectTier, type FidelityTier } from "@/lib/gpuTier";
 
 const ACCENT = "#3d74ff";
 const ACCENT_BRIGHT = "#8fb3ff";
@@ -40,17 +41,40 @@ function PointerTracker() {
 }
 
 /**
+ * Faux-glass for the low/static tiers: clearcoat + env reflections sell the
+ * material without MeshTransmissionMaterial's per-frame scene capture.
+ */
+function FauxGlassMaterial() {
+  return (
+    <meshPhysicalMaterial
+      transparent
+      opacity={0.24}
+      roughness={0.08}
+      metalness={0}
+      clearcoat={1}
+      clearcoatRoughness={0.06}
+      envMapIntensity={1.7}
+      color="#bcd0ff"
+      depthWrite={false}
+    />
+  );
+}
+
+/**
  * The glass data cube: refractive shell around an electric wireframe core.
  * Outer group = pointer tilt + float (and scroll-morph from P1.4);
  * inner meshes = slow idle spin. Choreography lives here so every fidelity
- * tier shares it (ADR-005 §3).
+ * tier shares it (ADR-005 §3) — the static tier holds the same silhouette
+ * at a fixed pose.
  */
-function GlassCube() {
+function GlassCube({ tier }: { tier: FidelityTier }) {
   const group = useRef<THREE.Group>(null);
   const shell = useRef<THREE.Mesh>(null);
   const core = useRef<THREE.Mesh>(null);
+  const animated = tier !== "static";
 
   useFrame((state, delta) => {
+    if (!animated) return;
     const g = group.current;
     if (!g) return;
     const t = state.clock.elapsedTime;
@@ -85,24 +109,34 @@ function GlassCube() {
 
   return (
     <group ref={group}>
-      <RoundedBox ref={shell} args={[1.9, 1.9, 1.9]} radius={0.09} smoothness={8}>
-        <MeshTransmissionMaterial
-          transmission={1}
-          thickness={1.1}
-          roughness={0.07}
-          ior={1.5}
-          chromaticAberration={0.05}
-          anisotropicBlur={0.25}
-          distortion={0.12}
-          distortionScale={0.25}
-          temporalDistortion={0.08}
-          samples={6}
-          resolution={768}
-          backside
-          backsideThickness={0.25}
-          attenuationColor={ACCENT_BRIGHT}
-          attenuationDistance={2.5}
-        />
+      <RoundedBox
+        ref={shell}
+        args={[1.9, 1.9, 1.9]}
+        radius={0.09}
+        smoothness={8}
+        rotation={animated ? undefined : [0.35, 0.65, 0]}
+      >
+        {tier === "high" ? (
+          <MeshTransmissionMaterial
+            transmission={1}
+            thickness={1.1}
+            roughness={0.07}
+            ior={1.5}
+            chromaticAberration={0.05}
+            anisotropicBlur={0.25}
+            distortion={0.12}
+            distortionScale={0.25}
+            temporalDistortion={0.08}
+            samples={6}
+            resolution={768}
+            backside
+            backsideThickness={0.25}
+            attenuationColor={ACCENT_BRIGHT}
+            attenuationDistance={2.5}
+          />
+        ) : (
+          <FauxGlassMaterial />
+        )}
       </RoundedBox>
 
       {/* Electric data core, refracted through the shell */}
@@ -123,17 +157,31 @@ function GlassCube() {
  * (connect-src 'self') forbids.
  */
 export default function CubeScene() {
+  // This component only ever renders client-side (dynamic ssr:false), so
+  // tier detection can run in the state initializer — once, before first draw.
+  const [tier] = useState<FidelityTier>(detectTier);
+
+  useEffect(() => {
+    console.info(`[cube] fidelity tier: ${tier} (override with ?tier=)`);
+    // Without WebGL there is no canvas — unblock the loader (P1.5) anyway.
+    if (tier === "none") markCubeReady();
+  }, [tier]);
+
+  if (tier === "none") return null;
+
+  const animated = tier !== "static";
   return (
     <Canvas
       camera={{ position: [0, 0.2, 6], fov: 42 }}
-      dpr={[1, 2]}
+      dpr={tier === "high" ? [1, 2] : [1, 1.5]}
+      frameloop={animated ? "always" : "demand"}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       onCreated={markCubeReady}
     >
-      <VisibilityPause />
-      <PointerTracker />
+      {animated && <VisibilityPause />}
+      {animated && <PointerTracker />}
 
-      <GlassCube />
+      <GlassCube tier={tier} />
 
       <Environment resolution={256} frames={1}>
         {/* Cool key strips + one electric accent, arranged for a dark studio */}
