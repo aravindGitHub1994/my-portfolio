@@ -1,95 +1,66 @@
-# Handoff — Animated Celestial Day↔Night Transition (ADR-004)
+# Handoff — Three.js Scroll-Driven Redesign (ADR-005)
 
-_For the next session. Focus: run the S8 **visual verification pass**, eyeball the
-HITL items, then commit. All slice CODE is implemented; `npm run lint` + `npm run
-build` are green. Nothing is committed yet._
+_For the next session. Focus: **begin executing** the redesign, starting at slice
+**P1.1**. This is a **planning-complete, code-not-started** state — two docs are
+written, no source code touched, nothing committed._
 
-> Supersedes the previous tri-mode (ADR-003) handoff. The tri-mode theme shipped; this
-> feature replaces its two-canvas background with one animated `SkyScene`.
+> Supersedes the previous ADR-004 celestial-sky handoff (that work is retired by this
+> redesign; it lives in git history and on branch `feat/animated-celestial-sky`).
 
-## Current status
-- **Slices S1–S7 are code-complete and pass `npm run lint` + `npm run build`**
-  (static export, 9 routes, zero errors/warnings) — independently re-verified after
-  each agent. **S8 (verification gate) is the only slice left**, and its remaining
-  part is the *visual* pass (the code/build half already passes).
-- **Plan / tracker:** [docs/plans/implementation-plan-0001.md](docs/plans/implementation-plan-0001.md)
-  (per-slice ✅/⏳ status + the S8 run-book live there).
-- **Decision:** [ADR-004](docs/decisions/ADR-004-animated-celestial-transition.md)
-  (partially supersedes [ADR-003](docs/decisions/ADR-003-tri-mode-theme.md); inherits
-  [ADR-001](docs/decisions/ADR-001-next-js-static-export.md) static-export constraints).
+## Current Status
+- On branch **`threeJS-redesign`** (cut from `feat/animated-celestial-sky`).
+- A `/grill-with-docs` session resolved **11 design branches**; a `/to-issues` session
+  produced a **16-slice, 4-phase** implementation plan. Both are written and saved.
+- **No source code changed. Nothing committed.** Only two new docs + this handoff
+  exist in the working tree (plus untracked `docs/gif_rec.gif` from the prior branch).
+- The redesign: single **dark, scroll-driven** page around **one morphing glass data
+  cube**; honest-but-bold tone with **real numbers only**; five acts
+  (Hero → Approach → Work → Trajectory → Contact); **electric-blue** accent + **Geist**;
+  content in `src/lib/*.ts` reused, current layout/theme/celestial all retired.
 
-## What shipped (by slice)
-- **S1 — unified canvas spine.** `src/components/sky/SkyScene.tsx`: one fixed `-z-10`
-  `<canvas>`, single RAF loop, draws everything as a function of one `progress` value
-  (0 = deep night → 1 = full day). `bodyPosition(t,w,h)` is the shared arc (sun at
-  `t=progress`, moon at `t=1−progress`). Helpers: `palette.ts`, `drawStars.ts`,
-  `drawMoon.ts`, `drawSun.ts`, `drawClouds.ts`, `drawHorizon.ts`.
-- **S2 — cinematic transition.** `THEME_TRANSITION_MS = 2200` exported from
-  `src/lib/theme.ts`. `ThemeProvider` context gained `transition: { animate, id }`;
-  `SkyScene` tweens `progress` (ease-in-out) on an explicit toggle, snaps otherwise.
-  Mid-arc re-click reverses smoothly; first mount is a gentle settle (no arc).
-- **S3 — mid-arc token cross-fade.** `ThemeProvider` now splits **`resolved`**
-  (target, updates immediately) from **`committed`** (painted/DOM theme). On an
-  animated toggle the `data-theme`/`color-scheme`/`localStorage`/`theme-color` flip is
-  **deferred to the twilight midpoint** (`THEME_TRANSITION_MS / 2`), wrapped in a
-  `html.theme-animating` class that runs a ~400 ms token cross-fade (`globals.css`).
-  Snap paths flip instantly. `ThemeMetaColor`, `CursorSpotlight`, `ProjectModal` read
-  `committed`.
-- **S4 — rebuilt star field** (`drawStars.ts`). Power-law magnitudes (many faint, few
-  bright), 4-point diffraction spikes on the brightest only, intermittent shooting
-  stars (every ~8–20 s, **skipped under reduced-motion**), and a traced **Pisces**
-  asterism (13 stars / 12 edges) whose lines brighten near the cursor. Stars fade out
-  by full day.
-- **S5 — realistic bodies + horizon.** `drawMoon.ts` draws `public/celestial/moon.webp`
-  inside a circular clip (the source has a white background) + limb darkening + cool
-  halo, with a **procedural fallback** (`MOON_MARIA`) if the asset is missing/fails —
-  load is lazy/cached and guarded (`typeof window`), `onerror` swallowed.
-  `drawSun.ts` stays procedural (limb darkening, granulation, layered corona, gentle
-  flicker). `drawHorizon.ts` adds an observatory-dome silhouette + a contrast scrim
-  that peaks at the twilight midpoint to protect text while a body dips low.
-- **S6 — toggle morph + cleanup.** `ThemeToggle.tsx` keeps clean Heroicons glyphs +
-  a small CSS sun↔moon morph on click (instant under reduced-motion). The
-  `useMounted` hydration gate was folded into `SkyScene` (inner `SkyCanvas`), so
-  `layout.tsx` renders `<SkyScene />` directly. **`Starfield.tsx` / `Cloudfield.tsx` /
-  `BackgroundScene.tsx` deleted** (`git rm`); no live imports remain. `CursorSpotlight`
-  unchanged (night-only).
-- **S7 — docs.** `docs/design-system.md` updated: single `SkyScene` + progress model +
-  cinematic transition + rebuilt star field + hybrid moon; component table and ADR-004
-  cross-links corrected.
+## Unresolved Threads
+- **Career dates still missing.** `resume.ts` `period` holds a *city*, not years.
+  Timeline ships **order-only**; schema (slice 3.1) is built date-ready. Ask the user
+  for real start/end years to light up the dated timeline + any "X+ years" figure.
+- **Two HITL slices need a human call:** 1.3 (fidelity/perf tier calibration) and 2.1
+  (the animatable-SVG diagram authoring contract — decide the id/class/edge convention
+  before re-authoring the other three diagrams).
+- **Capability tag palette** (`src/lib/capabilities.ts`) still uses celestial colors
+  (`gold/moss/lilac/plum/silver`) — must be recolored for the dark + electric-blue
+  system (slice 2.3).
+- **Diagrams** (`public/diagrams/*.svg`) are Mermaid-rendered and **not** structured
+  for animation yet — slices 2.1/2.2 re-author them; `.mmd` sources may be retired.
+- **Tracker is local** — `gh` is not installed, so the 16 slices live in the plan file,
+  not as GitHub issues. Offer to create real issues if `gh` gets set up.
+- **Big-build risk / new deps.** Adds `three` + R3F + drei + `gsap` + `lenis` +
+  `framer-motion` (a conscious reversal of ADR-004's "no runtime deps"). Static export
+  (ADR-001) is retained — keep all WebGL/DOM access inside effects/mounted guards.
 
-## Unresolved threads
-- **S8 visual pass (NOT yet run).** The run-book is in the plan file. Quick version on
-  **port 3004** (a dev server is already running): toggle night↔day (watch the ~2.2 s
-  arc + mid-arc cross-fade), re-click mid-arc (smooth reversal), reload (gentle
-  settle, **no FOUC**), DevTools → emulate `prefers-reduced-motion` (instant snap, no
-  shooting stars/arc), narrow to mobile width (bodies framed, scrim keeps text
-  legible), rename `public/celestial/moon.webp` away (procedural fallback, no console
-  errors — restore after), hover near Pisces (lines brighten).
-- **Browser-automated GIF capture is blocked.** The Claude Chrome extension is **not
-  connected**, so Claude can't drive the browser to record the transition. To enable:
-  install/enable the extension (https://claude.ai/chrome), sign into claude.ai with the
-  same account, restart Chrome if first-time — then Claude can navigate to
-  `localhost:3004`, drive the toggle, and export a GIF.
-- **HITL items to eyeball / tune** (build-verified, but need eyes): ease-curve feel &
-  first-mount settle duration; toggle morph strength; moon overscan/limb fringe;
-  Pisces placement & scale at mobile width; meteor frequency & star density; horizon
-  dome shape + scrim strength; twilight palette stops (`palette.ts`); the header glyph
-  flips instantly while the sky takes 2.2 s (intended).
-- **Mixed git staging.** The three deleted files are *staged* (`git rm`) while the rest
-  of the changes are unstaged — harmless; it all goes in one commit.
-- **Moon image license** — confirm the provided `moon.webp` is licensed for use before
-  shipping.
-- **Lint gotcha (still applies):** this repo's `react-hooks` config errors on
-  `setState` called synchronously in a `useEffect` body — do state updates in
-  event-handler/listener callbacks, keep effect bodies to DOM/subscription side-effects.
+## Key References
+- **ADR:** [ADR-005](docs/decisions/ADR-005-threejs-scroll-experience.md) — supersedes
+  ADR-003 & ADR-004, extends ADR-002, retains ADR-001. Full context, the 11 decisions,
+  and 8 rejected alternatives are there — don't re-litigate them.
+- **Plan / tracker:** [implementation-plan-0003.md](docs/plans/implementation-plan-0003.md)
+  — 16 tracer-bullet slices, each with acceptance criteria + `Blocked by` edges, a
+  files map, and the S-gate verification checklist.
+- **Constraints:** [ADR-001](docs/decisions/ADR-001-next-js-static-export.md) (static
+  export). CSP in `vercel.json` is `font-src 'self'` / `connect-src 'self'` → Geist
+  self-hosted, no third-party form.
 
-## Recommended next steps
-- [ ] Run the S8 visual pass (manual on 3004, or connect the Chrome extension for a GIF).
-- [ ] Tune any HITL items flagged above against what you see.
-- [ ] Review the `palette.ts` twilight stops on first render with the user.
-- [ ] Commit the feature once visually verified.
+## Recommended Next Steps
+- [ ] Start **P1.1** (dark shell: add deps, self-host Geist, dark+electric-blue tokens,
+      wire Lenis, strip the theme/celestial systems, collapse to one scroll page).
+      Verify `npm run lint` + `npm run build` stay green (static export intact).
+- [ ] Then **P1.2 → P1.5** to complete the Hero spine before scaling (proves refraction
+      + tiering + scroll-morph look award-grade first).
+- [ ] At **1.3**, sit with the user to calibrate mobile faux-glass fidelity on a real
+      device / emulation.
+- [ ] Get real career **dates** from the user (unblocks the dated timeline).
+- [ ] Commit per phase — each slice/phase is designed to be independently deployable.
 
-## Recommended skills
-- **`verify`** / **`run`** — drive the dev server for the visual/a11y checks.
-- **`frontend-ui-engineering`** — any visual polish from the browser pass.
-- **`the-fool`** — pre-mortem the transition timing/interruption edge cases (S8).
+## Recommended Skills
+- **`webgpu-threejs-tsl`** / **`react-patterns`** — building the cube canvas + R3F acts.
+- **`tailwind-patterns`** — the dark token system + electric-blue accent in Tailwind v4.
+- **`frontend-ui-engineering`** — the scroll choreography, loader, cursor, micro-interactions.
+- **`executing-plans`** — drive the slices in dependency order with review checkpoints.
+- **`verify`** / **`run`** — drive the dev server (port 3004) for per-phase visual/perf checks.

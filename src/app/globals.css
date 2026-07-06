@@ -1,40 +1,37 @@
 @import "tailwindcss";
 
 /*
-  Design system: "Midnight Observatory"
-  Single dark theme. Celestial palette — deep night sky base, star-gold accent,
-  aged-parchment text, with plum / moss / lilac / silver supporting hues.
+  Design system: "Electric Dark" (ADR-005)
+  Single dark cinematic theme built around one glass data cube.
+  Black/charcoal/graphite base, one electric-blue accent used sparingly
+  (glow, active states, diagram highlights, cube caustics). Geist everywhere.
 */
 
 @theme {
-  /* ---- Surfaces (deep space, layered) ---- */
-  --color-bg: #07071a;          /* deepest night sky */
-  --color-surface: #0f0f2a;     /* raised panels / cards */
-  --color-surface-2: #181840;   /* hover / elevated */
-  --color-midnight: #191970;    /* brand midnight blue */
+  /* ---- Surfaces (near-black, layered) ---- */
+  --color-bg: #050507;          /* page base — near black */
+  --color-surface: #0d0d12;     /* charcoal — raised panels / cards */
+  --color-surface-2: #15151c;   /* graphite — hover / elevated */
 
   /* ---- Text ---- */
-  --color-ink: #e8ddb5;         /* aged parchment — primary text */
-  --color-ink-muted: #c0c7d1;   /* celestial silver — secondary text */
-  --color-ink-subtle: #8b8597;  /* dim — captions / meta */
+  --color-ink: #f2f4f8;         /* primary text */
+  --color-ink-muted: #a2a8b4;   /* secondary text */
+  --color-ink-subtle: #6a7080;  /* captions / meta */
 
-  /* ---- Accents ---- */
-  --color-gold: #d4af37;        /* star gold — primary accent / CTAs */
-  --color-gold-soft: #e6c860;   /* gold hover */
-  --color-plum: #7d5a7b;        /* dusty plum */
-  --color-moss: #556b2f;        /* forest moss */
-  --color-moss-light: #9bb06a;  /* lifted moss for text on dark */
-  --color-lilac: #b8a9d9;       /* starlight lilac */
-  --color-silver: #c0c7d1;      /* celestial silver */
-  --color-bronze: #6e6658;      /* oxidized bronze */
+  /* ---- Accent (single electric blue) ---- */
+  --color-accent: #3d74ff;        /* CTAs, caustics, active states */
+  --color-accent-soft: #5c8aff;   /* hover on accent surfaces */
+  --color-accent-bright: #8fb3ff; /* accent-colored text on dark (AA) */
 
   /* ---- Borders ---- */
-  --color-line: rgba(192, 199, 209, 0.14);
-  --color-line-strong: rgba(192, 199, 209, 0.3);
+  --color-line: rgba(162, 168, 180, 0.12);
+  --color-line-strong: rgba(162, 168, 180, 0.26);
 
-  /* ---- Typography ---- */
-  --font-serif: var(--font-fraunces);
-  --font-sans: var(--font-inter);
+  /* ---- Glow (used in box-shadow arbitrary values) ---- */
+  --color-glow: rgba(61, 116, 255, 0.5);
+
+  /* ---- Typography (Geist display + body, Geist Mono for meta) ---- */
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
   /* ---- Radius scale ---- */
@@ -42,102 +39,14 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.875rem;
 
-  /* ---- Glow (used in box-shadow arbitrary values) ---- */
-  --color-glow: rgba(212, 175, 55, 0.50);  /* gold glow — night default */
-
   /* ---- Motion ---- */
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
-
-  /* ---- Keyframes ---- */
-  --animate-twinkle: twinkle 4s ease-in-out infinite;
-  --animate-float: float 7s ease-in-out infinite;
-}
-
-@keyframes twinkle {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 1; }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
 }
 
 html {
-  scroll-behavior: smooth;
+  /* Lenis owns smooth scrolling; CSS smooth-scroll would fight it. */
+  scroll-behavior: auto;
   color-scheme: dark;
-}
-
-/*
-  Day theme — "Warm sunlit" (ADR-003). Overrides the same semantic token names
-  under [data-theme="day"] so every `bg-bg` / `text-ink` / `border-line` utility
-  flips with zero component edits (Tailwind v4 emits `var(--color-*)` references).
-  This block is unlayered, so it wins over the `:root` defaults in `@layer theme`.
-  All text/accent pairings AA-verified against the cream base (see Slice 1).
-*/
-html[data-theme="day"] {
-  color-scheme: light;
-
-  /* ---- Surfaces (sunlit, layered) ---- */
-  --color-bg: #f4ecd8;          /* warm cream base */
-  --color-surface: #fbf6ea;     /* raised panels / cards */
-  --color-surface-2: #ece0c6;   /* hover / elevated */
-
-  /* ---- Text ---- */
-  --color-ink: #2d2417;         /* espresso — primary text (12.96:1) */
-  --color-ink-muted: #5a4d36;   /* secondary text (7.00:1) */
-  --color-ink-subtle: #6f5f44;  /* captions / meta (5.25:1) */
-
-  /* ---- Accents (warm amber lineage, contrast-darkened for cream) ---- */
-  --color-gold: #82661b;        /* amber accent / links / CTAs (4.61:1) */
-  --color-gold-soft: #6f5616;   /* amber hover (5.91:1) */
-  --color-plum: #6a4a68;        /* dusty plum, darkened (6.39:1) */
-  --color-moss: #4a5d28;        /* forest moss, darkened (6.18:1) */
-  --color-moss-light: #3f5320;  /* moss text on cream (7.22:1) */
-  --color-lilac: #64497e;       /* starlight lilac, darkened (6.38:1) */
-  --color-silver: #4a5563;      /* celestial silver → slate (6.44:1) */
-
-  /* ---- Borders (espresso-tinted) ---- */
-  --color-line: rgba(45, 36, 23, 0.16);
-  --color-line-strong: rgba(45, 36, 23, 0.32);
-
-  /* ---- Glow — soft amber in day (no stray gold on cream) ---- */
-  --color-glow: rgba(160, 105, 20, 0.38);
-}
-
-/* Day replaces the dark celestial wash with a soft warm-sky hint so the cream
-   base reads cleanly (the full day horizon canvas lands in Slice 3). */
-html[data-theme="day"] body::before {
-  background:
-    radial-gradient(900px 600px at 80% -5%, rgba(120, 170, 220, 0.18), transparent 60%),
-    radial-gradient(700px 500px at 5% 10%, rgba(212, 175, 55, 0.10), transparent 55%),
-    radial-gradient(600px 600px at 50% 110%, rgba(180, 150, 90, 0.10), transparent 60%);
-}
-
-/*
-  Day-only hero legibility. The SkyScene canvas now paints bright green hills and
-  azure behind the centred hero text (the Hero vignette deliberately keeps the
-  centre clear so the sun/moon show through), so the day text — verified against
-  the cream base — needs help over the busy illustration. A faint cream halo
-  (drop-shadow works on the gradient `.text-gilt` headline, unlike text-shadow on
-  background-clipped text) plus a darker, slightly heavier paragraph. Scoped to
-  the hero so card/surface text (already AA on cream) is untouched; night is
-  unaffected. Neutralised with the rest of motion/effects under reduced-motion is
-  not needed — these are static.
-*/
-html[data-theme="day"] h1.hero-legible {
-  filter: drop-shadow(0 1px 6px rgba(247, 240, 222, 0.78))
-    drop-shadow(0 0 1px rgba(247, 240, 222, 0.6));
-}
-html[data-theme="day"] p.hero-legible {
-  color: #241c10; /* deepened espresso for contrast over green hills */
-  font-weight: 500;
-  text-shadow: 0 1px 8px rgba(247, 240, 222, 0.7);
 }
 
 body {
@@ -148,9 +57,8 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Subtle starfield gradient wash behind everything — sits behind the SkyScene
-   canvas (-z-10) so the sun/moon drawn on the canvas are never veiled by it.
-   Still paints above the body's solid background as the pre-mount fallback. */
+/* Faint cold wash behind everything — pre-canvas fallback so the page never
+   reads flat black before the WebGL scene mounts (canvas sits at -z-10). */
 body::before {
   content: "";
   position: fixed;
@@ -158,107 +66,64 @@ body::before {
   z-index: -11;
   pointer-events: none;
   background:
-    radial-gradient(900px 600px at 80% -5%, rgba(25, 25, 112, 0.55), transparent 60%),
-    radial-gradient(700px 500px at 5% 10%, rgba(125, 90, 123, 0.18), transparent 55%),
-    radial-gradient(600px 600px at 50% 110%, rgba(85, 107, 47, 0.12), transparent 60%);
+    radial-gradient(1000px 700px at 50% -10%, rgba(61, 116, 255, 0.07), transparent 60%),
+    radial-gradient(800px 600px at 85% 110%, rgba(61, 116, 255, 0.04), transparent 55%);
 }
 
-/* Headings use the serif display face */
+/* Headings — Geist as display face: tighter tracking, heavier weight */
 h1, h2, h3, h4 {
-  font-family: var(--font-serif), Georgia, serif;
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 
-/* Gold gradient text helper for hero emphasis */
-.text-gilt {
+/* Electric gradient text helper for hero emphasis */
+.text-electric {
   background: linear-gradient(
     100deg,
-    var(--color-gold) 0%,
-    var(--color-gold-soft) 35%,
-    var(--color-ink) 60%,
-    var(--color-gold-soft) 85%,
-    var(--color-gold) 100%
+    var(--color-accent-bright) 0%,
+    var(--color-accent) 45%,
+    var(--color-accent-bright) 100%
   );
-  background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: shimmer 8s linear infinite;
 }
 
-/*
-  Day variant of .text-gilt — the token vars already flip (--color-gold becomes
-  amber #82661b, --color-gold-soft becomes #6f5616, --color-ink becomes espresso
-  #2d2417), so the gradient automatically becomes an amber → bronze → espresso
-  shimmer that passes large-text AA on cream. No additional overrides needed.
+::selection {
+  background: rgba(61, 116, 255, 0.35);
+  color: var(--color-ink);
+}
 
-  Day-mode focus ring: amber instead of gold, stays AA on cream.
-*/
-html[data-theme="day"] :focus-visible {
-  outline-color: var(--color-gold);
+/* Slim dark scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-2) transparent;
 }
 
 /* Focus visibility for keyboard users */
 :focus-visible {
-  outline: 2px solid var(--color-gold);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 
-/* Hero portrait flip — rotates around the vertical axis, holding each face
-   ~9s with a ~1s flip (one flip ≈ every 10s). Reduced-motion freezes it on
-   the front face via the rule below (duration → 0, ends at rotateY(360deg)). */
-@keyframes portrait-flip {
-  0%, 42% { transform: rotateY(0deg); }
-  50%, 92% { transform: rotateY(180deg); }
-  100% { transform: rotateY(360deg); }
+/* ---- Lenis recommended styles ---- */
+html.lenis, html.lenis body {
+  height: auto;
 }
-.animate-portrait-flip {
-  animation: portrait-flip 20s ease-in-out infinite;
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
 }
-
-/* Header theme-toggle sun↔moon morph (ADR-004, S6). The glyph stays a clean
-   Heroicon (the realism lives in the background sky); on an explicit toggle the
-   newly-shown icon does a small rotate + scale "pop" so the swap feels alive.
-   The class is only applied after the first user toggle, so the post-hydration
-   neutral→icon swap stays silent. Under reduced-motion the block below zeroes
-   the duration with !important, collapsing the morph to an instant swap. */
-@keyframes theme-toggle-morph {
-  0%   { transform: rotate(-60deg) scale(0.55); opacity: 0; }
-  55%  { transform: rotate(10deg)  scale(1.12); opacity: 1; }
-  100% { transform: rotate(0)      scale(1);    opacity: 1; }
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
 }
-.animate-theme-toggle-morph {
-  animation: theme-toggle-morph 340ms var(--ease-out-soft) both;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-/*
-  Mid-arc page-token cross-fade (ADR-004, S3). The `ThemeProvider` adds
-  `theme-animating` to <html> just before it flips `data-theme` at the twilight
-  midpoint, and removes it ~400ms later. While present, page colours ease between
-  the night/day token values so the flip reads as one cross-fade rather than a
-  hard cut. The 400ms here MUST match THEME_CROSSFADE_MS in ThemeProvider.tsx.
-
-  Snap paths (reduced-motion / refocus / first load) never add this class, so they
-  flip instantly. The reduced-motion block below also zeroes transition-duration
-  with !important, so even a stray class can never produce a cross-fade there.
-*/
-html.theme-animating,
-html.theme-animating body,
-html.theme-animating *,
-html.theme-animating *::before,
-html.theme-animating *::after {
-  transition-property: background-color, color, border-color;
-  transition-duration: 400ms;
-  transition-timing-function: var(--ease-out-soft);
+.lenis.lenis-stopped {
+  overflow: hidden;
 }
 
 /* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
   *,
   *::before,
   *::after {

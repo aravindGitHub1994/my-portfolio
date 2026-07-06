@@ -1,23 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/Header";
+import { LenisProvider } from "@/components/LenisProvider";
 import { Footer } from "@/components/Footer";
-import { CursorSpotlight } from "@/components/CursorSpotlight";
-import { SkyScene } from "@/components/sky/SkyScene";
-import { ThemeMetaColor } from "@/components/ThemeMetaColor";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import { themeInitScript } from "@/lib/theme";
 import { SITE } from "@/lib/nav";
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const inter = Inter({
-  variable: "--font-inter",
+// next/font self-hosts these at build time — the browser only ever requests
+// them from 'self', which the vercel.json CSP (font-src 'self') requires.
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
   display: "swap",
 });
@@ -31,9 +22,8 @@ const geistMono = Geist_Mono({
 const description =
   "Data Analytics Manager who ships production software by directing AI coding agents — real projects across taxonomy engines, Bayesian budget models, and analytics tooling.";
 
-/** Static default (night); ThemeMetaColor client component updates it live. */
 export const viewport: Viewport = {
-  themeColor: "#07071a",
+  themeColor: "#050507",
 };
 
 export const metadata: Metadata = {
@@ -68,23 +58,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${inter.variable} ${geistMono.variable} h-full antialiased`}
-      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <head>
-        {/* Pre-paint theme resolution (ADR-003) — runs before first paint to
-            avoid a flash of the wrong theme. Keep in sync via src/lib/theme.ts. */}
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
-      <body className="min-h-full flex flex-col">
-        <ThemeProvider>
-          <ThemeMetaColor />
-          <SkyScene />
-          <CursorSpotlight />
-          <Header />
+      <body className="flex min-h-full flex-col">
+        <LenisProvider>
           <div className="flex flex-1 flex-col">{children}</div>
           <Footer />
-        </ThemeProvider>
+        </LenisProvider>
       </body>
     </html>
   );
