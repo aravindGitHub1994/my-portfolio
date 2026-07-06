@@ -1,5 +1,6 @@
 import { SectionHeader } from "@/components/SectionHeader";
 import { ButtonLink } from "@/components/Button";
+import { CubeCanvas } from "@/components/cube/CubeCanvas";
 import { PROJECTS } from "@/lib/projects";
 import { EXPERIENCE } from "@/lib/resume";
 import { SITE, SOCIAL_LINKS } from "@/lib/nav";
@@ -12,6 +13,8 @@ import { SITE, SOCIAL_LINKS } from "@/lib/nav";
 export default function Home() {
   return (
     <main>
+      <CubeCanvas />
+
       {/* Act 1 — Hero (P1.4 builds the real content + scroll-morph) */}
       <section
         id="hero"
