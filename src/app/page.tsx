@@ -3,8 +3,8 @@ import { ButtonLink } from "@/components/Button";
 import { CubeCanvas } from "@/components/cube/CubeCanvas";
 import { Hero } from "@/components/acts/Hero";
 import { Work } from "@/components/acts/Work";
+import { Trajectory } from "@/components/acts/Trajectory";
 import { Magnetic } from "@/components/ui/Magnetic";
-import { EXPERIENCE } from "@/lib/resume";
 import { SITE, SOCIAL_LINKS } from "@/lib/nav";
 
 /**
@@ -36,23 +36,7 @@ export default function Home() {
       <Work />
 
       {/* Act 4 — Trajectory (P3.3) */}
-      <section
-        id="trajectory"
-        className="mx-auto w-full max-w-5xl px-6 py-24 sm:py-32"
-      >
-        <SectionHeader
-          eyebrow="Trajectory"
-          title="From tech support to data analytics leadership"
-        />
-        <ol className="mt-10 space-y-4 border-l border-line pl-6">
-          {EXPERIENCE.map((item) => (
-            <li key={item.org}>
-              <p className="text-ink">{item.role}</p>
-              <p className="text-sm text-ink-subtle">{item.org}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <Trajectory />
 
       {/* Act 5 — Contact (P4.1 adds the point-globe finale) */}
       <section
