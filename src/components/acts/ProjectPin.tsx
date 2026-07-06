@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CapabilityTag } from "@/components/Tag";
 import { InlineDiagram } from "@/components/InlineDiagram";
+import { ReadTheBuild } from "@/components/acts/ReadTheBuild";
 import {
   buildDrawTimeline,
   spawnPackets,
@@ -150,6 +151,9 @@ export function ProjectPin({
                   in progress
                 </span>
               )}
+            </div>
+            <div className="mt-8">
+              <ReadTheBuild project={project} />
             </div>
           </div>
 
