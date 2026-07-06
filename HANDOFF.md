@@ -1,37 +1,52 @@
-# Handoff — ADR-005 redesign · P1 done, mid-P2.2
+# Handoff — ADR-005 redesign · P1 + P2 + 3.1/3.3 done, next 3.2
 
-_Branch `threeJS-redesign`. P1 (Hero spine, slices 1.1–1.5) and P2.1 are
-**committed**; slice **2.2 is half-done in the working tree** — finish it first._
+_Branch `threeJS-redesign`. All of P2 (Work act) plus P3 slices 3.1 and 3.3 are
+**committed**; working tree is clean. Next: **3.2 Approach act** — but read the
+QA note first, it interacts with unverified cube work._
 
 ## Current Status
 - **P1 committed** (`0bf80c2`…`70de8a9`): dark shell + Geist + Lenis
   (`LenisProvider`), glass-cube canvas (`src/components/cube/`), tier system
   (`src/lib/gpuTier.ts`, `?tier=` override), Hero act + scroll-morph
   (`cubeState.heroProgress`), loader/cursor/magnetic (`src/components/ui/`).
-  Lint + static-export build green; dev on port 3004.
-- **P2.1 committed:** diagram convention (**`docs/diagram-authoring.md`** — read
-  it first), hand-authored `public/diagrams/taxonomy.svg`,
-  `src/lib/diagramAnimation.ts` (draw timeline + packets),
-  `src/components/InlineDiagram.tsx` (fetch-inline, `<img>` fallback).
-- **P2.2 in progress (uncommitted):** old `budget/gmc/personas` `.svg/.mmd/.light.svg`
-  are `git rm`'d; new `budget.svg` is written. **`gmc.svg` and `personas.svg` do
-  not exist yet.** Planned geometry (follow taxonomy/budget as reference):
-  - `gmc.svg` — TD chain of 6, viewBox 420×580, nodes x=90 w=240 h=58 at
-    y=20,116,212,308(SQLite cylinder),404,500; straight edges x=210; key node
-    (accent + `data-key`) = "44 GMC sub-accounts"; last node frontend-stroke
-    `#8fb3ff`; steps 0–10 alternating; prefix `gmc-`.
-  - `personas.svg` — TD branch, viewBox 560×470: data(cyl-top, y=24) → select
-    (y=140) → sim (y=256, `data-key`, dashed rect) → branches to mkt (x=40) &
-    qa (x=300) at y=380, both dashed; curved e3/e4 with rotated arrows; `per-`.
-- Tasks: 2.2 (#7) in progress → 2.3 layout+capabilities recolor (#8) → 2.4
-  scroll-sync + cube-face texture (#9) → 2.5 disclosure (#10). Then P3/P4.
+- **P2 committed** (`3ecf8f3`…`f7db2f7`):
+  - 2.1/2.2: all four diagrams re-authored to `docs/diagram-authoring.md`
+    (prefixes `tax-/bud-/gmc-/per-`); runtime in `src/lib/diagramAnimation.ts`,
+    inlining in `src/components/InlineDiagram.tsx`.
+  - 2.3: `acts/Work.tsx` + `acts/ProjectPin.tsx` — CSS-sticky pins in 200vh
+    runways (no pin below `lg`), alternating sides, per-slug diagram panel
+    widths; `capabilities.ts` recolored to single-accent chips.
+  - 2.4: draw-on timeline scrubbed across each pin (`top 70%`→`bottom bottom`),
+    packets visibility-gated, `cubeState.workProject` written by an exclusive
+    55%-line trigger; `DiagramFace` in `CubeScene.tsx` projects the active
+    diagram inside the glass (TextureLoader on the SVGs, crossfade at trough,
+    counter-rotates the hero quarter-turn; animated tiers only).
+  - 2.5: `acts/ReadTheBuild.tsx` — native `<dialog>` overlay (no layout shift
+    in pins), Esc/focus-trap/restore native, stops Lenis + native scroll,
+    parks the custom cursor (it can't render above the top layer),
+    `@starting-style` entry.
+- **P3 partial:** 3.1 `resume.ts` schema (`location` + optional
+  `period?: {start?, end?}` — no dates invented); 3.3 `acts/Trajectory.tsx`
+  timeline (disclosures, order-only, auto-dates when `period` lands).
+- Every slice: lint + static-export build green; committed per slice.
 
 ## Unresolved Threads
-- **No in-browser QA yet** (Chrome extension never connected): verify cube fps,
-  `?tier=` paths, loader, cursor, hero morph, diagram render.
-- **P1.3 HITL calibration** (real phone) and **2.1 convention review** with user.
-- **Career dates missing** (`resume.ts` — slice 3.1); capability palette recolor
-  pending (slice 2.3); docs rewrite pending (4.3).
+- **In-browser QA still zero.** Chrome extension connect was attempted this
+  session and failed ("extension not connected") — needs user to install/
+  connect claude.ai/chrome, then verify: cube fps + `?tier=` paths, hero
+  morph, diagram draw-on scrub direction/feel, DiagramFace opacity/placement
+  (esp. vs. low-tier faux glass and on mobile), dialog focus/cursor behavior,
+  gmc panel height on small laptops. A dev server (not ours) already holds
+  port 3004.
+- **3.2 design tension:** Approach act wants `SKILL_TIERS` on the cube's
+  faces, but `DiagramFace` (2.4) occupies the cube during Work; Approach act
+  sits *before* Work in page order. Decide the face choreography after seeing
+  2.4 live.
+- **P1.3 HITL calibration** (real phone) and **2.1 convention review** with
+  user still pending; career dates for `resume.ts` still missing (user data).
+- PowerShell 5.1 gotchas hit twice: `git commit -m` with embedded `"` breaks
+  arg quoting (use `-F <file>`), and `Get-Content`/`Set-Content` round-trips
+  mojibake UTF-8 em-dashes (use the agent Write tool).
 
 ## Key References
 - ADR: `docs/decisions/ADR-005-threejs-scroll-experience.md`
@@ -41,13 +56,15 @@ _Branch `threeJS-redesign`. P1 (Hero spine, slices 1.1–1.5) and P2.1 are
   runtime cross-origin fetches ever (fonts, HDRs, GPU benchmarks are local).
 
 ## Recommended Next Steps
-- [ ] Write `gmc.svg` + `personas.svg` (specs above), commit 2.2.
-- [ ] 2.3: Work act pinned layouts from `PROJECTS` + recolor `capabilities.ts`.
-- [ ] 2.4: scrub `buildDrawTimeline` per pin; packets on visibility; cube face
-      textures via `THREE.TextureLoader` on the diagram SVGs.
-- [ ] 2.5: accessible "Read the build" overlay (no layout shift in pins).
-- [ ] Lint + build + commit per slice; then P3 (3.1 schema first), P4.
+- [ ] 3.2 Approach act: skill tiers on cube faces + inline real stats (44
+      sub-accounts, 19 sites, 200+ consultants…) — after the QA pass if at
+      all possible (see design tension above).
+- [ ] P4.1 contact point-globe dissolve; 4.2 polish/perf QA (scroll-progress
+      indicator, inter-act reveals, fps pass); 4.3 docs rewrite (README/ADR
+      touch-ups for retired celestial system).
+- [ ] HITL: browser QA session (extension), phone calibration, real career
+      dates into `resume.ts`.
 
 ## Recommended Skills
-- `executing-plans`, `webgpu-threejs-tsl`, `frontend-ui-engineering`,
-  `tailwind-patterns`; `verify`/`run` for the 3004 visual pass.
+- `webgpu-threejs-tsl`, `frontend-ui-engineering`, `tailwind-patterns`;
+  `verify`/`run` + Chrome extension for the 3004 visual pass.
