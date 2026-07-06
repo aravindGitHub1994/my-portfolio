@@ -1,6 +1,7 @@
 import { SectionHeader } from "@/components/SectionHeader";
 import { ButtonLink } from "@/components/Button";
 import { CubeCanvas } from "@/components/cube/CubeCanvas";
+import { Hero } from "@/components/acts/Hero";
 import { PROJECTS } from "@/lib/projects";
 import { EXPERIENCE } from "@/lib/resume";
 import { SITE, SOCIAL_LINKS } from "@/lib/nav";
@@ -15,22 +16,8 @@ export default function Home() {
     <main>
       <CubeCanvas />
 
-      {/* Act 1 — Hero (P1.4 builds the real content + scroll-morph) */}
-      <section
-        id="hero"
-        className="relative flex min-h-screen flex-col items-center justify-center px-6"
-      >
-        <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent-bright">
-          {SITE.name}
-        </p>
-        <h1 className="mt-6 max-w-3xl text-center text-5xl leading-tight sm:text-6xl">
-          Data Analytics &amp; <span className="text-electric">AI systems</span>
-        </h1>
-        <p className="mt-6 max-w-xl text-center text-lg leading-8 text-ink-muted">
-          I direct AI coding agents to ship production software — from raw data
-          to working product.
-        </p>
-      </section>
+      {/* Act 1 — Hero */}
+      <Hero />
 
       {/* Act 2 — Approach (P3.2) */}
       <section

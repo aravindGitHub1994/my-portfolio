@@ -41,6 +41,15 @@
 
   /* ---- Motion ---- */
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ---- Keyframes ---- */
+  --animate-scroll-cue: scroll-cue 2.2s var(--ease-out-soft) infinite;
+}
+
+/* Hero scroll indicator — a light pulse running down a hairline */
+@keyframes scroll-cue {
+  0% { transform: translateY(-100%); }
+  60%, 100% { transform: translateY(100%); }
 }
 
 html {

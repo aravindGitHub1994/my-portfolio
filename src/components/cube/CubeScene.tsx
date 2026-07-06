@@ -78,9 +78,18 @@ function GlassCube({ tier }: { tier: FidelityTier }) {
     const g = group.current;
     if (!g) return;
     const t = state.clock.elapsedTime;
+    const p = cubeState.heroProgress;
+
+    // Hero→Approach morph beat (P1.4): drift right, shrink, quarter-turn.
+    // Drift is viewport-relative so the cube never exits a narrow frame.
+    const driftX = p * state.viewport.width * 0.21;
+    const scale = 1 - p * 0.42;
+
+    g.position.x = THREE.MathUtils.damp(g.position.x, driftX, 3, delta);
+    g.scale.setScalar(THREE.MathUtils.damp(g.scale.x, scale, 3, delta));
 
     // Gentle float + pointer-follow tilt, critically damped.
-    g.position.y = Math.sin(t * 0.5) * 0.08;
+    g.position.y = Math.sin(t * 0.5) * 0.08 - p * 0.25;
     g.rotation.x = THREE.MathUtils.damp(
       g.rotation.x,
       cubeState.pointer.y * 0.14,
@@ -89,7 +98,7 @@ function GlassCube({ tier }: { tier: FidelityTier }) {
     );
     g.rotation.y = THREE.MathUtils.damp(
       g.rotation.y,
-      cubeState.pointer.x * 0.22,
+      cubeState.pointer.x * 0.22 + p * Math.PI * 0.5,
       2.5,
       delta,
     );
