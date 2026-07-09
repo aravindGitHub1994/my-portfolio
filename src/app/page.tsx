@@ -1,36 +1,30 @@
-import { SectionHeader } from "@/components/SectionHeader";
 import { ButtonLink } from "@/components/Button";
-import { CubeCanvas } from "@/components/cube/CubeCanvas";
+import { LensCanvas } from "@/components/lens/LensCanvas";
+import { LensChoreography } from "@/components/lens/LensChoreography";
+import { KineticText } from "@/components/lens/kinetic/KineticText";
 import { Hero } from "@/components/acts/Hero";
+import { Approach } from "@/components/acts/Approach";
 import { Work } from "@/components/acts/Work";
 import { Trajectory } from "@/components/acts/Trajectory";
 import { Magnetic } from "@/components/ui/Magnetic";
 import { SITE, SOCIAL_LINKS } from "@/lib/nav";
 
 /**
- * The single scroll-driven page (ADR-005): five acts around one morphing
- * glass data cube. Acts are placeholders until their slice lands —
- * Hero (P1.4), Work (P2), Approach + Trajectory (P3), Contact finale (P4).
+ * The single scroll-driven page (ADR-006): five acts around The Lens — a
+ * dispersion prism refracting data packets into insight-beams, reshaping
+ * prism → cube → point-globe across the scroll.
  */
 export default function Home() {
   return (
     <main>
-      <CubeCanvas />
+      <LensCanvas />
+      <LensChoreography />
 
       {/* Act 1 — Hero */}
       <Hero />
 
-      {/* Act 2 — Approach (P3.2) */}
-      <section
-        id="approach"
-        className="mx-auto w-full max-w-5xl px-6 py-24 sm:py-32"
-      >
-        <SectionHeader
-          eyebrow="Approach"
-          title="I write the spec, agents write the code"
-          description="Spec-driven development: I scope the problem, lock the interfaces, and direct Claude Code / Gemini CLI agents through implementation — owning the architecture decisions and the review."
-        />
-      </section>
+      {/* Act 2 — Approach (slice 3.3: kinetic count-up stats) */}
+      <Approach />
 
       {/* Act 3 — Work (P2) */}
       <Work />
@@ -43,10 +37,10 @@ export default function Home() {
         id="contact"
         className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 py-24 sm:py-32"
       >
-        <h2 className="text-center text-4xl sm:text-5xl">
+        <KineticText as="h2" className="text-center text-4xl sm:text-5xl">
           Let&apos;s build something{" "}
           <span className="text-electric">exceptional</span>.
-        </h2>
+        </KineticText>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <Magnetic>
             <ButtonLink href={`mailto:${SITE.email}`} variant="primary">

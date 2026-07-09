@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { onCubeReady } from "@/components/cube/cubeState";
+import { onLensReady } from "@/components/lens/lensState";
 import { SITE } from "@/lib/nav";
 
 /** How long to wait for WebGL before force-dismissing — the site must never
@@ -10,7 +10,7 @@ const FAILSAFE_MS = 4000;
 
 /**
  * Branded first-paint loader. Rendered visible in the prerendered HTML (no
- * flash of empty canvas), dismissed once the cube scene reports ready.
+ * flash of empty canvas), dismissed once the Lens scene reports ready.
  * Fixed overlay → zero CLS. Reduced-motion gets an instant cut (the global
  * CSS zeroes transition durations).
  */
@@ -18,7 +18,7 @@ export function Loader() {
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onCubeReady(() => setDone(true));
+    const unsubscribe = onLensReady(() => setDone(true));
     const failsafe = window.setTimeout(() => setDone(true), FAILSAFE_MS);
     return () => {
       unsubscribe();
