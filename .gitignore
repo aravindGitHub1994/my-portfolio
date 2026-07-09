@@ -25,6 +25,11 @@
 *.pem
 recovery-codes.txt
 
+# confidential client screenshots (ADR-006 §7a) — raw product captures must
+# never be committed; published imagery is recreated with dummy data only.
+docs/**/Screenshot*.png
+docs/**/screenshot*.png
+
 # debug
 npm-debug.log*
 yarn-debug.log*
