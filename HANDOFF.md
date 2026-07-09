@@ -81,10 +81,10 @@
    GitHub Support ("remove cached views / sensitive data" flow) to finish the
    purge. NDA/contract-terms check also still owner-side.
 2. ~~Slice 4.3~~ **done** (owner-directed 2026-07-09; assets are 100%
-   fictional so no NDA exposure from them). Note while wiring it: the tracked
-   `docs/projects/budget-optimizer-meridian/PROJECT_CONTEXT.md` names a real
-   client (redacted) — pre-existing in public history; owner may want to
-   scrub it alongside the GitHub Support purge.
+   fictional so no NDA exposure from them). The real client name previously
+   in `docs/projects/budget-optimizer-meridian/PROJECT_CONTEXT.md` has been
+   redacted (working tree fixed; history rewrite pending owner go-ahead on
+   the force-push — see below).
 3. Two recorded deviations from ADR-006 §9, owner may veto (rationale in plan
    0004): canvas-raster kinetic type; stateless shader advection.
 4. QA was headless-browser (SwiftShader) — worth one pass with the owner's
