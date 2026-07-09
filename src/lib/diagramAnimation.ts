@@ -103,11 +103,15 @@ export interface PacketController {
 }
 
 /**
- * Spawns one electric packet per edge, looping along the path (ping-pong on
- * data-bidir edges). Paused by default — play/pause is tied to act
- * visibility by the caller, never scrubbed.
+ * Spawns one electric packet per edge along its path (ping-pong on
+ * data-bidir edges). Paused by default. `loop: true` repeats forever
+ * (visibility-gated by the caller); `loop: false` plays a single pass —
+ * ADR-006 §5/§6: packets flow the edges **once, on entry**, then settle.
  */
-export function spawnPackets(svg: SVGSVGElement): PacketController {
+export function spawnPackets(
+  svg: SVGSVGElement,
+  { loop = true }: { loop?: boolean } = {},
+): PacketController {
   gsap.registerPlugin(MotionPathPlugin);
   const ns = "http://www.w3.org/2000/svg";
   const layer = document.createElementNS(ns, "g");
@@ -126,7 +130,7 @@ export function spawnPackets(svg: SVGSVGElement): PacketController {
     const travel = gsap.utils.clamp(0.9, 2.6, edge.getTotalLength() / 90);
 
     const run = gsap.timeline({
-      repeat: -1,
+      repeat: loop ? -1 : 0,
       repeatDelay: 0.5,
       delay: i * 0.4,
       paused: true,

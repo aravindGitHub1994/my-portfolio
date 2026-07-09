@@ -5,14 +5,16 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ButtonLink } from "@/components/Button";
 import { Magnetic } from "@/components/ui/Magnetic";
-import { cubeState } from "@/components/cube/cubeState";
+import { KineticText } from "@/components/lens/kinetic/KineticText";
 import { SITE } from "@/lib/nav";
 
 /**
- * Act 1 — Hero. Owns the first beat of the cube's morph story: a
- * ScrollTrigger over this section writes progress into cubeState (read by
- * GlassCube's frame loop), and the copy lifts/fades slightly faster than
- * the scroll for parallax depth. Reduced-motion: plain static hero.
+ * Act 1 — Hero. The Lens's scroll inputs live in LensChoreography
+ * (ADR-006); this component only owns its own copy parallax — the content
+ * lifts/fades slightly faster than the scroll for depth. The headline is
+ * kinetic type: refracts in as chromatic shards on the high tier, and is a
+ * plain crisp <h1> everywhere else (it is the real <h1> either way).
+ * Reduced-motion: plain static hero.
  */
 export function Hero() {
   const section = useRef<HTMLElement>(null);
@@ -23,16 +25,6 @@ export function Hero() {
     gsap.registerPlugin(ScrollTrigger);
 
     const ctx = gsap.context(() => {
-      ScrollTrigger.create({
-        trigger: section.current,
-        start: "top top",
-        end: "bottom top",
-        scrub: true,
-        onUpdate: (self) => {
-          cubeState.heroProgress = self.progress;
-        },
-      });
-
       gsap.to(content.current, {
         y: -70,
         opacity: 0,
@@ -46,10 +38,7 @@ export function Hero() {
       });
     }, section);
 
-    return () => {
-      ctx.revert();
-      cubeState.heroProgress = 0;
-    };
+    return () => ctx.revert();
   }, []);
 
   return (
@@ -62,10 +51,13 @@ export function Hero() {
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent-bright">
           {SITE.name}
         </p>
-        <h1 className="mt-6 max-w-3xl text-center text-5xl leading-[1.08] sm:text-7xl">
+        <KineticText
+          as="h1"
+          className="mt-6 max-w-3xl text-center text-5xl leading-[1.08] sm:text-7xl"
+        >
           Data Analytics &amp;{" "}
           <span className="text-electric">AI systems</span>
-        </h1>
+        </KineticText>
         <p className="mt-7 max-w-xl text-center text-lg leading-8 text-ink-muted">
           I lead with measurement and ship the software those insights demand —
           directing AI coding agents while I own the spec, the architecture,

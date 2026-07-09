@@ -3,15 +3,15 @@ import { ProjectPin } from "@/components/acts/ProjectPin";
 import { PROJECTS } from "@/lib/projects";
 
 /**
- * Act 3 — Work (ADR-005 §5). Each project pins on scroll with a minimal
- * default view — title, tagline, capability chips, and its architecture
- * diagram as the hero visual — alternating text/diagram sides per project.
+ * Act 3 — Work (ADR-006 §5). Each project pins briefly on scroll with a
+ * minimal default view — title, tagline, capability chips, and its two-beat
+ * visual (recreated screenshot when present, then the architecture diagram
+ * resolving once on entry) — alternating text/visual sides per project.
  *
- * Pinning is CSS `position: sticky` inside a tall runway (works identically
- * under Lenis, native scroll, and reduced-motion). The runway height beyond
- * one viewport (~100vh) is the dwell the diagram draw-on timeline is
- * scrubbed across (see ProjectPin). Below `lg` there is no pin — panels
- * stack and scroll normally.
+ * Pinning is CSS `position: sticky` inside a short runway (works identically
+ * under Lenis, native scroll, and reduced-motion); the diagram animation is
+ * a single play-through, never scrubbed. Below `lg` there is no pin —
+ * panels stack and scroll normally.
  */
 export function Work() {
   return (
@@ -20,7 +20,7 @@ export function Work() {
         <SectionHeader
           eyebrow="Work"
           title="Four systems, shipped by directing AI"
-          description="Real production systems — taxonomy engines, Bayesian budget models, feed monitoring, synthetic personas. Scroll each one to watch its architecture build."
+          description="Real production systems — taxonomy engines, Bayesian budget models, feed monitoring, synthetic personas. Each architecture resolves as it enters."
         />
       </div>
 
