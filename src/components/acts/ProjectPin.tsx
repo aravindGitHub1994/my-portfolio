@@ -5,9 +5,9 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CapabilityTag } from "@/components/Tag";
 import { InlineDiagram } from "@/components/InlineDiagram";
+import { ProjectRevealCurtain } from "@/components/acts/ProjectRevealCurtain";
 import { ReadTheBuild } from "@/components/acts/ReadTheBuild";
 import { KineticText } from "@/components/lens/kinetic/KineticText";
-import { GlassImage } from "@/components/lens/kinetic/GlassImage";
 import { buildDrawTimeline, spawnPackets } from "@/lib/diagramAnimation";
 import type { Project } from "@/lib/projects";
 
@@ -27,18 +27,19 @@ const reducedMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /**
- * One pinned project panel — the two-beat refraction (ADR-006 §5):
+ * One pinned project panel. Where a recreated screenshot exists, the two beats
+ * are overlaid into a single hover/focus **curtain reveal** (ADR-007): a blue
+ * squiggle band sweeps across and paints the architecture diagram in over the
+ * screenshot; leaving reverses it. This overrides ADR-006's two separately-shown
+ * beats and the GlassImage WebGL distortion for these cards.
  *
- * - **Beat 1** — the recreated dummy-data screenshot (when the asset exists;
- *   `GlassImage` distorts it subtly on the high tier and snaps it crisp when
- *   the project is centered);
- * - **Beat 2** — the architecture diagram resolves **once, on entry**: the
- *   draw-on timeline plays through, then data packets flow the edges a
- *   single pass and settle (ADR-006 §6 — the scroll-scrubbed draw-on and the
- *   cube-face projection are retired).
+ * The screenshot-less card (personas) has nothing to reveal from, so it keeps
+ * the ADR-006 §6 behaviour: the inline diagram resolves **once, on scroll
+ * entry** — the draw-on timeline plays, then packets flow the edges one pass.
  *
- * Reduced-motion: none of this runs — the SVG's resting state is fully
- * drawn by convention, so the finished diagram simply shows.
+ * Reduced-motion: the curtain snaps instantly (handled inside the reveal
+ * component); the scroll draw-on simply doesn't run — the SVG's resting state
+ * is fully drawn by convention, so the finished diagram shows.
  */
 export function ProjectPin({
   project,
@@ -97,7 +98,13 @@ export function ProjectPin({
       className="relative lg:h-[150vh]"
     >
       <div className="flex flex-col justify-center py-20 lg:sticky lg:top-0 lg:h-screen lg:py-0">
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-10 px-6 lg:grid-cols-2 lg:gap-16">
+        <div
+          className={`mx-auto grid w-full max-w-[1500px] grid-cols-1 items-center gap-10 px-6 lg:gap-16 ${
+            diagramRight
+              ? "lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"
+              : "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
+          }`}
+        >
           <div className={diagramRight ? "" : "lg:order-2"}>
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-ink-subtle">
               {String(index + 1).padStart(2, "0")} /{" "}
@@ -124,33 +131,39 @@ export function ProjectPin({
             </div>
           </div>
 
+          {/* Preview takes the wider grid column (~60%) so the recreated
+              screenshot and the diagram read at a legible size. Aligned with
+              flex (not justify-self) because the curtain is an absolutely-
+              positioned SVG with no in-flow width — justify-self would shrink
+              it to 0. The curtain fills the column; the diagram-only fallback
+              keeps its intrinsic-size cap. */}
           <div
-            className={
-              diagramRight
-                ? "lg:justify-self-end"
-                : "lg:order-1 lg:justify-self-start"
-            }
+            className={`flex ${
+              diagramRight ? "lg:justify-end" : "lg:order-1 lg:justify-start"
+            }`}
           >
-            <div className={`flex w-full flex-col gap-5 ${panelWidth}`}>
-              {/* Beat 1 — the product is real (recreated, dummy data only) */}
-              {project.screenshot && (
-                <div className="overflow-hidden rounded-lg border border-line bg-surface/50">
-                  <GlassImage
-                    src={project.screenshot}
-                    alt={`${project.title} product interface (recreated with fictional data)`}
-                    className="w-full"
-                  />
-                </div>
-              )}
-              {/* Beat 2 — the architecture that shipped it */}
-              <div className="w-full rounded-lg border border-line bg-surface/50 p-4 sm:p-5">
+            {project.screenshot ? (
+              // Screenshot + diagram overlaid — the hover/focus curtain reveal.
+              <div className="w-full">
+                <ProjectRevealCurtain
+                  screenshot={project.screenshot}
+                  diagram={project.diagram}
+                  title={project.title}
+                />
+              </div>
+            ) : (
+              // No screenshot to reveal from — the diagram resolves on scroll
+              // entry instead (ADR-006 §6), animated inline so GSAP reaches it.
+              <div
+                className={`w-full ${panelWidth} rounded-lg border border-line bg-surface/50 p-4 sm:p-5`}
+              >
                 <InlineDiagram
                   project={project}
                   className="w-full"
                   onSvgReady={handleSvgReady}
                 />
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

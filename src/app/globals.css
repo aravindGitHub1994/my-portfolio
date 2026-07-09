@@ -144,6 +144,44 @@ html.lenis, html.lenis body {
   overflow: hidden;
 }
 
+/* ---- Project reveal curtain (ADR-007) ------------------------------------
+   Hover/focus curtain that sweeps a blue squiggle band across a project
+   preview, revealing the architecture diagram in its wake. The sweep itself is
+   GSAP transform on two <g> elements (see ProjectRevealCurtain.tsx); this block
+   is layout + affordances only. Aspect ratio matches the 1000×620 viewBox so
+   the outer preserveAspectRatio never crops. */
+.project-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1000 / 620;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+}
+.project-preview:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.project-reveal-svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.project-reveal-squiggles {
+  /* Belt-and-braces: the decorative curtain never intercepts pointer events. */
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* The controller also snaps + hides the band in JS; this keeps it hidden even
+     if CSS paints before hydration, so no half-swept frame is ever shown. */
+  .project-reveal-squiggles {
+    opacity: 0;
+  }
+}
+
 /* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *,
