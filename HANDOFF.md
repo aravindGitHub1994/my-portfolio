@@ -75,19 +75,30 @@
 
 ## Unresolved Threads
 
-1. **GitHub cached views still serve the old blobs** (verified HTTP 200 at the
-   old SHA post-push) — unreachable commits persist until GitHub purges, and
-   **PR #1's read-only `refs/pull/*` pin old commits**. Owner must contact
-   GitHub Support ("remove cached views / sensitive data" flow) to finish the
-   purge. NDA/contract-terms check also still owner-side.
+1. **GitHub cached views still serve pre-rewrite blobs** (verified HTTP 200
+   at old SHAs post-push, for *both* rewrites now — the §7a PNG purge and
+   the 2026-07-09 client-name purge below) — unreachable commits persist
+   until GitHub purges, and **PR #1's read-only `refs/pull/*` pin old
+   commits**. Owner must contact GitHub Support ("remove cached views /
+   sensitive data" flow) to finish the purge — one request can cover both
+   rewrites. NDA/contract-terms check also still owner-side.
 2. ~~Slice 4.3~~ **done** (owner-directed 2026-07-09; assets are 100%
-   fictional so no NDA exposure from them). The real client name previously
-   in `docs/projects/budget-optimizer-meridian/PROJECT_CONTEXT.md` has been
-   redacted (working tree fixed; history rewrite pending owner go-ahead on
-   the force-push — see below).
-3. Two recorded deviations from ADR-006 §9, owner may veto (rationale in plan
+   fictional so no NDA exposure from them).
+3. **Second history rewrite done (2026-07-09, owner-authorized):** the real
+   client name in `docs/projects/budget-optimizer-meridian/PROJECT_CONTEXT.md`
+   (present since this repo's very first commit) is fully scrubbed.
+   `git filter-repo --replace-text` on a fresh mirror clone, verified
+   zero-match across all history and tree-identical to the original except
+   the two redacted lines, then force-pushed to `main` +
+   `feat/animated-celestial-sky` (`threeJS-redesign` had no upstream yet, so
+   its local branch was simply re-pointed). Every commit hash on all three
+   branches changed again as a result — this session's earlier 6 redesign
+   commits now live at new SHAs (see `git log`); messages/order/content are
+   otherwise unchanged. Confirmed `origin/main` and
+   `origin/feat/animated-celestial-sky` match the rewritten local branches.
+4. Two recorded deviations from ADR-006 §9, owner may veto (rationale in plan
    0004): canvas-raster kinetic type; stateless shader advection.
-4. QA was headless-browser (SwiftShader) — worth one pass with the owner's
+5. QA was headless-browser (SwiftShader) — worth one pass with the owner's
    eyes on real GPU for perf feel (fps) and MTM look; composition/choreography
    are verified.
 
