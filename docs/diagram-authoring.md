@@ -1,10 +1,16 @@
-# Animatable diagram SVGs — authoring convention (slice 2.1)
+# Animatable diagram SVGs — authoring convention
 
 Hand-structured SVGs in `public/diagrams/<slug>.svg`, checked in, replacing the
-Mermaid-rendered files (ADR-005 §5, extending ADR-002). Each file must work in
-three contexts: **inlined** into the page (GSAP draw-on + packet flow),
-**standalone** as `<img>`/texture (cube face projection — final state must look
-complete with no external CSS), and **reduced-motion** (final state only).
+Mermaid-rendered files (ADR-005 §5, extending ADR-002; single-play + legibility
+re-author per ADR-006 §6). Each file must work in three contexts: **inlined**
+into the page (GSAP draw-on + packet flow), **standalone** as `<img>` fallback
+(final state must look complete with no external CSS), and **reduced-motion**
+(final state only).
+
+**Legibility contract (ADR-006 §6):** size the drawing to fill its frame and
+type so node titles resolve to **≥ ~12px on screen** at the rendered panel
+width (`ProjectPin`'s `DIAGRAM_PANEL_WIDTH`) — in practice titles 16–20 /
+subs 12.5–15 in viewBox units, `stroke-width` 2, tight outer margins.
 
 ## Rules
 
@@ -51,7 +57,8 @@ complete with no external CSS), and **reduced-motion** (final state only).
 
 - `buildDrawTimeline(svg)` — paused GSAP timeline over `[data-step]` elements
   (edges: dash-offset; arrows: pop after their edge; nodes/labels: fade+rise).
-  Scrubbed by the Work act's pin ScrollTrigger (slice 2.4).
-- `spawnPackets(svg)` — creates circles per `.dg-edge`, loops them along the
-  path via MotionPathPlugin; returns a cleanup. Play/pause tied to act
-  visibility, never scrubbed.
+  Played **once on entry** by `ProjectPin` (ADR-006 §6 — scroll-scrub retired).
+- `spawnPackets(svg, { loop: false })` — creates circles per `.dg-edge` and
+  runs them along the path via MotionPathPlugin for **a single pass** after the
+  draw-on completes; returns a cleanup. Reduced-motion: nothing runs — the
+  resting state is fully drawn by convention (rule 10).

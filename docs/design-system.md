@@ -1,111 +1,171 @@
-# Design System — "Midnight Observatory / Warm Sunlit"
+# Design System — "Electric Dark" around The Lens
 
-Dual-theme design system (ADR-003). The night theme ("Midnight Observatory") is the brand default
-— deep night-sky surfaces, star-gold accents, aged-parchment text. The day theme ("Warm Sunlit")
-is a full reskin driven by the same semantic token names; every `bg-bg`, `text-ink`, and
-`border-line` utility flips automatically via a `[data-theme="day"]` CSS block (zero component edits).
+Single dark cinematic theme (ADR-005, retained by ADR-006) built around **The
+Lens** — a dispersion prism that refracts streams of raw *data packets* into
+ordered *insight-beams*, enacting **data → meaning → insight** across one
+scrolling page (ADR-006). Black/charcoal/graphite surfaces, **one electric-blue
+accent**, Geist everywhere.
 
-See [ADR-003](decisions/ADR-003-tri-mode-theme.md) for the full design rationale.
-See [ADR-004](decisions/ADR-004-animated-celestial-transition.md) for the unified sky canvas and animated day↔night transition (partially supersedes ADR-003).
-See [ADR-002 (amended)](decisions/ADR-002-mermaid-prerendered-svgs.md) for light diagram variants.
+See [ADR-006](decisions/ADR-006-lens-refractive-redesign.md) for the redesign
+decision, [ADR-005](decisions/ADR-005-threejs-scroll-experience.md) for the
+retained dark system/positioning, and [ADR-001](decisions/ADR-001-next-js-static-export.md)
+for the static-export constraint everything must respect. ADR-002/003/004 are
+historical (superseded).
 
-All tokens live in `src/app/globals.css` under Tailwind v4's `@theme` (`:root` night defaults)
-and the `html[data-theme="day"]` override block. Available as utilities: `bg-bg`, `text-ink`,
-`text-gold`, `border-line`, `shadow-[…var(--color-glow)]`, …
+All tokens live in `src/app/globals.css` under Tailwind v4 `@theme` and are
+used as semantic utilities: `bg-bg`, `bg-surface`, `text-ink`, `text-ink-muted`,
+`text-accent-bright`, `border-line`, `shadow-[…var(--color-glow)]` — never raw
+hex in components.
 
 ---
 
-## Color tokens — Night (`:root` default)
+## Color tokens
 
-| Token | Hex | Usage |
+| Token | Value | Usage |
 |---|---|---|
-| `bg` | `#07071a` | Page background (deepest night sky) |
-| `surface` | `#0f0f2a` | Cards / raised panels |
-| `surface-2` | `#181840` | Hover / elevated |
-| `midnight` | `#191970` | Brand midnight blue (gradient washes) |
-| `ink` | `#e8ddb5` | Primary text (aged parchment) |
-| `ink-muted` | `#c0c7d1` | Secondary text (celestial silver) |
-| `ink-subtle` | `#8b8597` | Captions / meta |
-| `gold` | `#d4af37` | Primary accent — links, CTAs, eyebrows |
-| `gold-soft` | `#e6c860` | Gold hover |
-| `plum` | `#7d5a7b` | Supporting accent |
-| `moss` / `moss-light` | `#556b2f` / `#9bb06a` | Supporting accent (light variant for text) |
-| `lilac` | `#b8a9d9` | Supporting accent |
-| `silver` | `#c0c7d1` | Supporting accent |
-| `bronze` | `#6e6658` | Weathered tone |
-| `line` / `line-strong` | silver @ 14% / 30% | Borders |
-| `glow` | `rgba(212,175,55,0.50)` | Box-shadow gold glow (see `--color-glow`) |
+| `bg` | `#050507` | Page base — near black |
+| `surface` | `#0d0d12` | Charcoal — raised panels / cards |
+| `surface-2` | `#15151c` | Graphite — hover / elevated |
+| `ink` | `#f2f4f8` | Primary text |
+| `ink-muted` | `#a2a8b4` | Secondary text |
+| `ink-subtle` | `#6a7080` | Captions / meta |
+| `accent` | `#3d74ff` | CTAs, key nodes, caustics, active states |
+| `accent-soft` | `#5c8aff` | Hover on accent surfaces |
+| `accent-bright` | `#8fb3ff` | Accent-colored text on dark (AA) |
+| `line` / `line-strong` | ink-muted @ 12% / 26% | Borders |
+| `glow` | `rgba(61,116,255,0.5)` | Box-shadow glow |
 
-## Color tokens — Day (`[data-theme="day"]` overrides)
+**Single-accent rule:** the only hue on the page is electric blue. Hierarchy is
+carried by weight, size, opacity, and borders — never extra colors. The one
+sanctioned exception is the **spectrum dispersion ramp** inside the WebGL scene
+(`DataStreams.tsx`: cyan `#46e3ff` → electric `#3d74ff` → violet `#8b5cf6`),
+which *is* the metaphor — white data refracting into the spectrum of insight.
 
-| Token | Hex | Contrast on cream | Usage |
-|---|---|---|---|
-| `bg` | `#f4ecd8` | — | Warm cream base |
-| `surface` | `#fbf6ea` | — | Raised panels / cards |
-| `surface-2` | `#ece0c6` | — | Hover / elevated |
-| `ink` | `#2d2417` | 12.96:1 | Espresso — primary text |
-| `ink-muted` | `#5a4d36` | 7.00:1 | Secondary text |
-| `ink-subtle` | `#6f5f44` | 5.25:1 | Captions / meta |
-| `gold` | `#82661b` | 4.61:1 | Amber accent / links / CTAs |
-| `gold-soft` | `#6f5616` | 5.91:1 | Amber hover (darker than gold in day) |
-| `plum` | `#6a4a68` | 6.39:1 | Darkened dusty plum |
-| `moss` | `#4a5d28` | 6.18:1 | Darkened forest moss |
-| `moss-light` | `#3f5320` | 7.22:1 | Moss text on cream |
-| `lilac` | `#64497e` | 6.38:1 | Darkened starlight lilac |
-| `silver` | `#4a5563` | 6.44:1 | Slate (silver → slate for cream) |
-| `line` | espresso @ 16% | — | Border |
-| `line-strong` | espresso @ 32% | — | Strong border |
-| `glow` | `rgba(160,105,20,0.38)` | — | Soft amber glow (replaces gold on cream) |
-
-All day-mode text pairings AA-verified against `#f4ecd8`. See HANDOFF.md for verification details.
-
-### Discipline colors (`src/lib/disciplines.ts`)
-
-Same semantic tokens used in both themes; colors flip automatically.
-
-| Discipline | Token | Night | Day |
-|---|---|---|---|
-| Analytics | Silver | `#c0c7d1` | `#4a5563` |
-| Writing | Gold | `#d4af37` | `#82661b` |
-| Design | Lilac | `#b8a9d9` | `#64497e` |
-| Code | Moss-light | `#9bb06a` | `#3f5320` |
+`.text-electric` — the electric gradient display helper (accent-bright → accent
+→ accent-bright, `background-clip: text`) for hero emphasis and stat figures.
+The kinetic rasterizer reproduces it on the GL side (`lens/kinetic/rasterize.ts`).
 
 ---
 
 ## Typography
 
-- **Headings:** Fraunces (serif), via `--font-serif` — applied to `h1`–`h4`.
-- **Body:** Inter (sans), via `--font-sans`.
-- **Labels / tags / meta:** Geist Mono, via `--font-mono`.
-- `.text-gilt` — animated shimmer gradient. At night: gold → gold-soft → parchment shimmer.
-  At day: amber → bronze → espresso shimmer (all stops flip via the token override; passes AA for large text on cream).
+- **Everything is Geist** — display and body via `--font-sans` (`next/font`,
+  self-hosted; CSP `font-src 'self'` forbids CDN fonts). Headings are weight
+  600, tracking −0.02em, `text-wrap: balance`.
+- **Geist Mono** (`--font-mono`) for eyebrows, meta, act numbering (`01 / 04`),
+  and capability chips — uppercase, wide tracking.
+- Scale in practice: hero `text-5xl`–`text-7xl`; section titles `text-3xl`–
+  `text-4xl`; stat figures `text-5xl`–`text-6xl` tabular-nums; body `text-base`
+  to `text-lg` with relaxed leading.
 
 ---
 
-## Spacing & radius
+## The Lens — scene contract
+
+One persistent WebGL `<canvas>` (`src/components/lens/`) sits behind the DOM
+(`-z-10`). `lensState.ts` is the shared mutable state (pointer, pointer speed,
+scroll velocity, per-act progress); `LensChoreography.tsx` is the **sole owner**
+of the five per-act ScrollTriggers. Frame loops read the state — scroll and
+pointer never re-render React.
+
+| Act | Section | Lens state |
+|---|---|---|
+| 1 Hero | `#hero` | Prism center-right; packets stream in, spectrum beams fan out |
+| 2 Approach | `#approach` | Prism **tightens** (sinks under the stat band, shrinks); beams organize into parallel lines |
+| 3 Work | `#work` | Lens **recedes** small + dim — the project panels own the stage |
+| 4 Trajectory | `#trajectory` | Beams retract — prism **crystallizes into the cube** (payoff beat) |
+| 5 Contact | `#contact` | Cube dissolves into a turning **point-globe** finale |
+
+Scene pieces:
+
+- **`TheLens.tsx`** — the solid: transmission-glass prism → cube
+  (`MeshTransmissionMaterial` on high; faux-glass `meshPhysicalMaterial` on
+  low/static), wireframe data core, kernel light.
+- **`DataStreams.tsx`** — stateless vertex-shader particles (position is a pure
+  function of time + seed; no GPGPU) + five additive light blades. Point sizes
+  are **pixel-scale** (`× 7.0 / -mv.z`, unity at the lens plane) — packets must
+  read as packets, never fog.
+- **`RefractionPass.tsx`** — the global refractive pass (ADR-006 §4):
+  pointer-radial displacement + chromatic aberration + desaturation, keyed to
+  pointer speed and scroll velocity. **High tier + fine pointer only.**
+- **`kinetic/`** — DOM↔GL twin system for headings, stat figures, and imagery
+  (below).
+- Environment is **Lightformer-only** (drei Environment presets fetch CDN HDRs
+  — CSP forbids).
+
+## Kinetic type & imagery (DOM↔GL twins)
+
+The real semantic DOM element (`KineticText`, `GlassImage`) always renders and
+always ships in the prerendered HTML — it is what ATS/crawlers/screen readers
+see. On the **high tier only**, a GL layer (`KineticTextLayer`,
+`GlassImageLayer`) claims the kind via `kinetic/registry.ts`; the DOM turns
+`opacity: 0` (still selectable, still in the a11y tree) and a canvas-raster GL
+twin renders at the exact layout position:
+
+- **Refract-in** (ADR-006 §3): glyphs assemble from RGB-split chromatic shards
+  on entry; settled text **shears** with scroll velocity.
+- The rasterizer (`rasterize.ts`) walks per-character Ranges at
+  browser-computed positions — survives `text-wrap: balance` and reproduces
+  `.text-electric` — and **re-rasters on text mutation** (rAF-coalesced), which
+  is how count-up stat figures stay live on the GL side.
+- Where no layer claims (low/static tiers, WebGL unavailable), the DOM element
+  is simply visible — **zero drift risk, the DOM node is the source** — and
+  gets a **plain fade** on first viewport entry (never hidden in the prerender;
+  reduced-motion never hides or fades).
+
+Count-up figures (`acts/Approach.tsx` + `src/lib/stats.ts`): numbers count
+0→value on entry (gsap, staggered); the prerender ships **resolved values**;
+reduced-motion renders them resolved with no count; no `aria-live` (the settled
+DOM text is the accessible value). Every figure traces to `resume.ts` bullets
+or is derived from `PROJECTS`/`CAPABILITY_LIST` lengths — nothing invented.
+
+## Fidelity tiers (`src/lib/gpuTier.ts`)
+
+Heuristic, dependency-free detection (CSP forbids CDN GPU benchmarks); override
+with `?tier=high|low|static`. **Graceful reduction** (ADR-006 §8) — lower tiers
+are calmer, honestly non-identical:
+
+| | high (desktop, capable GPU) | low (mobile / weak GPU) | static (`prefers-reduced-motion`) | none (no WebGL) |
+|---|---|---|---|---|
+| Lens solid | transmission dispersion | faux-glass, calm | faux-glass cube, fixed pose | — |
+| Particles | 800 + 1500, animated | 260 + 480, animated | none (blades settled) | — |
+| Refraction pass | ✓ (fine pointer only) | — | — | — |
+| Headings | GL refract-in + shear | DOM, plain fade | DOM, static (CSS kills transitions) | DOM |
+| Imagery | GL planes, snap crisp | crisp DOM `<img>` | crisp DOM `<img>` | DOM |
+| Diagrams | draw-on + one packet pass on entry | same | resting state (fully drawn) | resting state |
+| Frameloop | always | always | demand | no canvas |
+
+The canvas is `aria-hidden`; the loader (`ui/Loader.tsx`) is dismissed by
+`markLensReady()` with a 4 s failsafe so WebGL failure never locks the page.
+
+---
+
+## Diagrams
+
+Hand-structured animatable SVGs in `public/diagrams/` — see
+[diagram-authoring.md](diagram-authoring.md) for the authoring convention
+(structure groups, `data-step` build order, explicit arrows, hardcoded dark
+palette). Re-authored for **legibility** (ADR-006 §6): node titles resolve to
+≥ ~12px at rendered size, dense fill, `stroke-width` 2. They animate **once on
+entry** (draw-on, then a single packet pass) via `src/lib/diagramAnimation.ts`
+and settle — no scroll-scrub. Inlined by `InlineDiagram.tsx` so GSAP can reach
+nodes; the resting state is fully drawn, so reduced-motion and the `<img>`
+fallback are complete diagrams.
+
+---
+
+## Spacing, radius, motion
 
 - Spacing: Tailwind's default 0.25rem scale — do not invent off-scale values.
-- Radius: `--radius-sm` 4px, `--radius-md` 8px, `--radius-lg` 14px.
-
----
-
-## Motion
-
-- `Reveal` — scroll-into-view fade + lift (IntersectionObserver).
-- `SkyScene` — single persistent full-viewport canvas driven by a `progress` value (`0` = deep night, `1` = full day). On an explicit theme toggle it plays a ~2.2 s ease-in-out arc: the sun and moon travel crossing arcs through a twilight sky, meeting near the horizon at the midpoint (~progress 0.5), at which point page tokens cross-fade via a scoped `html.theme-animating` transition so the page and sky stay visually consistent throughout. First mount settles gently without an arc; auto refocus and `prefers-reduced-motion` snap instantly. See [ADR-004](decisions/ADR-004-animated-celestial-transition.md).
-  - **Stars:** magnitude follows a power-law distribution (many faint, few bright). The brightest stars carry subtle 4-point diffraction spikes. Occasional shooting stars appear at night (suppressed under reduced-motion). A Pisces asterism is drawn from real relative star positions; its constellation lines brighten as the cursor nears. Stars fade smoothly to invisible by full day.
-  - **Moon:** rendered from `public/celestial/moon.png` (real, transparent, self-lit near-side photo) drawn faithfully — no clip, overscan, or limb/terminator overlays — behind only a faint cool halo/earthshine. Sized ~1.5× and matched to the sun. Falls back silently to the procedural drawing if the asset is absent or fails to load — the build and scene never break.
-  - **Sun:** procedural and themeable; tint lerps through the night→twilight→day palette via `palette.ts`. Limb darkening, finer granulation, a layered multi-stop corona, and gentle limb flicker. Sized ~1.5× and matched to the moon so the two read equal during the cross.
-  - **Horizon:** a **procedural illustrated landscape** (style of `docs/horizon_reference.jpg`) — distant snow-capped mountains, **real conifer silhouettes** (three shapes sliced from `public/celestial/trees.png`, a black-on-white luminance→alpha mask, tinted per layer) placed across **three depth tiers** — small/distant on the foothills, medium on the mid hill, and a few large ones at the foreground left/right edges (kept clear of the centred hero text) — and two rolling green hill layers, each colour-lerping from a dark cool night palette to the bright reference palette by day. The **observatory** is drawn **procedurally** (`drawObservatory` — a domed cylindrical tower with a tapered telescope barrel angled up-left toward the Pisces asterism), right-of-centre, *between* the foothills and front hills so the green hills overlap its base. It's a clean silhouette in the observatory tint — nothing baked in — so the green-tinted conifers and hills around it supply its setting (the earlier `observatory.png` was dropped because its baked-in trees/ground rendered in the wrong tint). A soft contrast scrim behind the terrain protects text legibility while a celestial body dips low during the transition.
-- `float`, `twinkle`, `shimmer` keyframes for subtle ambient motion.
-- All motion respects `prefers-reduced-motion` (neutralized via CSS globally; `SkyScene` draws a single static frame and suppresses the arc, shooting stars, and the mid-arc token cross-fade).
-
----
-
-## Responsive breakpoints
-
-Mobile-first using Tailwind defaults: `sm` 640px, `md` 768px, `lg` 1024px, `xl` 1280px.
-Test at 320 / 768 / 1024 / 1440px.
+- Radius: `--radius-sm` 4px · `--radius-md` 8px · `--radius-lg` 14px.
+- Easing: `--ease-out-soft` `cubic-bezier(0.16,1,0.3,1)` for reveals/fades.
+- **Lenis** owns smooth scrolling (`LenisProvider`); CSS `scroll-behavior` stays
+  `auto`. GSAP ScrollTrigger drives all scroll choreography.
+- Ambient keyframes: `scroll-cue` (hero), `loader-sweep` (loader).
+- **Reduced motion is global**: a media query zeroes every CSS
+  animation/transition; JS choreography guards on the same query
+  (`LensChoreography`, count-ups, diagram play) and the scene renders resolved
+  end-states.
 
 ---
 
@@ -113,27 +173,46 @@ Test at 320 / 768 / 1024 / 1440px.
 
 | Component | Purpose |
 |---|---|
-| `Hero` | Landing hero with gilt headline, CTAs, orbit ring |
-| `SkyScene` | Unified full-viewport sky canvas (one RAF loop); `progress` `0`→night, `1`→day; ~2.2 s cinematic arc on explicit toggle; mid-arc token cross-fade; snap on first load / auto refocus / reduced-motion. Draws via `sky/` helpers (`drawStars`, `drawMoon`, `drawSun`, `drawClouds`, `drawHorizon`, `palette`) — replaces the retired `Starfield` / `Cloudfield` / `BackgroundScene` — see [ADR-004](decisions/ADR-004-animated-celestial-transition.md) |
-| `ThemeToggle` | Header switcher — glyph-based Heroicons sun↔moon (small click morph; the celestial realism lives in `SkyScene`, not here) + separate Auto badge |
-| `ThemeProvider` | Client context: `{ mode, resolved, setMode }` |
-| `ThemeMetaColor` | Updates `<meta name="theme-color">` with the active palette |
-| `CursorSpotlight` | Pointer glow — **night only** (torchlight metaphor) |
-| `Reveal` | Scroll-reveal wrapper (client) |
-| `Button` / `ButtonLink` | Primary / outline / ghost buttons; internal + external links |
-| `SectionHeader` | Eyebrow + title + description block |
-| `DisciplineTag` / `Tag` | Themed discipline badges + neutral skill tags |
-| `ProjectCard` | Project showcase surface with disciplines, summary, link |
-| `ProjectModal` | Lightbox; swaps diagram to `*.light.svg` in day mode |
+| `lens/LensCanvas` → `LensScene` | Client-only persistent canvas: rig, solid, streams, kinetic layers, refraction pass, Lightformer environment |
+| `lens/LensChoreography` | The five act ScrollTriggers + scroll velocity → `lensState` |
+| `lens/kinetic/KineticText` | Semantic heading/figure with GL twin + plain-fade fallback |
+| `lens/kinetic/GlassImage` | Semantic `<img>` with distort-then-snap GL plane (high tier) |
+| `acts/Hero` | Act 1 — kinetic `<h1>`, copy parallax, scroll cue |
+| `acts/Approach` | Act 2 — method statement + count-up stat band (`lib/stats.ts`) |
+| `acts/Work` → `ProjectPin` | Act 3 — pinned two-beat project panels (screenshot slot + diagram) |
+| `acts/ReadTheBuild` | Per-project progressive disclosure (problem/approach/outcome/howAI/stack) |
+| `acts/Trajectory` | Act 4 — experience timeline of disclosures from `resume.ts` |
+| `InlineDiagram` | Fetches + inlines a diagram SVG for animation (CSP-safe, own asset) |
+| `SectionHeader` | Eyebrow + kinetic title + description |
+| `Button` / `ButtonLink` | Primary / outline actions |
+| `Tag` / `CapabilityTag` | Neutral tech tags + single-accent capability chips |
+| `ui/Loader` | Branded first-paint overlay, dismissed on lens-ready |
+| `ui/Cursor`, `ui/Magnetic` | Fine-pointer custom cursor + magnetic CTAs |
+| `LenisProvider` | Smooth scroll + ScrollTrigger sync |
+| `Reveal` | Generic scroll-reveal wrapper (available; acts use their own choreography) |
+
+Content lives in `src/lib/*.ts` (`projects.ts`, `resume.ts`, `stats.ts`,
+`capabilities.ts`, `nav.ts`, `techIcons.ts`) — components render it, never
+hardcode it.
 
 ---
 
 ## Accessibility
 
-- `color-scheme` flips per theme (`dark` at night, `light` in day) — native controls match.
-- Gold / amber focus ring on all interactive elements via `:focus-visible`.
-- All day-mode text pairings meet WCAG AA (minimum 4.5:1 for normal text).
-- `.text-gilt` passes large-text AA (3:1) in both themes.
-- Decorative canvas elements / glows marked `aria-hidden`.
-- `ThemeToggle`: scene button and auto badge both keyboard-operable with correct `aria-label` / `aria-pressed`.
-- `prefers-reduced-motion`: all animations neutralized; canvases render static frames.
+- Prerendered HTML carries the **full semantic DOM** — every heading, figure,
+  and body string exists as real elements (the canvas is decoration,
+  `aria-hidden`).
+- Focus ring: 2px accent outline via `:focus-visible` on all interactive
+  elements; Trajectory/ReadTheBuild disclosures are real `<button>`s with
+  `aria-expanded`/`aria-controls`.
+- `color-scheme: dark`; `::selection` styled on-brand.
+- Contrast: `ink` and `ink-muted` clear AA on `bg`/`surface`;
+  `accent-bright` is the accent text color for exactly that reason.
+- `prefers-reduced-motion`: CSS + JS + scene all resolve to static end-states;
+  count-ups render final values; nothing is hidden behind motion.
+
+## Responsive breakpoints
+
+Mobile-first Tailwind defaults: `sm` 640 · `md` 768 · `lg` 1024 · `xl` 1280.
+Test at 320 / 768 / 1024 / 1440. The Work act pins only at `lg+`; below that
+panels stack naturally.
