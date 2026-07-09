@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Budget Optimization Report — recreation (fictional data)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #f9f9f7; color: #0b0b0b;
+    --series-1: #2a78d6; --series-2: #1baf7a; --series-3: #eda100;
+    --series-4: #008300; --series-5: #4a3aa7;
+    --bar-cur: #86b6ef; --bar-opt: #256abf;
+    --ink-2: #52514e; --muted: #898781; --grid: #e1e0d9; --axis: #c3c2b7;
+    --good: #006300; --down: #d03b3b; --surface: #ffffff;
+  }
+  .wrap { max-width: 1310px; margin: 0 auto; padding: 20px 40px; }
+  .head { display: flex; align-items: flex-start; justify-content: space-between; }
+  h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+  .sub { margin-top: 6px; font-size: 14px; color: var(--ink-2); }
+  .chips { display: flex; gap: 8px; }
+  .chipk {
+    font-size: 12.5px; font-weight: 600; border-radius: 999px; padding: 6px 12px;
+    background: #fff; border: 1px solid rgba(11,11,11,0.10); color: var(--ink-2);
+  }
+  .chipk.good { color: var(--good); }
+  /* hero row */
+  .hero { display: flex; gap: 40px; align-items: baseline; margin: 13px 0 13px; }
+  .hero .big { font-size: 38px; font-weight: 700; color: var(--good); }
+  .hero .cap { font-size: 14px; color: var(--ink-2); max-width: 240px; }
+  .hero .mid { font-size: 24px; font-weight: 600; }
+  /* cards */
+  .grid { display: grid; grid-template-columns: 620px 1fr; gap: 20px; }
+  .card { background: var(--surface); border: 1px solid rgba(11,11,11,0.10);
+    border-radius: 12px; padding: 15px 20px; }
+  .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .card .h2sub { font-size: 12.5px; color: var(--muted); margin-bottom: 12px; }
+  .legend { display: flex; gap: 16px; font-size: 12.5px; color: var(--ink-2);
+    align-items: center; margin-bottom: 12px; }
+  .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+    vertical-align: -1px; margin-right: 6px; }
+  /* bar chart */
+  .brow { display: grid; grid-template-columns: 78px 1fr; align-items: center; margin-bottom: 13px; }
+  .bname { font-size: 13px; color: var(--ink-2); }
+  .bars { display: flex; flex-direction: column; gap: 2px; }
+  .bar { height: 12px; border-radius: 0 4px 4px 0; position: relative; }
+  .bar.cur { background: var(--bar-cur); }
+  .bar.opt { background: var(--bar-opt); }
+  .bval { position: absolute; left: 100%; margin-left: 8px; top: 50%;
+    transform: translateY(-50%); font-size: 12px; color: var(--ink-2);
+    font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* table */
+  table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  th { text-align: right; font-size: 12px; font-weight: 600; color: var(--muted);
+    padding: 8px 10px; border-bottom: 1px solid var(--grid); }
+  th:first-child { text-align: left; }
+  td { text-align: right; font-size: 13.5px; padding: 7px 10px;
+    border-bottom: 1px solid #f1f0ec; font-variant-numeric: tabular-nums; }
+  td:first-child { text-align: left; }
+  tr.total td { border-bottom: 0; font-weight: 600; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+    margin-right: 8px; vertical-align: 0; }
+  .up { color: var(--good); font-weight: 600; }
+  .down { color: var(--down); font-weight: 600; }
+  .foot { margin-top: 14px; font-size: 12px; color: var(--muted); }
+  svg text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <div>
+        <h1>Budget Optimization Report</h1>
+        <div class="sub">Fixed-budget scenario &middot; 52 weeks &middot; 4 markets &middot; Google Meridian (Bayesian MMM)</div>
+      </div>
+      <div class="chips">
+        <span class="chipk good">&#10003; R-hat 1.01</span>
+        <span class="chipk good">&#10003; ESS 1,240</span>
+        <span class="chipk">4 chains &times; 2,000 draws</span>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div style="display:flex; gap:14px; align-items:baseline;">
+        <span class="big">+4.2%</span>
+        <span class="cap">expected incremental revenue at constant spend</span>
+      </div>
+      <div style="display:flex; gap:14px; align-items:baseline;">
+        <span class="mid">&euro;194,000&thinsp;/wk</span>
+        <span class="cap">total media budget &mdash; held constant</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Budget allocation &mdash; current vs optimized</h2>
+        <div class="h2sub">weekly spend per channel (&euro;k)</div>
+        <div class="legend">
+          <span><span class="sw" style="background:var(--bar-cur)"></span>Current</span>
+          <span><span class="sw" style="background:var(--bar-opt)"></span>Optimized</span>
+        </div>
+        <div id="barchart"></div>
+      </div>
+
+      <div class="card">
+        <h2>Response curves</h2>
+        <div class="h2sub">incremental weekly revenue vs weekly spend, posterior mean &middot; &#9679; current &middot; &#9675; optimized</div>
+        <svg id="curves" width="100%" height="302" viewBox="0 0 600 302"></svg>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <h2>Recommended reallocation</h2>
+      <table>
+        <thead>
+          <tr><th>Channel</th><th>Current &euro;/wk</th><th>Optimized &euro;/wk</th><th>&Delta;</th><th>Posterior ROI (mean)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="dot" style="background:var(--series-1)"></span>Paid Search</td><td>68,400</td><td>61,900</td><td class="down">&#9660; 9.5%</td><td>3.1</td></tr>
+          <tr><td><span class="dot" style="background:var(--series-2)"></span>Paid Social</td><td>52,000</td><td>63,200</td><td class="up">&#9650; 21.5%</td><td>2.4</td></tr>
+          <tr><td><span class="dot" style="background:var(--series-3)"></span>Online Video</td><td>41,300</td><td>47,800</td><td class="up">&#9650; 15.7%</td><td>1.9</td></tr>
+          <tr><td><span class="dot" style="background:var(--series-4)"></span>Display</td><td>22,600</td><td>14,100</td><td class="down">&#9660; 37.6%</td><td>0.9</td></tr>
+          <tr><td><span class="dot" style="background:var(--series-5)"></span>Audio</td><td>9,700</td><td>7,000</td><td class="down">&#9660; 27.8%</td><td>0.7</td></tr>
+          <tr class="total"><td>Total</td><td>194,000</td><td>194,000</td><td>&mdash;</td><td></td></tr>
+        </tbody>
+      </table>
+      <div class="foot">Generated 2026-07-09 &middot; fit window 2025-W02 &ndash; 2026-W01 &middot; optimizer: fixed budget, channel bounds &plusmn;30% &middot; all figures fictional (dummy-data recreation)</div>
+    </div>
+  </div>
+
+<script>
+  // ---- grouped horizontal bars ----
+  const channels = [
+    { name: "Paid Search", cur: 68.4, opt: 61.9 },
+    { name: "Paid Social", cur: 52.0, opt: 63.2 },
+    { name: "Online Video", cur: 41.3, opt: 47.8 },
+    { name: "Display",     cur: 22.6, opt: 14.1 },
+    { name: "Audio",       cur:  9.7, opt:  7.0 },
+  ];
+  const pxPerK = 380 / 70; // 70k -> 380px
+  const bc = document.getElementById("barchart");
+  bc.innerHTML = channels.map(c => `
+    <div class="brow">
+      <div class="bname">${c.name}</div>
+      <div class="bars">
+        <div class="bar cur" style="width:${(c.cur * pxPerK).toFixed(1)}px"><span class="bval">${c.cur.toFixed(1)}</span></div>
+        <div class="bar opt" style="width:${(c.opt * pxPerK).toFixed(1)}px"><span class="bval">${c.opt.toFixed(1)}</span></div>
+      </div>
+    </div>`).join("");
+
+  // ---- response curves ----
+  // y(x) = base - A * (1 - exp(-(x - x0)/tau)) : simple saturation shape
+  const P = { x0: 46, x1: 508, base: 264, top: 12 };
+  const css = getComputedStyle(document.body);
+  const curves = [
+    { name: "Search",  color: css.getPropertyValue("--series-1"), A: 218, tau: 150, cur: 68.4, opt: 61.9 },
+    { name: "Social",  color: css.getPropertyValue("--series-2"), A: 182, tau: 190, cur: 52.0, opt: 63.2 },
+    { name: "Video",   color: css.getPropertyValue("--series-3"), A: 141, tau: 210, cur: 41.3, opt: 47.8 },
+    { name: "Display", color: css.getPropertyValue("--series-4"), A:  71, tau: 170, cur: 22.6, opt: 14.1 },
+    { name: "Audio",   color: css.getPropertyValue("--series-5"), A:  36, tau: 160, cur:  9.7, opt:  7.0 },
+  ];
+  const spendX = k => P.x0 + k * ((P.x1 - P.x0) / 80); // 0..80k -> plot width
+  const svg = document.getElementById("curves");
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (t, a) => { const n = document.createElementNS(NS, t);
+    for (const k in a) n.setAttribute(k, a[k]); svg.appendChild(n); return n; };
+  // grid + axes
+  for (let gy = P.top + 40; gy < P.base; gy += 56)
+    el("line", { x1: P.x0, y1: gy, x2: P.x1, y2: gy, stroke: "#e1e0d9", "stroke-width": 1 });
+  el("line", { x1: P.x0, y1: P.base, x2: P.x1, y2: P.base, stroke: "#c3c2b7", "stroke-width": 1 });
+  el("line", { x1: P.x0, y1: P.top, x2: P.x0, y2: P.base, stroke: "#c3c2b7", "stroke-width": 1 });
+  // axis titles
+  const t1 = el("text", { x: (P.x0 + P.x1) / 2, y: 296, "text-anchor": "middle",
+    "font-size": 12, fill: "#898781" }); t1.textContent = "weekly spend (€k)";
+  const t2 = el("text", { x: 14, y: (P.top + P.base) / 2, "text-anchor": "middle",
+    "font-size": 12, fill: "#898781",
+    transform: `rotate(-90 14 ${(P.top + P.base) / 2})` }); t2.textContent = "incr. revenue (€k)";
+  // x ticks
+  [0, 20, 40, 60, 80].forEach(k => {
+    const x = spendX(k);
+    el("line", { x1: x, y1: P.base, x2: x, y2: P.base + 4, stroke: "#c3c2b7", "stroke-width": 1 });
+    const t = el("text", { x, y: P.base + 17, "text-anchor": "middle", "font-size": 11, fill: "#898781" });
+    t.textContent = k;
+  });
+  for (const c of curves) {
+    const y = x => P.base - c.A * (1 - Math.exp(-(x - P.x0) / c.tau));
+    const pts = [];
+    for (let x = P.x0; x <= P.x1; x += 6) pts.push(`${x},${y(x).toFixed(1)}`);
+    el("polyline", { points: pts.join(" "), fill: "none",
+      stroke: c.color.trim(), "stroke-width": 2, "stroke-linecap": "round" });
+    // current marker: filled, 2px surface ring
+    const cx = spendX(c.cur);
+    el("circle", { cx, cy: y(cx).toFixed(1), r: 4.5, fill: c.color.trim(),
+      stroke: "#ffffff", "stroke-width": 2 });
+    // optimized marker: open ring
+    const ox = spendX(c.opt);
+    el("circle", { cx: ox, cy: y(ox).toFixed(1), r: 4.5, fill: "#ffffff",
+      stroke: c.color.trim(), "stroke-width": 2 });
+    // direct label: colored dot + ink text at line end
+    const ly = y(P.x1);
+    el("circle", { cx: P.x1 + 10, cy: ly, r: 4, fill: c.color.trim() });
+    const lt = el("text", { x: P.x1 + 20, y: ly + 4, "font-size": 12.5, fill: "#52514e" });
+    lt.textContent = c.name;
+  }
+</script>
+</body>
+</html>

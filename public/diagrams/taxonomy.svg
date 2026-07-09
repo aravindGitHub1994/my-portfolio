@@ -2,83 +2,83 @@
   <title id="tax-title">Taxonomy Builder architecture: React frontend calls an Express API — JWT auth, fail-closed tenant guard, recursive taxonomy engine, two-tier cache and Excel workers — backed by PostgreSQL.</title>
 
   <g class="dg-edges">
-    <path class="dg-edge" id="tax-e1" data-from="ui" data-to="auth" data-step="1" d="M360,82 L360,156" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1.5" stroke-linecap="round"/>
-    <path class="dg-arrow" data-step="1" d="M355,153 L365,153 L360,162 Z" fill="rgba(162,168,180,0.65)"/>
-    <text class="dg-label" data-step="1" x="372" y="122" font-size="10.5" fill="#6a7080">REST · HttpOnly JWT</text>
+    <path class="dg-edge" id="tax-e1" data-from="ui" data-to="auth" data-step="1" d="M360,78 L360,140" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="2" stroke-linecap="round"/>
+    <path class="dg-arrow" data-step="1" d="M355,137 L365,137 L360,146 Z" fill="rgba(162,168,180,0.65)"/>
+    <text class="dg-label" data-step="1" x="374" y="112" font-size="14.5" fill="#6a7080">REST · HttpOnly JWT</text>
 
-    <path class="dg-edge" id="tax-e2" data-from="auth" data-to="guard" data-step="3" d="M360,218 L360,240" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1.5" stroke-linecap="round"/>
-    <path class="dg-arrow" data-step="3" d="M355,237 L365,237 L360,246 Z" fill="rgba(162,168,180,0.65)"/>
+    <path class="dg-edge" id="tax-e2" data-from="auth" data-to="guard" data-step="3" d="M360,216 L360,244" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="2" stroke-linecap="round"/>
+    <path class="dg-arrow" data-step="3" d="M355,241 L365,241 L360,250 Z" fill="rgba(162,168,180,0.65)"/>
 
-    <path class="dg-edge" id="tax-e3" data-from="guard" data-to="engine" data-step="5" d="M300,300 C255,315 215,320 187,332" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1.5" stroke-linecap="round"/>
-    <path class="dg-arrow" data-step="5" d="M179,325 L189,325 L184,334 Z" fill="rgba(162,168,180,0.65)" transform="rotate(63,184,334)"/>
+    <path class="dg-edge" id="tax-e3" data-from="guard" data-to="engine" data-step="5" d="M310,316 L204,360" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="2" stroke-linecap="round"/>
+    <path class="dg-arrow" data-step="5" d="M191,355 L201,355 L196,364 Z" fill="rgba(162,168,180,0.65)" transform="rotate(67,196,364)"/>
 
-    <path class="dg-edge" id="tax-e4" data-from="guard" data-to="cache" data-step="5" d="M360,300 L360,330" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1.5" stroke-linecap="round"/>
-    <path class="dg-arrow" data-step="5" d="M355,327 L365,327 L360,336 Z" fill="rgba(162,168,180,0.65)"/>
+    <path class="dg-edge" id="tax-e4" data-from="guard" data-to="cache" data-step="5" d="M360,316 L360,360" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="2" stroke-linecap="round"/>
+    <path class="dg-arrow" data-step="5" d="M355,357 L365,357 L360,366 Z" fill="rgba(162,168,180,0.65)"/>
 
-    <path class="dg-edge" id="tax-e5" data-from="guard" data-to="worker" data-step="5" d="M420,300 C465,315 505,320 533,332" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1.5" stroke-linecap="round"/>
-    <path class="dg-arrow" data-step="5" d="M531,325 L541,325 L536,334 Z" fill="rgba(162,168,180,0.65)" transform="rotate(-63,536,334)"/>
+    <path class="dg-edge" id="tax-e5" data-from="guard" data-to="worker" data-step="5" d="M410,316 L516,360" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="2" stroke-linecap="round"/>
+    <path class="dg-arrow" data-step="5" d="M519,355 L529,355 L524,364 Z" fill="rgba(162,168,180,0.65)" transform="rotate(-67,524,364)"/>
 
-    <path class="dg-edge" id="tax-e6" data-from="engine" data-to="db" data-bidir="true" data-step="7" d="M180,394 C180,448 258,468 294,484" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1.5" stroke-linecap="round"/>
-    <path class="dg-arrow" data-step="7" d="M175,403 L185,403 L180,394 Z" fill="rgba(162,168,180,0.65)"/>
-    <path class="dg-arrow" data-step="7" d="M289,475 L299,475 L294,484 Z" fill="rgba(162,168,180,0.65)" transform="rotate(-66,294,484)"/>
+    <path class="dg-edge" id="tax-e6" data-from="engine" data-to="db" data-bidir="true" data-step="7" d="M169,432 L268,512" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="2" stroke-linecap="round"/>
+    <path class="dg-arrow" data-step="7" d="M164,441 L174,441 L169,432 Z" fill="rgba(162,168,180,0.65)"/>
+    <path class="dg-arrow" data-step="7" d="M270,508 L280,508 L275,517 Z" fill="rgba(162,168,180,0.65)" transform="rotate(-51,275,517)"/>
 
-    <path class="dg-edge" id="tax-e7" data-from="cache" data-to="db" data-bidir="true" data-step="7" d="M360,394 L360,462" pathLength="1" fill="none" stroke="rgba(162,168,180,0.35)" stroke-width="1.5" stroke-linecap="round"/>
-    <path class="dg-arrow" data-step="7" d="M355,403 L365,403 L360,394 Z" fill="rgba(162,168,180,0.45)"/>
-    <path class="dg-arrow" data-step="7" d="M355,459 L365,459 L360,468 Z" fill="rgba(162,168,180,0.45)"/>
-    <text class="dg-label" data-step="7" x="372" y="432" font-size="10.5" fill="#6a7080">miss / invalidate</text>
+    <path class="dg-edge" id="tax-e7" data-from="cache" data-to="db" data-bidir="true" data-step="7" d="M360,432 L360,478" pathLength="1" fill="none" stroke="rgba(162,168,180,0.35)" stroke-width="2" stroke-linecap="round"/>
+    <path class="dg-arrow" data-step="7" d="M355,441 L365,441 L360,432 Z" fill="rgba(162,168,180,0.45)"/>
+    <path class="dg-arrow" data-step="7" d="M355,478 L365,478 L360,487 Z" fill="rgba(162,168,180,0.45)"/>
+    <text class="dg-label" data-step="7" x="374" y="462" font-size="14.5" fill="#6a7080">miss / invalidate</text>
 
-    <path class="dg-edge" id="tax-e8" data-from="worker" data-to="db" data-bidir="true" data-step="7" d="M540,394 C540,448 462,468 426,484" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1.5" stroke-linecap="round"/>
-    <path class="dg-arrow" data-step="7" d="M535,403 L545,403 L540,394 Z" fill="rgba(162,168,180,0.65)"/>
-    <path class="dg-arrow" data-step="7" d="M421,475 L431,475 L426,484 Z" fill="rgba(162,168,180,0.65)" transform="rotate(66,426,484)"/>
+    <path class="dg-edge" id="tax-e8" data-from="worker" data-to="db" data-bidir="true" data-step="7" d="M565,432 L452,512" pathLength="1" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="2" stroke-linecap="round"/>
+    <path class="dg-arrow" data-step="7" d="M560,441 L570,441 L565,432 Z" fill="rgba(162,168,180,0.65)"/>
+    <path class="dg-arrow" data-step="7" d="M440,508 L450,508 L445,517 Z" fill="rgba(162,168,180,0.65)" transform="rotate(55,445,517)"/>
   </g>
 
   <g class="dg-nodes">
     <g class="dg-node" id="tax-n-ui" data-node="ui" data-step="0">
-      <rect x="260" y="24" width="200" height="58" rx="10" fill="#0e0e14" stroke="#8fb3ff" stroke-opacity="0.75" stroke-width="1.5"/>
-      <text x="360" y="50" text-anchor="middle" font-size="13.5" font-weight="600" fill="#f2f4f8">React Frontend</text>
-      <text x="360" y="68" text-anchor="middle" font-size="10.5" fill="#a2a8b4">Builder &amp; Admin UI</text>
+      <rect x="235" y="14" width="250" height="64" rx="10" fill="#0e0e14" stroke="#8fb3ff" stroke-opacity="0.75" stroke-width="2"/>
+      <text x="360" y="42" text-anchor="middle" font-size="20" font-weight="600" fill="#f2f4f8">React Frontend</text>
+      <text x="360" y="66" text-anchor="middle" font-size="15" fill="#a2a8b4">Builder &amp; Admin UI</text>
     </g>
 
     <g class="dg-node dg-container" id="tax-n-api" data-node="api" data-step="2">
-      <rect x="60" y="140" width="600" height="272" rx="14" fill="rgba(13,13,18,0.55)" stroke="rgba(162,168,180,0.18)" stroke-width="1"/>
-      <text x="84" y="168" font-size="10.5" letter-spacing="2" fill="#6a7080">EXPRESS API</text>
+      <rect x="28" y="118" width="664" height="336" rx="14" fill="rgba(13,13,18,0.55)" stroke="rgba(162,168,180,0.18)" stroke-width="1"/>
+      <text x="50" y="144" font-size="13" letter-spacing="2" fill="#6a7080">EXPRESS API</text>
     </g>
 
     <g class="dg-node" id="tax-n-auth" data-node="auth" data-step="2">
-      <rect x="280" y="164" width="160" height="54" rx="10" fill="#0e0e14" stroke="rgba(162,168,180,0.35)" stroke-width="1.5"/>
-      <text x="360" y="187" text-anchor="middle" font-size="13.5" font-weight="600" fill="#f2f4f8">authMiddleware</text>
-      <text x="360" y="205" text-anchor="middle" font-size="10.5" fill="#a2a8b4">JWT verify</text>
+      <rect x="250" y="152" width="220" height="64" rx="10" fill="#0e0e14" stroke="rgba(162,168,180,0.35)" stroke-width="2"/>
+      <text x="360" y="180" text-anchor="middle" font-size="20" font-weight="600" fill="#f2f4f8">authMiddleware</text>
+      <text x="360" y="204" text-anchor="middle" font-size="15" fill="#a2a8b4">JWT verify</text>
     </g>
 
     <g class="dg-node" id="tax-n-guard" data-node="guard" data-key="true" data-step="4">
-      <rect x="270" y="246" width="180" height="54" rx="10" fill="#0e0e14" stroke="#3d74ff" stroke-opacity="0.8" stroke-width="1.5"/>
-      <text x="360" y="269" text-anchor="middle" font-size="13.5" font-weight="600" fill="#f2f4f8">clientContext guard</text>
-      <text x="360" y="287" text-anchor="middle" font-size="10.5" fill="#a2a8b4">fail-closed · per-tenant</text>
+      <rect x="235" y="252" width="250" height="64" rx="10" fill="#0e0e14" stroke="#3d74ff" stroke-opacity="0.8" stroke-width="2"/>
+      <text x="360" y="280" text-anchor="middle" font-size="20" font-weight="600" fill="#f2f4f8">clientContext guard</text>
+      <text x="360" y="304" text-anchor="middle" font-size="15" fill="#a2a8b4">fail-closed · per-tenant</text>
     </g>
 
     <g class="dg-node" id="tax-n-engine" data-node="engine" data-key="true" data-step="6">
-      <rect x="92" y="336" width="176" height="58" rx="10" fill="#0e0e14" stroke="#3d74ff" stroke-opacity="0.8" stroke-width="1.5"/>
-      <text x="180" y="361" text-anchor="middle" font-size="13.5" font-weight="600" fill="#f2f4f8">Taxonomy Engine</text>
-      <text x="180" y="379" text-anchor="middle" font-size="10.5" fill="#a2a8b4">recursive DFS generator</text>
+      <rect x="60" y="368" width="218" height="64" rx="10" fill="#0e0e14" stroke="#3d74ff" stroke-opacity="0.8" stroke-width="2"/>
+      <text x="169" y="396" text-anchor="middle" font-size="20" font-weight="600" fill="#f2f4f8">Taxonomy Engine</text>
+      <text x="169" y="420" text-anchor="middle" font-size="15" fill="#a2a8b4">recursive DFS generator</text>
     </g>
 
     <g class="dg-node" id="tax-n-cache" data-node="cache" data-step="6">
-      <rect x="300" y="336" width="120" height="58" rx="10" fill="#0e0e14" stroke="rgba(162,168,180,0.5)" stroke-width="1.5"/>
-      <path d="M300,348 A60,10 0 0 0 420,348" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1"/>
-      <text x="360" y="368" text-anchor="middle" font-size="12" font-weight="600" fill="#f2f4f8">2-tier cache</text>
-      <text x="360" y="383" text-anchor="middle" font-size="10" fill="#a2a8b4">versioned · in-mem</text>
+      <rect x="285" y="368" width="150" height="64" rx="10" fill="#0e0e14" stroke="rgba(162,168,180,0.5)" stroke-width="2"/>
+      <path d="M285,381 A75,10 0 0 0 435,381" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1"/>
+      <text x="360" y="402" text-anchor="middle" font-size="18" font-weight="600" fill="#f2f4f8">2-tier cache</text>
+      <text x="360" y="422" text-anchor="middle" font-size="14" fill="#a2a8b4">versioned · in-mem</text>
     </g>
 
     <g class="dg-node" id="tax-n-worker" data-node="worker" data-step="6">
-      <rect x="452" y="336" width="176" height="58" rx="10" fill="#0e0e14" stroke="rgba(162,168,180,0.35)" stroke-width="1.5"/>
-      <text x="540" y="361" text-anchor="middle" font-size="13.5" font-weight="600" fill="#f2f4f8">Excel workers</text>
-      <text x="540" y="379" text-anchor="middle" font-size="10.5" fill="#a2a8b4">worker_threads · import / export</text>
+      <rect x="450" y="368" width="230" height="64" rx="10" fill="#0e0e14" stroke="rgba(162,168,180,0.35)" stroke-width="2"/>
+      <text x="565" y="396" text-anchor="middle" font-size="20" font-weight="600" fill="#f2f4f8">Excel workers</text>
+      <text x="565" y="420" text-anchor="middle" font-size="15" fill="#a2a8b4">worker_threads · import/export</text>
     </g>
 
     <g class="dg-node" id="tax-n-db" data-node="db" data-step="8">
-      <rect x="300" y="470" width="120" height="64" rx="10" fill="#0e0e14" stroke="rgba(162,168,180,0.5)" stroke-width="1.5"/>
-      <path d="M300,483 A60,10 0 0 0 420,483" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1"/>
-      <text x="360" y="510" text-anchor="middle" font-size="13" font-weight="600" fill="#f2f4f8">PostgreSQL</text>
+      <rect x="275" y="490" width="170" height="66" rx="10" fill="#0e0e14" stroke="rgba(162,168,180,0.5)" stroke-width="2"/>
+      <path d="M275,503 A85,10 0 0 0 445,503" fill="none" stroke="rgba(162,168,180,0.5)" stroke-width="1"/>
+      <text x="360" y="533" text-anchor="middle" font-size="20" font-weight="600" fill="#f2f4f8">PostgreSQL</text>
     </g>
   </g>
 </svg>

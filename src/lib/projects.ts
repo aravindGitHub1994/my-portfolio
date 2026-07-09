@@ -16,6 +16,13 @@ export interface Project {
   howAI: string;
   /** Public path, e.g. "/diagrams/taxonomy.svg". */
   diagram: string;
+  /**
+   * Optional recreated product screenshot (ADR-006 §7) — public path under
+   * /screens/. MUST be a fabricated, dummy-data recreation (fictional
+   * clients/SKUs/figures), never a raw client capture (§7a). The Work act
+   * renders its Beat-1 image pane only when this is present.
+   */
+  screenshot?: string;
   status?: "in-progress";
 }
 
@@ -36,6 +43,7 @@ export const PROJECTS: Project[] = [
     howAI:
       "Directed Claude Code through spec-driven development end to end — architecture decisions captured as ADRs before code, the recursive taxonomy engine and the fail-closed tenant guard built from written specs, and regression coverage added alongside each feature rather than after.",
     diagram: "/diagrams/taxonomy.svg",
+    screenshot: "/screens/taxonomy.png",
   },
   {
     slug: "budget",
@@ -53,6 +61,7 @@ export const PROJECTS: Project[] = [
     howAI:
       "Used Claude Code and Gemini CLI as the implementation team for the modeling pipeline — translating MMM domain requirements (priors, spline knots, convergence thresholds) into working Python, and codifying hard-won \"gotchas\" (Meridian's strict dimension naming, API churn between versions) as a standing project context so they get caught automatically on the next run.",
     diagram: "/diagrams/budget.svg",
+    screenshot: "/screens/budget.png",
   },
   {
     slug: "gmc",
@@ -70,6 +79,7 @@ export const PROJECTS: Project[] = [
     howAI:
       "Had Claude Code drive the build from a written PRD and ADRs — the service-account auth decision, the API call strategy (discovery → aggregate status → on-demand drill-down), and the SQLite caching layer were all specified first and implemented against that spec, keeping Merchant API quota usage predictable from day one.",
     diagram: "/diagrams/gmc.svg",
+    screenshot: "/screens/gmc.png",
   },
   {
     slug: "personas",
