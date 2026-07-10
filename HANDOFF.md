@@ -1,139 +1,112 @@
-# HANDOFF — "The Lens" redesign (ADR-006): implemented + QA'd, uncommitted
+# Handoff — ADR-009 implementation (plan-0006)
 
-> Sessions: 2026-07-07 (three so far), branch `threeJS-redesign`. The previous
-> HANDOFF (ADR-005 P2/P3 tracking) was deleted by the owner; this replaces it.
+Branch `ui-refinement`. Executing
+`docs/plans/implementation-plan-0006.md` (slice specs live THERE — read it
+first; this file only records progress + gotchas).
+
+> ✅ **Plan-0006 complete** (2026-07-11). All AFK slices coded with
+> `npm run lint` + `npm run build` green after every slice (final pass green
+> at commit time). Owner drove the 5.3 visual QA across all tiers and signed
+> off; plan-0005 + plan-0006 committed and pushed to `ui-refinement`.
 
 ## Current Status
 
-- **ADR-006 implemented, visually QA'd on all tiers, §7a history rewrite DONE
-  — everything is in the working tree, NOTHING COMMITTED YET.**
-  `npm run lint` ✅ · `npm run build` ✅ · semantic DOM in `out/index.html` ✅.
-- New system: `src/components/lens/` (replaces the deleted
-  `src/components/cube/`):
-  - `lensState.ts` — shared mutable scroll/pointer state; `LensChoreography.tsx`
-    — sole owner of the five per-act ScrollTriggers + scroll velocity.
-  - `TheLens.tsx` — dispersion prism → crystallizes to cube (Trajectory beat)
-    → hands off to point-globe (Contact). Tiered: MTM / faux-glass / static cube.
-  - `DataStreams.tsx` — stateless vertex-shader particles + light blades.
-  - `RefractionPass.tsx` — pointer-radial displacement + chromatic aberration +
-    desaturation. High tier + fine pointer only.
-  - `kinetic/` — DOM↔GL twin system (Range-walk rasterizer; re-rasters on text
-    mutation for count-ups; plain-fade fallback where no GL layer claims).
-- **Slice 3.3 done:** `acts/Approach.tsx` — five count-up stat figures,
-  content in `src/lib/stats.ts` (44/19/200+ trace to `resume.ts`; 4/5 derived
-  from `PROJECTS.length`/`CAPABILITY_LIST.length`). Prerender ships resolved
-  values; reduced-motion never zeroes them; no aria-live.
-- **Visual QA done (third session, via `agent-browser` CLI — not the Chrome
-  extension) and the scene was materially fixed:**
-  - **Point-size bug (the big one):** `gl_PointSize` used `300.0/-mv.z` (~43×)
-    — particles rendered 70–150px, additive-blended into blinding white fog
-    that washed out every act. Now pixel-scale (`7.0/-mv.z`, unity at the lens
-    plane) in both stream shaders. This also fixed the "white slab" prism
-    (transmission was refracting the blown-out scene) and the Contact globe
-    (was a white ball; now an actual point-globe).
-  - Glass tuned: MTM `roughness` 0.06→0.12 + `envMapIntensity` 0.7 (Lightformer
-    strips no longer blow faces to white).
-  - `LensRig` approach beat: prism now **sinks below the stat band + shrinks**
-    (`sink = approach·(1−work)·(1−trajectory)`) so the figures own the row.
-  - All acts + `?tier=low` + `?tier=static` + emulated reduced-motion verified
-    by screenshot; pointer-distortion pass verified live; no page errors.
-- **Slice 4.3 done (2026-07-09, fourth session, owner-directed):** the three
-  hero screenshots recreated as fully fictional dummy-data pages (brands
-  Veyra Electronics / Solstice Beverages "Data Path" / a fictional Meridian
-  report — all SKUs, people, dates and € figures invented), authored as
-  self-contained HTML in `docs/projects/recreations/` (tracked; see its
-  README for the 1440×900 regen command), screenshotted via agent-browser →
-  `public/screens/{taxonomy,budget,gmc}.png` (86–113 KB each), and
-  `Project.screenshot` set on the three shipped projects (personas stays
-  imageless). Beat-1 verified live: high tier = GL-twinned distorting plane,
-  low tier = crisp DOM `<img>`; all three paths in the prerendered
-  `out/index.html`; lint ✅ build ✅.
-- **Slice 4.4 done:** all four diagrams re-authored for legibility (titles
-  16–20 / subs 12.5–15 viewBox units, stroke 2, dense fill; budget flipped
-  780×196 strip → vertical 440×492). `ProjectPin`: budget panel `max-w-sm`,
-  card padding p-4/sm:p-5. Verified in-browser per project.
-- **Slice 5.1 audit done** — one gap fixed: `KineticText` now has the §3
-  "plain fade" on unclaimed tiers (IO-driven, never hidden in prerender or
-  under reduced-motion). Delivered tier matrix documented in
-  `docs/design-system.md`. Note: low tier keeps *animated* calm choreography
-  (fewer particles, faux-glass, no post) — richer than the plan table's
-  "static prism" shorthand; recorded as the delivered contract.
-- **Slice 5.2 done:** `docs/design-system.md` rewritten (Electric Dark + Lens
-  contract + tier matrix), `README.md` rewritten (was celestial-era),
-  `AGENTS.md` conventions updated, `docs/diagram-authoring.md` updated
-  (single-play contract + legibility rules).
-- **§7a / slice 0.2 DONE (owner-authorized, third session):**
-  - `git filter-repo` on a mirror clone removed both confidential PNGs from
-    all history; force-pushed `main` + `feat/animated-celestial-sky`.
-  - Local: `main`/`feat` re-pointed; `threeJS-redesign` rebased onto the
-    rewritten base (`8e0a807`, old `bdf8b24`) — tree diff = only the two PNGs;
-    zero `Screenshot` objects reachable from any local ref. Raw files remain
-    on disk (gitignored) as recreation references.
-  - **Remote main was ahead of local** (contained the merged PR #1 celestial
-    branch); local `main` now tracks the rewritten remote incl. that merge.
-    `threeJS-redesign` still forks from the pre-merge base — intentional.
+Plan-0005 is fully implemented (see git-diffable working tree + plan-0005).
+Its leftovers were folded into plan-0006: open bug 1 → slice 4.1,
+CONTEXT.md scrub → 5.2, all visual verification → 5.3 (HITL).
+**Per owner request there is NO agent browser QA this plan** — every AFK
+slice gates on `npm run lint` + `npm run build` only.
 
-## Unresolved Threads
+### Plan-0006 slices
 
-1. **GitHub cached views still serve pre-rewrite blobs** (verified HTTP 200
-   at old SHAs post-push, for *both* rewrites now — the §7a PNG purge and
-   the 2026-07-09 client-name purge below) — unreachable commits persist
-   until GitHub purges, and **PR #1's read-only `refs/pull/*` pin old
-   commits**. Owner must contact GitHub Support ("remove cached views /
-   sensitive data" flow) to finish the purge — one request can cover both
-   rewrites. NDA/contract-terms check also still owner-side.
-2. ~~Slice 4.3~~ **done** (owner-directed 2026-07-09; assets are 100%
-   fictional so no NDA exposure from them).
-3. **Second history rewrite done (2026-07-09, owner-authorized):** the real
-   client name in `docs/projects/budget-optimizer-meridian/PROJECT_CONTEXT.md`
-   (present since this repo's very first commit) is fully scrubbed.
-   `git filter-repo --replace-text` on a fresh mirror clone, verified
-   zero-match across all history and tree-identical to the original except
-   the two redacted lines, then force-pushed to `main` +
-   `feat/animated-celestial-sky` (`threeJS-redesign` had no upstream yet, so
-   its local branch was simply re-pointed). Every commit hash on all three
-   branches changed again as a result — this session's earlier 6 redesign
-   commits now live at new SHAs (see `git log`); messages/order/content are
-   otherwise unchanged. Confirmed `origin/main` and
-   `origin/feat/animated-celestial-sky` match the rewritten local branches.
-4. Two recorded deviations from ADR-006 §9, owner may veto (rationale in plan
-   0004): canvas-raster kinetic type; stateless shader advection.
-5. QA was headless-browser (SwiftShader) — worth one pass with the owner's
-   eyes on real GPU for perf feel (fps) and MTM look; composition/choreography
-   are verified.
+| Slice | State | Notes |
+|---|---|---|
+| 1.1 prism glass retune | **coded (lint+build green; visual at 5.3)** | `TheLens.tsx`: env 0.16→0.03, roughness→0.06, CA→0.05, distortion→0.05, temporal→0.02, attenuation 4.5→2.5, pointLight 4→2.5; core → new `CORE_CYAN` (#46e3ff, = SPECTRUM cyan), opacity 1; comment rewritten. Kept `ior 1.45` + `anisotropicBlur 0.12` (plan said "keep ~"). |
+| 1.2 physical refraction | **coded (lint+build green; visual at 5.3)** | `DataStreams.tsx`: `uInSide` mirrors inflow p0/c/p1 x (enter outer face), driven `lerp(1, v.side, v.project)`; beam origin `p0.x = mix(0.4, 0.4*uSide, uProject)`; kink = `vec3(uSide, 0.08*k, 0) * 0.6 * uProject` added to the bezier control point (per-color spread, sweeps through zero mid-crossing). Hero/underline/static unaffected (uProject≈0 paths checked by inspection). |
+| 2.1 gpuTier rewrite | **coded (lint+build green; visual at 5.3)** | Full rewrite: default **high**; only floors = reduced-motion→static, no-WebGL→none, software renderer→low; `?tier=` sets `auto:false`; header comment rewritten. Old mobile/Intel/memory heuristic deleted. |
+| 2.2 stateful tier + watchdog + popup | **done (lint+build green)** | One deviation from the design notes: the repo's `react-hooks/set-state-in-effect` rule forbids detect-in-an-effect, so detection lives in a lazy `useState(detectTier)` initializer inside a NEW client-only `LensRoot.tsx` (reached via the existing ssr:false dynamic boundary; `LensCanvas` is now a thin prerendered shell). `FidelityNotice` + module-level `watchdogFired` guard live in LensRoot; `FpsWatchdog` in LensScene. GlassImageLayer unmount audit passed (registry release + texture dispose + IO disconnect; lingering ≤1.1s gsap tween on a plain ref object is harmless). |
+| 3.1 reveal affordance | **done (lint+build green)** | Pill (`.reveal-hint`, globals.css) + `data-revealing` via React state in `ProjectRevealCurtain`; `data-cursor-label="Reveal"` read by a new label div in `Cursor.tsx` (own quickTo pair at the ring's lag; text only rewritten when non-empty so fade-out keeps its shape). Pill fade relies on the global reduced-motion transition-zeroing block — no extra media gate. |
+| 4.1 kinetic-twin offset (ex-bug 1) | **coded (lint+build green)** | Root cause pinned to the baseline math: `r.top + fontBoundingBoxAscent` assumes a Range rect starts one font-ascent above the baseline — untrue across line-height models, which is exactly what separates the tight-leading hero from section titles. `rasterize.ts` now measures the browser's real Range-top→baseline offset with an offscreen probe (zero-size inline-block marker = baseline; same font + line-height; cached per style key; probe on `document.body` so heading MutationObservers never fire). Pad symmetry vs `layoutPlaneToRect` was audited clean — no layout.ts change. Marker-line verification is owner's at 5.3. |
+| 4.2 extended aberration | **done (lint+build green)** | Eyebrow (`SectionHeader`) + `01 / 05` counter (`ProjectPin`) wrapped in `KineticText as="p"`, same classes. `.cta-split` utility (globals.css, fine-pointer + no-reduced-motion gate) on the three Contact `ButtonLink`s — 1px red/blue text-shadow channel literals (not tokens, like the shader CA). Chips/body/taglines untouched. |
+| 5.1 ADR-009 + docs | **done** (previous session) | |
+| 5.2 confidentiality tail | **done** | CONTEXT.md:17 brand scrubbed to just the current fictional name. Shape greps (GTM/GA4/email) over repo AND `out/` prerender: only fabricated recreation values + owner's gmail. Final lint+build green 2026-07-11. |
+| 5.3 owner visual QA | **done — owner sign-off (2026-07-11)** | all tiers + reduced-motion + `?tier=high&debugProjection`; incl. plan-0005 trajectory-pose check (ex-bug 2) |
+
+### 2.2 design notes (historical — implemented with one deviation, see table)
+
+- **`LensCanvas.tsx`** — `useState<FidelityTier|null>(null)` + `auto` state;
+  detect in an effect; `null` → render nothing; `"none"` → `markLensReady()`
+  + no canvas (the tier console.info moves here from LensScene). Render
+  `<LensScene tier={tier} onSlow={...}/>` inside the existing
+  `pointer-events-none -z-10` div; `FidelityNotice` as a **sibling** with
+  `pointer-events-auto`. `onSlow` → `setTier("low")` + show notice; **Back to
+  full** → `setTier("high")`, hide notice; **×** → hide, stay low.
+  Watchdog must fire once per page load: module-level boolean, but **read/set
+  it only inside the onSlow callback** (never during render — react-compiler
+  purity). Pass `onSlow` only when `tier==="high" && auto`.
+- **`LensScene.tsx`** — take `tier`/`onSlow` props; delete `detectTier`
+  import, the internal `useState`, the tier-log effect, and the `none` early
+  return; keep `markLensReady` onCreated, `finePointer`, high-tier gates.
+  Mount `{tier==="high" && onSlow && <FpsWatchdog onSlow={onSlow}/>}`.
+- **`FpsWatchdog`** (in LensScene, child of Canvas): `useFrame` accumulator
+  in a ref — skip deltas >0.1s (tab pause/compile), ~1s warmup, then 2s
+  windows; window avg <40fps → `onSlow()` once (set ref `fired`). Keep
+  watching across good windows (fire on later sustained degradation).
+- **`FidelityNotice`** (DOM, in LensCanvas file): fixed card, `role="dialog"`
+  + aria-label, copy **"Switched to the basic version for smoothness."**,
+  buttons "Back to full" + ×. Semantic tokens only (`bg-surface`, `text-ink`,
+  `border-line`, `text-accent-bright`… — see `globals.css` @theme). No
+  localStorage.
+- **Hot-swap cleanup audit (done):** `RefractionPass` disposes its Effect on
+  unmount and `KineticTextLayer` releases its registry claim + per-plane
+  textures — high→low swap is safe. `GlassImageLayer` audit ~~was NOT done~~
+  → done next session, passed (see 2.2 table row).
+- R3F `Canvas` `dpr`/`frameloop` props react to tier change in place; no
+  `key=` remount (would re-run onCreated and drop scene continuity).
+
+## Close-out (resolved)
+
+- **Committed & pushed** to `ui-refinement` (2026-07-11) — plan-0005 +
+  plan-0006 landed together after owner sign-off (`git commit -F <file>`,
+  Windows shell memory note).
+- Slices 1.1/1.2/2.1/2.2 lint + build green (2026-07-11); visual acceptance
+  completed by the owner at 5.3.
+- 1.2's kink magnitudes (0.6, 0.08·k) were the owner's to retune at 5.3; the
+  committed values reflect that review.
+- Owner's machine previously detected `low`; 2.1 makes it high by default —
+  covered by the 5.3 watchdog check.
 
 ## Key References
 
-- ADR: `docs/decisions/ADR-006-lens-refractive-redesign.md` (§7a security;
-  §8 mobile contract) · Plan: `docs/plans/implementation-plan-0004.md`
-- Design system (rewritten): `docs/design-system.md` · Diagrams:
-  `docs/diagram-authoring.md` · Reference site: ryanritzenthaler.com
-- Visual QA screenshots: session scratchpad `qa*.png` (temp — will vanish).
+- Plan (slice specs, acceptance gates): `docs/plans/implementation-plan-0006.md`
+- Decision record: `docs/decisions/ADR-009-lens-refinement-glass-refraction-and-high-default-fidelity.md`
+- Prior act: `docs/decisions/ADR-008-projection-work-act-and-prism-finale.md`, `docs/plans/implementation-plan-0005.md`
+- Conventions: `AGENTS.md`, `docs/design-system.md`
+- Confidentiality rule: project `CLAUDE.md` (authoritative; ADR-006 §7a narrative unreliable)
 
-## Gotchas for the next agent
+### Tooling notes
 
-- **Strict React-compiler lint rules** (`react-hooks/purity`, `immutability`,
-  `refs`, `set-state-in-effect`): frame-time uniform writes via material refs,
-  no `Math.random` in render/memo (seeded `mulberry32`), subscribe-before-claim
-  in the kinetic registry, JSX (not `createElement`) when passing refs.
-- Static export + CSP `connect-src/font-src 'self'`: no CDN HDRs/fonts/
-  benchmarks; drei Environment stays Lightformer-only.
-- Windows shell: commit messages via `git commit -F <file>`; don't round-trip
-  UTF-8 files through PowerShell cmdlets.
-- `agent-browser` CLI drives QA (daemon at
-  `~\Documents\Local_server\agent-browser`, binary under `bin/`); headless GL
-  auto-detects tier **low** — use `?tier=` overrides. Dev server already runs
-  on port 3004.
-- Never push any ref that predates the §7a rebase (would re-leak the blobs);
-  old commits linger only in the local reflog until expiry.
+- `npm run dev` on port 3004; **no browser QA this plan** (owner request) —
+  gates are `npm run lint` + `npm run build` only.
+- Windows: don't round-trip UTF-8 files through PowerShell cmdlets; commit
+  messages via `-F` file.
 
 ## Recommended Next Steps
 
-- [ ] Owner: GitHub Support request (purge cached views + PR #1 old commits);
-      NDA check for recreated visuals.
-- [ ] Commit the redesign in reviewable slices (guardrails / plan / scene /
-      acts / diagrams+screens / docs), messages via `-F` file,
-      `Co-Authored-By: Claude Fable 5`. (Owner waived pre-commit
-      /code-review.)
-- [ ] Owner eyes on real GPU: hero prism look, fps, distortion feel; tune
-      MTM/blade alphas if wanted (`/frontend-ui-engineering`).
+**Plan-0006 complete (2026-07-11).** Owner finished the 5.3 visual QA and
+signed off; work is committed and pushed to `ui-refinement`.
+
+- [x] Owner 5.3 visual QA + sign-off (all tiers + reduced-motion +
+      `?tier=high&debugProjection`): watchdog auto-drop + "Back to full",
+      `?tier=low` shows no notice, 4.1 marker-line alignment (incl. the new
+      eyebrow / `01 / 05` twins), reveal pill + "Reveal" cursor label, CTA
+      RGB-split legibility, 1.2 kink magnitudes.
+- [x] Commit (plan-0005 + plan-0006) and push to `ui-refinement`
+      (`git commit -F <file>`, Windows note).
+
+No open agent work remains on this plan.
+
+## Recommended Skills
+
+- `fullstack-guardian` — completed the post-5.3 commit + push (this session).
+  No further agent work outstanding.

@@ -5,7 +5,9 @@ Accepted — **supersedes ADR-003** (tri-mode theme) and **ADR-004** (animated
 celestial sky) in full; **extends ADR-002** (diagrams stay pre-rendered SVGs but are
 re-authored to be individually animatable); **retains ADR-001** (static export) while
 **consciously reversing its "no new runtime dependencies" posture**. See Related
-Decisions.
+Decisions. §3's device-class tier heuristic was later partially superseded by
+ADR-006 §8, and then by **ADR-009** (high-by-default fidelity with a runtime FPS
+watchdog replacing the static pre-load guess).
 
 ## Date
 2026-07-06

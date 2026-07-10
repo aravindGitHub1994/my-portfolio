@@ -19,8 +19,8 @@ export function Work() {
       <div className="mx-auto w-full max-w-5xl px-6 pt-24 sm:pt-32">
         <SectionHeader
           eyebrow="Work"
-          title="Four systems, shipped by directing AI"
-          description="Real production systems — taxonomy engines, Bayesian budget models, feed monitoring, synthetic personas. Each architecture resolves as it enters."
+          title="Measurement craft, then systems shipped by directing AI"
+          description="Hands-on tagging and measurement work across hundreds of client accounts, then real production systems — taxonomy engines, Bayesian budget models, feed monitoring, synthetic personas. Each architecture resolves as it enters."
         />
       </div>
 

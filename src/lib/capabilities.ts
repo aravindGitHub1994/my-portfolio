@@ -9,7 +9,9 @@ export type CapabilityKey =
   | "full-stack"
   | "data-pipeline"
   | "automation"
-  | "api-integration";
+  | "api-integration"
+  | "measurement"
+  | "governance";
 
 export interface Capability {
   key: CapabilityKey;
@@ -50,6 +52,18 @@ export const CAPABILITIES: Record<CapabilityKey, Capability> = {
   "api-integration": {
     key: "api-integration",
     label: "API Integration",
+    tag: CHIP,
+    text: "text-accent-bright",
+  },
+  measurement: {
+    key: "measurement",
+    label: "Measurement",
+    tag: CHIP,
+    text: "text-accent-bright",
+  },
+  governance: {
+    key: "governance",
+    label: "Governance",
     tag: CHIP,
     text: "text-accent-bright",
   },

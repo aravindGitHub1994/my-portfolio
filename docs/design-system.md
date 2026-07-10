@@ -64,27 +64,33 @@ The kinetic rasterizer reproduces it on the GL side (`lens/kinetic/rasterize.ts`
 
 One persistent WebGL `<canvas>` (`src/components/lens/`) sits behind the DOM
 (`-z-10`). `lensState.ts` is the shared mutable state (pointer, pointer speed,
-scroll velocity, per-act progress); `LensChoreography.tsx` is the **sole owner**
-of the five per-act ScrollTriggers. Frame loops read the state — scroll and
-pointer never re-render React.
+scroll velocity, per-act progress, projection target); `LensChoreography.tsx`
+is the **sole owner** of the per-act and per-card ScrollTriggers. Frame loops
+read the state — scroll and pointer never re-render React.
 
 | Act | Section | Lens state |
 |---|---|---|
 | 1 Hero | `#hero` | Prism center-right; packets stream in, spectrum beams fan out |
 | 2 Approach | `#approach` | Prism **tightens** (sinks under the stat band, shrinks); beams organize into parallel lines |
-| 3 Work | `#work` | Lens **recedes** small + dim — the project panels own the stage |
-| 4 Trajectory | `#trajectory` | Beams retract — prism **crystallizes into the cube** (payoff beat) |
-| 5 Contact | `#contact` | Cube dissolves into a turning **point-globe** finale |
+| 3 Work | `#work` | High tier at `lg`+: the prism turns **projector** (ADR-008 §2) — hops to the corner opposite the active card and its beams curve into the window; low tier keeps the ADR-006 recede |
+| 4 Trajectory | `#trajectory` | The prism **eases home** to center; the ordered fan re-forms (a recap, not a metamorphosis) |
+| 5 Contact | `#contact` | Beams bend down into a soft **underline beneath the CTA row** (high tier); low/static end on the resolved prism + fan |
 
 Scene pieces:
 
-- **`TheLens.tsx`** — the solid: transmission-glass prism → cube
+- **`TheLens.tsx`** — the solid: a transmission-glass dispersion prism — the
+  site's **constant object** (ADR-008 §3; it never transforms)
   (`MeshTransmissionMaterial` on high; faux-glass `meshPhysicalMaterial` on
   low/static), wireframe data core, kernel light.
 - **`DataStreams.tsx`** — stateless vertex-shader particles (position is a pure
   function of time + seed; no GPGPU) + five additive light blades. Point sizes
   are **pixel-scale** (`× 7.0 / -mv.z`, unity at the lens plane) — packets must
-  read as packets, never fog.
+  read as packets, never fog. The beam shader carries the **projected mode**
+  (quadratic bezier into the active window, endpoint damped between cards) and
+  the **CTA underline mode** (ADR-008 §2/§3).
+- **`projectionTargets.ts` / `ProjectionTarget.tsx`** — DOM registry of beam
+  targets (each card's preview, the contact CTA row); `rectToWorld.ts` is the
+  shared DOM→world mapping (also used by the kinetic layout).
 - **`RefractionPass.tsx`** — the global refractive pass (ADR-006 §4):
   pointer-radial displacement + chromatic aberration + desaturation, keyed to
   pointer speed and scroll velocity. **High tier + fine pointer only.**
@@ -108,6 +114,10 @@ twin renders at the exact layout position:
   browser-computed positions — survives `text-wrap: balance` and reproduces
   `.text-electric` — and **re-rasters on text mutation** (rAF-coalesced), which
   is how count-up stat figures stay live on the GL side.
+- **Twinned elements** (ADR-006 §3, extended by ADR-009 §5): all `h1`/`h2`/`h3`
+  headings, the Approach stat figures, and the small mono eyebrow + `01 / 05`
+  counter labels. Body copy, taglines, and capability chips stay crisp DOM
+  (ADR-006 §2); the Contact CTA labels get a separate lightweight DOM RGB-split.
 - Where no layer claims (low/static tiers, WebGL unavailable), the DOM element
   is simply visible — **zero drift risk, the DOM node is the source** — and
   gets a **plain fade** on first viewport entry (never hidden in the prerender;
@@ -121,13 +131,19 @@ or is derived from `PROJECTS`/`CAPABILITY_LIST` lengths — nothing invented.
 
 ## Fidelity tiers (`src/lib/gpuTier.ts`)
 
-Heuristic, dependency-free detection (CSP forbids CDN GPU benchmarks); override
-with `?tier=high|low|static`. **Graceful reduction** (ADR-006 §8) — lower tiers
-are calmer, honestly non-identical:
+Dependency-free detection (CSP forbids CDN GPU benchmarks). **`high` is the
+default** for any capable WebGL context (ADR-009, superseding ADR-006 §8's
+device-class heuristic); a runtime **FPS watchdog** samples framerate after load
+and, if it can't hold ~40fps, **hot-swaps to `low` in place** (no reload) and
+shows a dismissible "switched to basic" popup — session-only, so a later visit
+re-detects `high`. Floors: `prefers-reduced-motion → static`, no-WebGL → `none`,
+software renderers → `low`. Override any of it with `?tier=high|low|static`
+(which also suppresses the watchdog). **Graceful reduction** — lower tiers stay
+calmer, honestly non-identical:
 
-| | high (desktop, capable GPU) | low (mobile / weak GPU) | static (`prefers-reduced-motion`) | none (no WebGL) |
+| | high (default) | low (watchdog fallback / opt-out) | static (`prefers-reduced-motion`) | none (no WebGL) |
 |---|---|---|---|---|
-| Lens solid | transmission dispersion | faux-glass, calm | faux-glass cube, fixed pose | — |
+| Lens solid | transmission dispersion | faux-glass, calm | faux-glass prism, fixed pose | — |
 | Particles | 800 + 1500, animated | 260 + 480, animated | none (blades settled) | — |
 | Refraction pass | ✓ (fine pointer only) | — | — | — |
 | Headings | GL refract-in + shear | DOM, plain fade | DOM, static (CSS kills transitions) | DOM |

@@ -25,9 +25,12 @@ export function SectionHeader({
       ].join(" ")}
     >
       {eyebrow && (
-        <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-accent-bright">
+        <KineticText
+          as="p"
+          className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-accent-bright"
+        >
           {eyebrow}
-        </p>
+        </KineticText>
       )}
       <KineticText as="h2" className="text-3xl text-ink sm:text-4xl">
         {title}

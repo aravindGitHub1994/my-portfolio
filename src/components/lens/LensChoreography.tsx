@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { lensState } from "./lensState";
+import { NO_TARGET } from "./projectionTargets";
 
 /**
  * Single owner of the Lens's scroll inputs (ADR-006 act choreography).
@@ -52,11 +53,44 @@ export function LensChoreography() {
       lensState.acts.work =
         smooth(0, 0.15, p) * (1 - smooth(0.85, 1, p));
     });
-    // Trajectory — crystallization beat: prism → cube.
+    // Work projection (ADR-008 §2): one trigger per pinned card writes which
+    // window the prism projects into (index + side) and the card's stage
+    // progress (blend). World coords are the scene tracker's job — only it
+    // has the camera. Card DOM order matches PROJECTS order; adjacent
+    // 150vh runways make exactly one card active at the 55% line, and the
+    // `index ===` guard keeps an out-of-order deactivate from clobbering the
+    // neighbour that just took over.
+    const cards = gsap.utils.toArray<HTMLElement>(
+      "#work article[data-project]",
+    );
+    cards.forEach((card, index) => {
+      const apply = (self: ScrollTrigger) => {
+        if (self.isActive) {
+          lensState.projection.index = index;
+          lensState.projection.side = index % 2 === 0 ? 1 : -1;
+          lensState.projection.blend = self.progress;
+        } else if (lensState.projection.index === index) {
+          lensState.projection.index = NO_TARGET;
+          lensState.projection.blend = 0;
+        }
+      };
+      triggers.push(
+        ScrollTrigger.create({
+          trigger: card,
+          start: "top 55%",
+          end: "bottom 55%",
+          onUpdate: apply,
+          onToggle: apply,
+          onRefresh: apply,
+        }),
+      );
+    });
+
+    // Trajectory — the prism eases home and the ordered fan re-forms.
     track("trajectory", { start: "top 80%", end: "top 25%" }, (p) => {
       lensState.acts.trajectory = p;
     });
-    // Contact — dissolve: cube → point-globe.
+    // Contact — beams bend into the CTA underline finale (ADR-008 §3).
     track("contact", { start: "top 95%", end: "bottom bottom" }, (p) => {
       lensState.acts.contact = p;
     });
@@ -85,6 +119,8 @@ export function LensChoreography() {
       lensState.acts.work = 0;
       lensState.acts.trajectory = 0;
       lensState.acts.contact = 0;
+      lensState.projection.index = NO_TARGET;
+      lensState.projection.blend = 0;
       lensState.scrollVelocity = 0;
     };
   }, []);

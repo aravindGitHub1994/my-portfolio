@@ -7,7 +7,9 @@ import { CapabilityTag } from "@/components/Tag";
 import { InlineDiagram } from "@/components/InlineDiagram";
 import { ProjectRevealCurtain } from "@/components/acts/ProjectRevealCurtain";
 import { ReadTheBuild } from "@/components/acts/ReadTheBuild";
+import { SafariWindow } from "@/components/acts/SafariWindow";
 import { KineticText } from "@/components/lens/kinetic/KineticText";
+import { registerProjectionTarget } from "@/components/lens/projectionTargets";
 import { buildDrawTimeline, spawnPackets } from "@/lib/diagramAnimation";
 import type { Project } from "@/lib/projects";
 
@@ -17,6 +19,7 @@ import type { Project } from "@/lib/projects";
  * sliver. Keyed by slug; scales with the SVG's intrinsic ratio.
  */
 const DIAGRAM_PANEL_WIDTH: Record<string, string> = {
+  tagging: "max-w-lg",
   taxonomy: "max-w-lg",
   budget: "max-w-sm",
   gmc: "max-w-sm",
@@ -51,7 +54,51 @@ export function ProjectPin({
   count: number;
 }) {
   const article = useRef<HTMLElement>(null);
+  const preview = useRef<HTMLDivElement>(null);
   const disposeDraw = useRef<(() => void) | null>(null);
+
+  // The preview element is this card's projection target (ADR-008 §2) — the
+  // prism's beams curve into it while the card is pinned. Every card
+  // registers, including the screenshot-less diagram panel.
+  useEffect(() => {
+    const el = preview.current;
+    if (!el) return;
+    return registerProjectionTarget(index, el);
+  }, [index]);
+
+  // Window materialize (ADR-008 §2): the preview fades/rises once on first
+  // entry. The short delay lands the rise with the projected stream's
+  // endpoint sweep (damped ~0.3s) on the high tier; elsewhere it reads as a
+  // plain entrance. Same 62% line as the diagram draw-on beat.
+  useEffect(() => {
+    if (reducedMotion()) return;
+    const el = preview.current;
+    if (!el) return;
+    gsap.registerPlugin(ScrollTrigger);
+    const rise = gsap.fromTo(
+      el,
+      { opacity: 0, y: 28 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.9,
+        delay: 0.25,
+        ease: "power2.out",
+        paused: true,
+      },
+    );
+    const entry = ScrollTrigger.create({
+      trigger: article.current,
+      start: "top 62%",
+      once: true,
+      onEnter: () => rise.play(),
+    });
+    return () => {
+      entry.kill();
+      rise.kill();
+      gsap.set(el, { clearProps: "opacity,transform" });
+    };
+  }, []);
 
   const handleSvgReady = useCallback((svg: SVGSVGElement) => {
     if (reducedMotion()) return;
@@ -106,10 +153,13 @@ export function ProjectPin({
           }`}
         >
           <div className={diagramRight ? "" : "lg:order-2"}>
-            <p className="font-mono text-xs uppercase tracking-[0.3em] text-ink-subtle">
+            <KineticText
+              as="p"
+              className="font-mono text-xs uppercase tracking-[0.3em] text-ink-subtle"
+            >
               {String(index + 1).padStart(2, "0")} /{" "}
               {String(count).padStart(2, "0")}
-            </p>
+            </KineticText>
             <KineticText as="h3" className="mt-4 text-3xl text-ink sm:text-4xl">
               {project.title}
             </KineticText>
@@ -143,18 +193,22 @@ export function ProjectPin({
             }`}
           >
             {project.screenshot ? (
-              // Screenshot + diagram overlaid — the hover/focus curtain reveal.
-              <div className="w-full">
-                <ProjectRevealCurtain
-                  screenshot={project.screenshot}
-                  diagram={project.diagram}
-                  title={project.title}
-                />
+              // Screenshot + diagram overlaid — the hover/focus curtain reveal,
+              // mounted inside the Safari-style frame (ADR-008 §1).
+              <div ref={preview} className="w-full">
+                <SafariWindow domain={project.domain}>
+                  <ProjectRevealCurtain
+                    screenshot={project.screenshot}
+                    diagram={project.diagram}
+                    title={project.title}
+                  />
+                </SafariWindow>
               </div>
             ) : (
               // No screenshot to reveal from — the diagram resolves on scroll
               // entry instead (ADR-006 §6), animated inline so GSAP reaches it.
               <div
+                ref={preview}
                 className={`w-full ${panelWidth} rounded-lg border border-line bg-surface/50 p-4 sm:p-5`}
               >
                 <InlineDiagram

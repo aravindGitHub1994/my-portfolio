@@ -18,8 +18,8 @@ subs 12.5–15 in viewBox units, `stroke-width` 2, tight outer margins.
    rasterization), `role="img"` + `<title>`, `data-diagram="<slug>"`.
    `font-family="Geist, ui-sans-serif, system-ui, sans-serif"` — inherits Geist
    when inlined, falls back cleanly when rasterized.
-2. **Unique id prefix per file** (`tax-`, `bud-`, `gmc-`, `per-`) — all four
-   diagrams can be inlined on the one scroll page simultaneously.
+2. **Unique id prefix per file** (`tax-`, `bud-`, `gmc-`, `per-`, `tag-`) —
+   all five diagrams can be inlined on the one scroll page simultaneously.
 3. **Groups in paint order**: `<g class="dg-edges">` (paths + arrowheads +
    edge labels), then `<g class="dg-nodes">`. A runtime packet layer is
    appended last by `diagramAnimation.ts`.

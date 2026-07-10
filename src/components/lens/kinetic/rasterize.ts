@@ -24,6 +24,63 @@ function isTransparent(color: string): boolean {
 }
 
 /**
+ * Distance from a character Range-rect's top to the text baseline, for a
+ * given computed style (plan-0006 §4.1). Canvas `fontBoundingBoxAscent` is
+ * NOT that distance: browsers disagree on what a Range rect spans (font
+ * content box vs line-box fragment, which shifts with line-height), so
+ * deriving the baseline from canvas font metrics drifts wherever the
+ * heading's line-height differs from the font's own height — the section
+ * titles, while the tight-leading hero h1 happened to line up. Measure the
+ * browser's actual convention instead: lay out the same font + line-height
+ * off-screen with a zero-size inline-block marker (its top sits exactly on
+ * the baseline) and read the offset off the same Range API the glyph walk
+ * uses. Cached per style signature; probes live on document.body so the
+ * layer's MutationObservers (which watch the headings) never see them.
+ */
+const baselineOffsetCache = new Map<string, number>();
+
+function baselineOffset(style: CSSStyleDeclaration): number {
+  const key = `${style.fontStyle}|${style.fontWeight}|${style.fontSize}|${style.fontFamily}|${style.lineHeight}`;
+  const cached = baselineOffsetCache.get(key);
+  if (cached !== undefined) return cached;
+
+  const probe = document.createElement("div");
+  probe.style.position = "absolute";
+  probe.style.left = "-9999px";
+  probe.style.top = "0";
+  probe.style.visibility = "hidden";
+  probe.style.whiteSpace = "pre";
+  probe.style.fontStyle = style.fontStyle;
+  probe.style.fontWeight = style.fontWeight;
+  probe.style.fontSize = style.fontSize;
+  probe.style.fontFamily = style.fontFamily;
+  probe.style.lineHeight = style.lineHeight;
+  probe.textContent = "Mg";
+  const marker = document.createElement("span");
+  marker.style.display = "inline-block";
+  marker.style.width = "0";
+  marker.style.height = "0";
+  probe.appendChild(marker);
+  document.body.appendChild(probe);
+
+  const range = document.createRange();
+  range.setStart(probe.firstChild as Node, 0);
+  range.setEnd(probe.firstChild as Node, 1);
+  const charRect = range.getClientRects()[0];
+  // A zero-height inline-block's box edge IS the line's alphabetic baseline.
+  const baseline = marker.getBoundingClientRect().top;
+  document.body.removeChild(probe);
+
+  const offset =
+    charRect && baseline > charRect.top
+      ? baseline - charRect.top
+      : // Degenerate probe (no layout?) — old canvas-metrics estimate.
+        parseFloat(style.fontSize) * 0.8;
+  baselineOffsetCache.set(key, offset);
+  return offset;
+}
+
+/**
  * Gradient display text (`.text-electric`) computes `color: transparent` and
  * paints via background-clip — recreate its accent ramp across the span.
  */
@@ -81,9 +138,7 @@ export function rasterizeText(
       ctx.fillStyle = style.color;
     }
 
-    const ascent =
-      ctx.measureText("Mg").fontBoundingBoxAscent ||
-      parseFloat(style.fontSize) * 0.8;
+    const toBaseline = baselineOffset(style);
 
     for (let i = 0; i < text.length; i += 1) {
       const ch = text[i];
@@ -95,7 +150,7 @@ export function rasterizeText(
       ctx.fillText(
         ch,
         r.left - rect.left + RASTER_PAD,
-        r.top - rect.top + RASTER_PAD + ascent,
+        r.top - rect.top + RASTER_PAD + toBaseline,
       );
     }
   }

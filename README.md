@@ -20,16 +20,16 @@ A personal portfolio for a **Data Analytics Manager who ships production softwar
 
 ## 🎯 What it is
 
-One scrolling page in five acts — **Hero · Approach · Work · Trajectory · Contact** — where a persistent WebGL scene reshapes with the story: prism (data refracts into insight) → the prism **crystallizes into a cube** at the Trajectory payoff beat → dissolves into a **point-globe** at Contact.
+One scrolling page in five acts — **Hero · Approach · Work · Trajectory · Contact** — where a persistent WebGL scene works the story around one constant object ([ADR-008](docs/decisions/ADR-008-projection-work-act-and-prism-finale.md)): the prism refracts data into insight, turns **projector** during Work (its beams curve into each project's Safari-framed window), eases home through Trajectory, and ends with its beams forming a soft **underline beneath the contact CTA**.
 
 ## ✨ Features
 
 - 🔷 **The Lens** — dispersion prism (`MeshTransmissionMaterial`), stateless vertex-shader particle streams, and five spectrum light-blades; scroll choreography via GSAP ScrollTrigger + Lenis.
 - 🌀 **Pointer refraction pass** — a screen-space displacement + chromatic-aberration field around the pointer, keyed to pointer speed and scroll velocity (high tier, fine pointers only).
-- 🔤 **Kinetic type** — headings and stat figures render as GL twins of their real DOM elements: they *refract in* from chromatic shards and shear with scroll velocity, while the semantic DOM stays selectable and indexable underneath.
-- 🔢 **Count-up proof band** — Approach-act figures (44 / 19 / 200+ / 4 / 5) count up as they resolve; every number traces to `src/lib/resume.ts` or is derived from content arrays (`src/lib/stats.ts`).
+- 🔤 **Kinetic type** — headings, stat figures, and the small eyebrow / `01 / 05` labels render as GL twins of their real DOM elements: they *refract in* from chromatic shards and shear/aberrate near the pointer, while the semantic DOM stays selectable and indexable underneath. Body copy stays crisp.
+- 🔢 **Count-up proof band** — Approach-act figures (600+ / 44 / 19 / 200+ / 5 / 7) count up as they resolve; every number traces to `src/lib/resume.ts`, a project's copy, or is derived from content arrays (`src/lib/stats.ts`).
 - 📊 **Animatable architecture diagrams** — hand-structured SVGs (`public/diagrams/`, [authoring convention](docs/diagram-authoring.md)) that draw on once on entry with a single data-packet pass, then settle.
-- 🎚️ **Graceful reduction** — fidelity tiers (`src/lib/gpuTier.ts`, `?tier=high|low|static` override): low tier gets a calm faux-glass lens, crisp DOM type/imagery and no postprocessing; `prefers-reduced-motion` gets resolved end-states with no motion at all.
+- 🎚️ **High by default + graceful reduction** — `high` fidelity is served to every capable device (`src/lib/gpuTier.ts`, `?tier=high|low|static` override); a runtime FPS watchdog hot-swaps to the calm faux-glass `low` tier (and shows a dismissible popup) only when a device can't hold framerate. `prefers-reduced-motion` gets resolved end-states with no motion at all. ([ADR-009](docs/decisions/ADR-009-lens-refinement-glass-refraction-and-high-default-fidelity.md))
 - 🔒 **Security posture** — CSP (`connect-src 'self'`, `font-src 'self'`) with everything local/procedural; security headers via `vercel.json`; no client data in the repo (recreated, dummy-data imagery only — [ADR-006 §7](docs/decisions/ADR-006-lens-refractive-redesign.md)).
 - ⚡ **Static export** — fast, CDN-cacheable, SEO-friendly with `sitemap.ts` + `robots.ts`.
 
@@ -89,7 +89,7 @@ npm run lint         # ESLint (flat config)
 | `NEXT_PUBLIC_SITE_URL` | build-time env (Vercel) | Canonical/OG/sitemap base URL. Falls back to `https://example.com` if unset (`src/lib/nav.ts`). |
 | Site content | `src/lib/*.ts` | Edit `projects.ts`, `resume.ts`, `stats.ts`, `nav.ts`, `capabilities.ts` — not JSX. |
 | Design tokens | `src/app/globals.css` | Tailwind v4 `@theme` — see [design-system](docs/design-system.md). |
-| Fidelity tiers | `src/lib/gpuTier.ts` | Heuristic, CSP-safe detection; `?tier=` override. |
+| Fidelity tiers | `src/lib/gpuTier.ts` | `high` by default + runtime FPS-watchdog fallback (ADR-009); `?tier=` override. |
 | Security headers | `vercel.json` | Applied on Vercel deploys only. |
 
 ## 📁 Project Structure

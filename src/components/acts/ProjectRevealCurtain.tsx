@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   createCurtainReveal,
   type CurtainRevealController,
@@ -148,8 +148,18 @@ export function ProjectRevealCurtain({
     };
   }, []);
 
-  const open = () => controller.current?.open();
-  const close = () => controller.current?.close();
+  // Mirrors the reveal into a data attribute so CSS can fade the hint pill
+  // out while the curtain runs (ADR-009 §4) — the sweep itself stays GSAP's.
+  const [revealing, setRevealing] = useState(false);
+
+  const open = () => {
+    controller.current?.open();
+    setRevealing(true);
+  };
+  const close = () => {
+    controller.current?.close();
+    setRevealing(false);
+  };
 
   return (
     // role="img" + a combined label conveys both representations to screen
@@ -159,6 +169,9 @@ export function ProjectRevealCurtain({
       role="img"
       aria-label={`${title}: product screenshot — hover or focus to reveal the architecture diagram`}
       tabIndex={0}
+      data-cursor=""
+      data-cursor-label="Reveal"
+      data-revealing={revealing ? "" : undefined}
       onPointerEnter={open}
       onPointerLeave={close}
       onFocus={open}
@@ -239,6 +252,24 @@ export function ProjectRevealCurtain({
           ))}
         </g>
       </svg>
+
+      {/* Affordance hint (ADR-009 §4): a decorative pill inviting the hover;
+          CSS fades it while [data-revealing] (instant under reduced-motion).
+          The accessible name above already carries the instruction. */}
+      <span className="reveal-hint" aria-hidden="true">
+        <svg
+          width="18"
+          height="8"
+          viewBox="0 0 18 8"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        >
+          <path d="M1 4 Q 3 0.5 5 4 T 9 4 T 13 4 T 17 4" />
+        </svg>
+        Hover to reveal architecture
+      </span>
     </div>
   );
 }

@@ -19,6 +19,9 @@ const SECTIONS = [
  * overlay — never an in-flow expand — because the project panels are
  * sticky-pinned: growing them would shift every ScrollTrigger below.
  *
+ * Sections whose copy is absent are dropped, not stubbed: `howAI` is optional
+ * (ADR-008 §4) so a hand-craft project shows no AI heading at all.
+ *
  * <dialog> gives the a11y contract for free: focus trap, Esc→close, and
  * focus restored to the trigger on close. On top of that we stop Lenis (and
  * native scroll under reduced-motion, where Lenis doesn't exist) while open,
@@ -107,16 +110,18 @@ export function ReadTheBuild({ project }: { project: Project }) {
           </div>
 
           <div className="mt-8 space-y-7">
-            {SECTIONS.map(({ heading, key }) => (
-              <section key={key}>
-                <h5 className="font-mono text-xs uppercase tracking-[0.2em] text-accent-bright">
-                  {heading}
-                </h5>
-                <p className="mt-2 text-sm leading-7 text-ink-muted">
-                  {project[key]}
-                </p>
-              </section>
-            ))}
+            {SECTIONS.filter(({ key }) => project[key]).map(
+              ({ heading, key }) => (
+                <section key={key}>
+                  <h5 className="font-mono text-xs uppercase tracking-[0.2em] text-accent-bright">
+                    {heading}
+                  </h5>
+                  <p className="mt-2 text-sm leading-7 text-ink-muted">
+                    {project[key]}
+                  </p>
+                </section>
+              ),
+            )}
 
             <section>
               <h5 className="font-mono text-xs uppercase tracking-[0.2em] text-accent-bright">

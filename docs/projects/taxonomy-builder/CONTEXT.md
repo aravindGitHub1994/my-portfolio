@@ -14,7 +14,7 @@ last_reviewed: 2026-06-15
 # Project Context
 
 > [!abstract] Overview
-> `naming_taxonomy` (**Data Path — Taxonomy Builder**) is a multi-tenant SPA-API application for managing and generating marketing campaign naming conventions. It provides a structured way for agencies and brands to maintain naming integrity across advertising channels, with per-tenant access control, per-channel drafts, and an immutable export audit log.
+> `naming_taxonomy` (**Taxonomy Builder**) is a multi-tenant SPA-API application for managing and generating marketing campaign naming conventions. It provides a structured way for agencies and brands to maintain naming integrity across advertising channels, with per-tenant access control, per-channel drafts, and an immutable export audit log.
 
 ## 🏗️ Architecture
 

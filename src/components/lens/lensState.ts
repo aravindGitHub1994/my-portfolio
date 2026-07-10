@@ -3,6 +3,8 @@
 // velocity ticker) and read inside useFrame / postprocessing update() —
 // mutation instead of React state so scroll/pointer never re-render the tree.
 
+import { NO_TARGET } from "./projectionTargets";
+
 export const lensState = {
   /** Normalized pointer position, -1..1 on both axes (0,0 = center, y down). */
   pointer: { x: 0, y: 0 },
@@ -19,11 +21,42 @@ export const lensState = {
    * hero      — 0 at page top → 1 when the hero has scrolled away
    * approach  — beams organize from a chromatic fan into ordered lines
    * work      — tent curve (0→1→0) while the Work act holds the stage;
-   *             the Lens recedes so the image planes own it
-   * trajectory— crystallization: prism → cube (the payoff beat)
-   * contact   — dissolve: cube → point-globe finale
+   *             high tier projects the cards (ADR-008 §2), low tier recedes
+   * trajectory— return-to-center: the prism eases home, the fan re-forms
+   * contact   — beams bend into the CTA underline finale (ADR-008 §3)
    */
   acts: { hero: 0, approach: 0, work: 0, trajectory: 0, contact: 0 },
+  /**
+   * Work-act projection (ADR-008 §2). LensChoreography's per-card triggers
+   * write index/blend/side; the scene-side tracker converts the registered
+   * target element to world space each frame (targetX/targetY, at
+   * PROJECTION_PLANE_Z). The beams read all of it inside useFrame.
+   */
+  projection: {
+    /** Active target: a Work-card index, CONTACT_TARGET, or NO_TARGET. */
+    index: NO_TARGET,
+    /** 0→1 progress across the active card's stage time. */
+    blend: 0,
+    /** World-space beam endpoint (written scene-side, camera required). */
+    targetX: 0,
+    targetY: 0,
+    /**
+     * World half-extents of the active window's rect — the beam endpoints
+     * spread across them so the cone reads as light filling the frame.
+     */
+    halfW: 1.6,
+    halfH: 1,
+    /** Window side: +1 = preview right (even cards), -1 = left. */
+    side: 1,
+    /**
+     * Contact CTA underline target (ADR-008 §3): world-space point just
+     * beneath the CTA row, plus the row's world half-width so the beam
+     * endpoints spread across it.
+     */
+    ctaX: 0,
+    ctaY: 0,
+    ctaHalfW: 1,
+  },
   /** True once the WebGL canvas has created its context and drawn. */
   ready: false,
 };

@@ -1,7 +1,12 @@
 # ADR-006: "The Lens" — a Refractive, Data→Insight WebGL Portfolio
 
 ## Status
-Accepted — **partially supersedes ADR-005** (the cube is no longer the always-on
+Accepted — **partially superseded by ADR-008** (§1's "cube returns as the payoff"
+and the Work-act recede choreography are reversed: the prism is now the constant
+object, projecting the Work-act previews, and the cube/point-globe finale is
+retired). Further refined by **ADR-009** (§1 prism material → faint-blue glass
+with a visible core; §4 aberration reach extended to display labels + CTAs; §8
+device-class tiering → high-by-default with a runtime FPS watchdog). Original status: **partially supersedes ADR-005** (the cube is no longer the always-on
 spine (§2), mobile is no longer identical choreography (§3), and diagram animation is
 no longer scroll-scrubbed (§5)); **reverses ADR-002** (recreated, dummy-data product
 screenshots are now used); **retains ADR-001** (static export). ADR-003/004 remain
