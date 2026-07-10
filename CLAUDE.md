@@ -16,4 +16,11 @@ live in `LensChoreography` + `lensState`; fidelity tiers in `src/lib/gpuTier.ts`
 (`src/components/cube/`, retired). Never commit raw client screenshots — imagery
 under `public/screens/` must be dummy-data recreations (ADR-006 §7a).
 
+**Confidentiality.** Client names and client financial figures must not appear
+anywhere in this repo — not in code, docs, commit messages, or ADRs, *including*
+prose describing this rule. Refer to parties by role ("a named client", "real spend
+figures"). ADR-006 §7a's account of which files leaked is inaccurate and its
+remediation is not being pursued; treat the rule above as authoritative and the §7a
+narrative as unreliable.
+
 @AGENTS.md
