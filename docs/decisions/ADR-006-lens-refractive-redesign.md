@@ -32,11 +32,12 @@ emerged; the tensions worth recording:
   than "a glass cube," specifically *something that shows data transitioning into
   meaning and insight* — which also happens to be the literal value proposition.
 - **Confidential client data resurfaced.** Three project screenshots were added to
-  `docs/`. All three carry confidential content: **LG Electronics Portugal** + real
-  SKUs (GMC), **$35M / $118M** real MMM figures + identifying channels (Budget), and
-  **APM Monaco** (Taxonomy). Two are **already committed to a public GitHub repo**
+  `docs/`. All three carry confidential content: a **named client** + real SKUs (GMC),
+  **real MMM spend figures** + identifying channels (Budget), and a **second named
+  client** (Taxonomy). Two are **already committed to a public GitHub repo**
   (`aravindGitHub1994/my-portfolio`, verified reachable on `raw.githubusercontent.com`
   at `origin/main`). This is exactly the leak ADR-002 chose Mermaid diagrams to avoid.
+  This ADR deliberately omits the names and figures themselves — see §7a.
 - **The distortion effect can only touch what is rendered in WebGL.** A shader cannot
   warp crisp DOM text/images; to distort them they must become WebGL planes. So "where
   the distortion lives" is the architectural fork that reshapes everything.
@@ -101,13 +102,18 @@ WebGL planes. Personas (exploratory) keeps its diagram only. This **reverses ADR
 **retained and reaffirmed** — see §7a.
 
 ### 7a. Confidentiality remediation (OPEN ACTION — not yet done)
-The two already-public originals (Budget `$35M/$118M`; Taxonomy `APM Monaco`) and the
-untracked GMC/`LG Electronics Portugal` screenshot must be removed from the repo and
-its **public git history** (`git filter-repo`/BFG + force-push across `main` and
-`feat/*`), `docs/**/Screenshot*.png` git-ignored, and NDA/contract terms checked before
-any client work — even sanitized — is shown. Deleting the files in a new commit is
-**insufficient**; they remain fetchable at prior SHAs. This is independent of the
-redesign and outstanding as of this ADR.
+The two already-public originals (Budget — real spend figures; Taxonomy — real client
+name) and the untracked GMC screenshot (real client name + SKUs) must be removed from
+the repo and its **public git history** (`git filter-repo`/BFG + force-push across
+`main` and `feat/*`), `docs/**/Screenshot*.png` git-ignored, and NDA/contract terms
+checked before any client work — even sanitized — is shown. Deleting the files in a new
+commit is **insufficient**; they remain fetchable at prior SHAs. This is independent of
+the redesign and outstanding as of this ADR.
+
+Client names and financial figures are **intentionally not recorded in this ADR**, or
+anywhere else in the repo. Restating them here to document the incident would reproduce
+the exact leak the remediation exists to close — this file is itself public. Keep the
+identifiers in a private channel; this ADR references them only by role.
 
 ### 8. Mobile — graceful reduction (reverses ADR-005 §3)
 Mid-range mobile gets a **calmer, honestly non-identical** Lens: static/low-particle
