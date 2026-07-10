@@ -21,9 +21,17 @@ shipped as a **static export** (`output: "export"`) to Vercel. See `README.md` a
 - Don't edit inside the `<!-- BEGIN/END:nextjs-agent-rules -->` markers (tool-managed).
 
 ## Conventions
-- **Content in `src/lib/*.ts`** (`projects.ts`, `resume.ts`, `nav.ts`, `capabilities.ts`).
+- **Content in `src/lib/*.ts`** (`projects.ts`, `resume.ts`, `stats.ts`, `nav.ts`, `capabilities.ts`).
 - **`techIcons.ts`** path data is **verbatim from simple-icons** (24×24, nonzero fill); the
   `SQL` glyph is the one exception (MDI database path). Don't hand-edit path data.
-- **Diagrams** are pre-rendered SVGs in `public/diagrams/` (ADR-002), referenced via `<img src>`.
+- **Diagrams** are hand-structured animatable SVGs in `public/diagrams/`
+  (`docs/diagram-authoring.md`): inlined via `InlineDiagram` for the one-shot
+  draw-on + packet pass (ADR-006 §6), `<img>` as fallback only.
 - **Design tokens** in `src/app/globals.css` (Tailwind v4 `@theme`) — use semantic classes, not raw hex.
+- **The Lens** (`src/components/lens/`, ADR-006): `LensChoreography` is the sole owner of
+  scroll inputs; frame loops read mutable `lensState` (never React state). Strict
+  React-compiler lint rules apply — no `Math.random` in render/memo (seeded `mulberry32`),
+  frame-time uniform writes via material refs, subscribe-before-claim in the kinetic registry.
+- **Never commit raw client screenshots** — imagery under `public/screens/` must be
+  fabricated dummy-data recreations (ADR-006 §7/§7a).
 - Security headers in `vercel.json` (Vercel only).

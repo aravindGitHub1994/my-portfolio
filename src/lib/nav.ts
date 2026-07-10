@@ -1,15 +1,18 @@
-// Primary navigation links, shared by the header and footer.
+// In-page act anchors (ADR-005: single scroll page), shared by nav and footer.
 export interface NavLink {
   href: string;
   label: string;
 }
 
 export const NAV_LINKS: NavLink[] = [
-  { href: "/", label: "About" },
-  { href: "/projects", label: "Projects" },
-  { href: "/resume", label: "Resume" },
-  { href: "/contact", label: "Contact" },
+  { href: "#approach", label: "Approach" },
+  { href: "#work", label: "Work" },
+  { href: "#trajectory", label: "Trajectory" },
+  { href: "#contact", label: "Contact" },
 ];
+
+/** Resume stays a direct PDF download (no /resume page anymore). */
+export const RESUME_LINK: NavLink = { href: "/resume.pdf", label: "Resume" };
 
 export const SITE = {
   name: "Aravind Krishna Kumar",

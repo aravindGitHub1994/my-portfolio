@@ -5,11 +5,15 @@ full agent rules and conventions live in `@AGENTS.md` (imported below). Quick fa
 `npm run dev` runs on **port 3004**, `npm run build` produces a static export in
 `out/`, and site content is edited in `src/lib/*.ts` — not in JSX.
 
-The animated day↔night background is one persistent `<canvas>` in
-`src/components/sky/` (`SkyScene` + `draw*.ts` helpers), governed by
-[ADR-004](docs/decisions/ADR-004-animated-celestial-transition.md). It replaced the
-old `Starfield`/`Cloudfield`/`BackgroundScene` pair; the ~2.2 s toggle transition
-timing lives in `src/lib/theme.ts` (`THEME_TRANSITION_MS`), and the moon texture is
-`public/celestial/moon.webp` (with a procedural fallback).
+The background is one persistent WebGL `<canvas>` in `src/components/lens/` —
+**The Lens** ([ADR-006](docs/decisions/ADR-006-lens-refractive-redesign.md)): a
+dispersion prism refracting data-packet particles into insight-beams, reshaping
+prism → cube → point-globe across the five acts, with a pointer-keyed refractive
+postprocessing pass and canvas-raster kinetic headings (`lens/kinetic/` — the DOM
+element stays semantic; its GL twin renders on the high tier only). Scroll inputs
+live in `LensChoreography` + `lensState`; fidelity tiers in `src/lib/gpuTier.ts`
+(`?tier=high|low|static` override). It replaced the ADR-005 glass cube
+(`src/components/cube/`, retired). Never commit raw client screenshots — imagery
+under `public/screens/` must be dummy-data recreations (ADR-006 §7a).
 
 @AGENTS.md

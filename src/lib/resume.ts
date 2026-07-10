@@ -49,10 +49,22 @@ export const SKILL_TIERS: SkillTier[] = [
   },
 ];
 
+/**
+ * Optional dated period. Left absent until real dates are supplied — the
+ * Trajectory timeline (slice 3.3) renders order-only without it and
+ * auto-upgrades to dated when years appear. Values are display strings
+ * (e.g. "2021"), `end` omitted or "Present" for a current role.
+ */
+export interface ExperiencePeriod {
+  start?: string;
+  end?: string;
+}
+
 export interface ExperienceItem {
   role: string;
   org: string;
-  period: string;
+  location: string;
+  period?: ExperiencePeriod;
   points: string[];
 }
 
@@ -60,7 +72,7 @@ export const EXPERIENCE: ExperienceItem[] = [
   {
     role: "Manager, Data Analytics",
     org: "Assembly Global",
-    period: "Bengaluru",
+    location: "Bengaluru",
     points: [
       "Architected and built a multi-tenant, Dockerized taxonomy engine web app for marketing naming conventions and automated taxonomy generation, including a \"Lego-style\" UTM builder and dynamic taxonomy forms that cut manual effort for the activation team.",
       "Designed automated SQL report generation against BigQuery and PostgreSQL, improving cross-channel data accuracy.",
@@ -73,7 +85,7 @@ export const EXPERIENCE: ExperienceItem[] = [
   {
     role: "Web Analyst",
     org: "Flatworld Solutions",
-    period: "Bengaluru",
+    location: "Bengaluru",
     points: [
       "Designed a tagging architecture in Google Tag Manager spanning 19 websites, keeping tracking and taxonomy consistent across all of them.",
       "Built dashboards in Looker Studio and Excel that turned raw tracking data into actionable reporting.",
@@ -83,7 +95,7 @@ export const EXPERIENCE: ExperienceItem[] = [
   {
     role: "SME Technology / Senior Consultant / Implementation Consultant",
     org: "Regalix",
-    period: "Bengaluru",
+    location: "Bengaluru",
     points: [
       "Promoted to Subject Matter Expert; supported 200+ consultants with advanced JavaScript and GTM solutions for Google tracking implementations.",
       "Facilitated client transitions to GA4 and handled high-priority cases as part of an exclusive pilot program.",
@@ -93,7 +105,7 @@ export const EXPERIENCE: ExperienceItem[] = [
   {
     role: "Senior Technician / Technician",
     org: "Dell International Services",
-    period: "Bengaluru",
+    location: "Bengaluru",
     points: [
       "Resolved hardware and software issues for commercial and consumer clients while driving non-warranty service sales.",
       "Supported business continuity during COVID-19 by transitioning to US out-of-warranty sales support.",
@@ -102,7 +114,7 @@ export const EXPERIENCE: ExperienceItem[] = [
   {
     role: "Tech Support Analyst",
     org: "Sutherland Global Services",
-    period: "Cochin",
+    location: "Cochin",
     points: [
       "Elevated to Team Resolution Expert; led a team of 18 to expedite resolutions and improve sales conversion rates.",
     ],

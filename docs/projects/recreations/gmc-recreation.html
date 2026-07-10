@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GMC Insights — recreation (fictional data)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #ffffff; color: #111827;
+  }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 28px 40px 0; }
+  /* tabs */
+  .tabs { display: flex; gap: 8px; align-items: center; }
+  .tab { font-size: 15px; padding: 10px 18px; border-radius: 8px; color: #374151; }
+  .tab.active { background: #f3e8ff; color: #7c3aed; font-weight: 500; }
+  .rule { border: 0; border-top: 1px solid #e5e7eb; margin: 18px -40px 0; }
+  /* header */
+  .head { display: flex; align-items: flex-start; justify-content: space-between; margin-top: 26px; }
+  h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.01em; }
+  .meta { margin-top: 8px; font-size: 14.5px; color: #4b5563; }
+  .refresh {
+    background: #9333ea; color: #fff; font-size: 14.5px; font-weight: 500;
+    padding: 11px 20px; border-radius: 8px; border: 0;
+    box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  }
+  /* filters */
+  .filters { display: flex; gap: 14px; margin-top: 26px; }
+  .select, .search {
+    border: 1px solid #d1d5db; border-radius: 8px; background: #fff;
+    font-size: 14.5px; color: #111827; padding: 12px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .select { width: 260px; }
+  .select.wide { width: 340px; }
+  .select .chev { color: #6b7280; font-size: 12px; margin-left: 12px; }
+  .search { flex: 1; color: #9ca3af; }
+  /* table */
+  table { width: 100%; border-collapse: collapse; margin-top: 22px; table-layout: fixed; }
+  thead th {
+    background: #f9fafb; text-align: left; font-size: 13.5px; font-weight: 600;
+    color: #374151; padding: 12px 12px; border-bottom: 1px solid #e5e7eb;
+  }
+  tbody td {
+    vertical-align: top; padding: 18px 12px; font-size: 14px; color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .prod { font-weight: 500; color: #111827; line-height: 1.45; }
+  .offer {
+    font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px;
+    background: #f3f4f6; border-radius: 6px; padding: 3px 8px; color: #374151;
+    display: inline-block;
+  }
+  .issue {
+    font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px;
+    background: #f3e8ff; border: 1px solid #e9d5ff; color: #7c3aed;
+    border-radius: 999px; padding: 4px 12px; display: inline-block;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px;
+    border: 1px solid #e5e7eb; background: #fafafa; color: #4b5563;
+    border-radius: 6px; padding: 3px 8px; white-space: nowrap;
+  }
+  .reason b { display: block; font-weight: 600; color: #111827; margin-bottom: 4px; }
+  .reason span { font-size: 13px; color: #6b7280; line-height: 1.5; }
+  .fix { color: #7c3aed; font-weight: 500; white-space: nowrap; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="tabs">
+      <div class="tab active">Disapprovals</div>
+      <div class="tab">Leaderboard</div>
+      <div class="tab">History</div>
+    </div>
+    <hr class="rule">
+
+    <div class="head">
+      <div>
+        <h1>Disapproved Products</h1>
+        <div class="meta">231 issues &middot; 12 products affected &middot; last synced 7/9/2026, 9:41:22 AM</div>
+      </div>
+      <button class="refresh">Refresh data</button>
+    </div>
+
+    <div class="filters">
+      <div class="select">Veyra Electronics Portugal <span class="chev">&#9662;</span></div>
+      <div class="select wide">All issue types <span class="chev">&#9662;</span></div>
+      <div class="search">Search product title or ID&hellip;</div>
+    </div>
+
+    <table>
+      <colgroup>
+        <col style="width:112px"><col style="width:206px"><col style="width:158px">
+        <col style="width:168px"><col style="width:228px"><col style="width:70px">
+        <col style="width:222px"><col style="width:66px"><col style="width:50px">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Sub-account</th><th>Product</th><th>Offer ID</th><th>Issue</th>
+          <th>Surfaces</th><th>Attribute</th><th>Reason</th><th>Countries</th><th>Help</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Veyra Electronics Portugal</td>
+          <td class="prod">Veyra AeroBook&nbsp;14&Prime; | Ultra-light | 16:10 anti-glare IPS | VCore&nbsp;7 - AB14X</td>
+          <td><span class="offer">14AVX-B.VE21P.PT.C</span></td>
+          <td><span class="issue">landing_page_error</span></td>
+          <td>
+            <div class="chips">
+              <span class="chip">DEMAND_GEN_ADS</span>
+              <span class="chip">DEMAND_GEN_ADS_DISCOVER_SURFACE</span>
+              <span class="chip">DISPLAY_ADS</span><span class="chip">FREE_LISTINGS</span>
+              <span class="chip">SHOPPING_ADS</span><span class="chip">VIDEO_ADS</span>
+            </div>
+          </td>
+          <td>link</td>
+          <td class="reason"><b>Product page unavailable</b>
+            <span>Ensure your product page can be accessed from desktop and mobile devices and is not restricted from Google crawling</span></td>
+          <td>PT</td>
+          <td><span class="fix">Fix &nearr;</span></td>
+        </tr>
+        <tr>
+          <td>Veyra Electronics Portugal</td>
+          <td class="prod">Veyra AeroBook&nbsp;15.6&Prime; | FHD anti-glare | VCore&nbsp;7 - AB15X</td>
+          <td><span class="offer">15AVX-B.VE21P.PT.C</span></td>
+          <td><span class="issue">landing_page_error</span></td>
+          <td>
+            <div class="chips">
+              <span class="chip">DEMAND_GEN_ADS</span>
+              <span class="chip">DEMAND_GEN_ADS_DISCOVER_SURFACE</span>
+              <span class="chip">DISPLAY_ADS</span><span class="chip">FREE_LISTINGS</span>
+              <span class="chip">SHOPPING_ADS</span><span class="chip">VIDEO_ADS</span>
+            </div>
+          </td>
+          <td>link</td>
+          <td class="reason"><b>Product page unavailable</b>
+            <span>Ensure your product page can be accessed from desktop and mobile devices and is not restricted from Google crawling</span></td>
+          <td>PT</td>
+          <td><span class="fix">Fix &nearr;</span></td>
+        </tr>
+        <tr>
+          <td>Veyra Electronics Portugal</td>
+          <td class="prod">Veyra SoundPod&nbsp;Go | Portable BT speaker | IPX5 - SPG02</td>
+          <td><span class="offer">SPG02-K.VE10B.PT.C</span></td>
+          <td><span class="issue">image_link_broken</span></td>
+          <td>
+            <div class="chips">
+              <span class="chip">FREE_LISTINGS</span><span class="chip">SHOPPING_ADS</span>
+            </div>
+          </td>
+          <td>image link</td>
+          <td class="reason"><b>Image cannot be retrieved</b>
+            <span>Ensure the image URL responds with a valid image format and is publicly accessible</span></td>
+          <td>PT</td>
+          <td><span class="fix">Fix &nearr;</span></td>
+        </tr>
+        <tr>
+          <td>Veyra Electronics Portugal</td>
+          <td class="prod">Veyra HomeCam&nbsp;2K | Indoor security camera | Wi-Fi - HC2K</td>
+          <td><span class="offer">HC2K-D.VE30C.PT.C</span></td>
+          <td><span class="issue">price_mismatch</span></td>
+          <td>
+            <div class="chips">
+              <span class="chip">FREE_LISTINGS</span><span class="chip">SHOPPING_ADS</span>
+            </div>
+          </td>
+          <td>price</td>
+          <td class="reason"><b>Mismatched value (page crawl)</b>
+            <span>Ensure the price in your feed matches the price shown on your product page</span></td>
+          <td>PT</td>
+          <td><span class="fix">Fix &nearr;</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
