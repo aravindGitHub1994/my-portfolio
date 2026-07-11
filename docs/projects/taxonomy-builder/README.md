@@ -4,13 +4,13 @@ last_updated: 2026-06-16
 last_reviewed: 2026-06-16
 ---
 
-# 🏗️ Data Path — Taxonomy Builder
+# 🏗️ Taxonomy Builder
 
 > A multi-tenant, audit-logged platform for building, validating, and versioning marketing taxonomies and campaign structures — from a visual hierarchy builder all the way to reporting SQL.
 
 ## ✨ What the project does
 
-**Data Path — Taxonomy Builder** streamlines the creation, management, and versioning of marketing taxonomies. Teams construct nested campaign hierarchies (Campaign → Ad Set → Creative) in a reactive visual builder, enforce naming conventions through a shared dictionary and per-channel rules, export to Excel with an immutable audit trail, and generate reporting SQL that maps taxonomy strings back into dimensions — all behind per-tenant, role-based access control.
+**Taxonomy Builder** streamlines the creation, management, and versioning of marketing taxonomies. Teams construct nested campaign hierarchies (Campaign → Ad Set → Creative) in a reactive visual builder, enforce naming conventions through a shared dictionary and per-channel rules, export to Excel with an immutable audit trail, and generate reporting SQL that maps taxonomy strings back into dimensions — all behind per-tenant, role-based access control.
 
 ## 🚀 Why the project is useful
 
@@ -142,7 +142,7 @@ sequenceDiagram
    - 🔌 **Backend API**: http://localhost:5000
 
 > [!TIP]
-> Usernames follow the **`firstname.lastname`** convention and are auto-generated when a Super Admin creates a user. Sign in from the Data Path login screen, then use the **client switcher** to pick your active tenant.
+> Usernames follow the **`firstname.lastname`** convention and are auto-generated when a Super Admin creates a user. Sign in from the Taxonomy Builder login screen, then use the **client switcher** to pick your active tenant.
 
 ## 📖 Where to get help
 
@@ -153,4 +153,4 @@ sequenceDiagram
 - 🚩 **Support** — open an issue in the tracker for bugs or feature requests.
 
 ---
-*Built with ❤️ by the Data Path team.*
+*Built with ❤️ by the Taxonomy Builder team.*

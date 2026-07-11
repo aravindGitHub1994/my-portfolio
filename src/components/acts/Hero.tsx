@@ -48,9 +48,13 @@ export function Hero() {
       className="relative flex min-h-screen flex-col items-center justify-center px-6"
     >
       <div ref={content} className="flex flex-col items-center">
-        <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent-bright">
+        <KineticText
+          as="p"
+          variant="plain"
+          className="font-mono text-xs uppercase tracking-[0.3em] text-accent-bright"
+        >
           {SITE.name}
-        </p>
+        </KineticText>
         <KineticText
           as="h1"
           className="mt-6 max-w-3xl text-center text-5xl leading-[1.08] sm:text-7xl"
@@ -58,11 +62,15 @@ export function Hero() {
           Data Analytics &amp;{" "}
           <span className="text-electric">AI systems</span>
         </KineticText>
-        <p className="mt-7 max-w-xl text-center text-lg leading-8 text-ink-muted">
+        <KineticText
+          as="p"
+          variant="plain"
+          className="mt-7 max-w-xl text-center text-lg leading-8 text-ink-muted"
+        >
           I lead with measurement and ship the software those insights demand —
           directing AI coding agents while I own the spec, the architecture,
           and the review.
-        </p>
+        </KineticText>
         <div className="mt-10 flex flex-col gap-3 sm:flex-row">
           <Magnetic>
             <ButtonLink href="#work" variant="primary">
@@ -82,9 +90,13 @@ export function Hero() {
         aria-hidden="true"
         className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3"
       >
-        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-ink-subtle">
+        <KineticText
+          as="span"
+          variant="plain"
+          className="font-mono text-[10px] uppercase tracking-[0.3em] text-ink-subtle"
+        >
           Scroll
-        </span>
+        </KineticText>
         <span className="relative block h-12 w-px overflow-hidden bg-line">
           <span className="animate-scroll-cue absolute inset-x-0 top-0 h-full bg-gradient-to-b from-transparent via-accent to-transparent" />
         </span>

@@ -22,13 +22,14 @@ shipped as a **static export** (`output: "export"`) to Vercel. See `README.md` a
 
 ## Conventions
 - **Content in `src/lib/*.ts`** (`projects.ts`, `resume.ts`, `stats.ts`, `nav.ts`, `capabilities.ts`).
-- **`techIcons.ts`** path data is **verbatim from simple-icons** (24×24, nonzero fill); the
-  `SQL` glyph is the one exception (MDI database path). Don't hand-edit path data.
 - **Diagrams** are hand-structured animatable SVGs in `public/diagrams/`
   (`docs/diagram-authoring.md`): inlined via `InlineDiagram` for the one-shot
   draw-on + packet pass (ADR-006 §6), `<img>` as fallback only.
 - **Design tokens** in `src/app/globals.css` (Tailwind v4 `@theme`) — use semantic classes, not raw hex.
-- **The Lens** (`src/components/lens/`, ADR-006): `LensChoreography` is the sole owner of
+- **The Lens** (`src/components/lens/`, ADR-006, amended by ADR-008/009/010/011): fidelity is
+  high by default; a runtime FPS watchdog **prompts** before any downgrade to `low`
+  (opt-in, ADR-010 §2; tier threaded from
+  `LensCanvas` and mirrored to `lensState.fidelityTier`). `LensChoreography` is the sole owner of
   scroll inputs; frame loops read mutable `lensState` (never React state). Strict
   React-compiler lint rules apply — no `Math.random` in render/memo (seeded `mulberry32`),
   frame-time uniform writes via material refs, subscribe-before-claim in the kinetic registry.

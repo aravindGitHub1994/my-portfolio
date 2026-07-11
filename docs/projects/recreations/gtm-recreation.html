@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tag Manager — container overview — recreation (fictional data)</title>
+<!--
+  Fabricated dummy-data recreation (ADR-006 §7/§7a, ADR-008 §4). Nothing here is
+  real: the account, container domain, GTM container ID, GA4 measurement ID, the
+  editor addresses, the tag/trigger names and every count are invented, and sit
+  inside the same fictional universe as the other recreations (Veyra Electronics
+  Portugal). Never replace any of it with a live container capture.
+-->
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #f1f3f4; color: #202124; font-size: 14px;
+  }
+  .muted { color: #5f6368; }
+
+  /* ---- header ---- */
+  .header { background: #fff; display: flex; align-items: center; gap: 18px; padding: 12px 20px; }
+  .back { color: #5f6368; font-size: 19px; width: 28px; text-align: center; }
+  .gtmlogo { width: 26px; height: 26px; transform: rotate(45deg); border-radius: 5px;
+    background: linear-gradient(135deg, #8ab4f8 0%, #8ab4f8 50%, #4285f4 50%, #1a73e8 100%); }
+  .product { font-size: 21px; color: #5f6368; font-weight: 400; }
+  .crumbwrap { border-left: 1px solid #dadce0; padding-left: 22px; margin-left: 6px; }
+  .crumbs { font-size: 12.5px; color: #5f6368; }
+  .crumbs .sep { margin: 0 5px; }
+  .container-name { font-size: 20px; font-weight: 500; color: #202124; margin-top: 1px; }
+  .container-name .chev { font-size: 12px; color: #5f6368; margin-left: 4px; }
+  .search { flex: 1; max-width: 700px; background: #f1f3f4; border-radius: 8px;
+    display: flex; align-items: center; gap: 14px; padding: 12px 18px; color: #5f6368; font-size: 15px; }
+  .hicons { margin-left: auto; display: flex; align-items: center; gap: 18px; color: #5f6368; font-size: 17px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: #5f6368; }
+
+  /* ---- nav ---- */
+  .nav { background: #fff; border-bottom: 1px solid #dadce0; display: flex; align-items: center; padding: 0 20px; }
+  .tab { font-size: 14px; color: #5f6368; padding: 14px 6px; margin-right: 30px;
+    border-bottom: 3px solid transparent; }
+  .tab.active { color: #1a73e8; font-weight: 500; border-bottom-color: #1a73e8; }
+  .navright { margin-left: auto; display: flex; align-items: center; gap: 22px; }
+  .cid { color: #1a73e8; font-size: 13.5px; }
+  .changes { font-size: 13.5px; color: #3c4043; }
+  .btn-preview { border: 1px solid #dadce0; background: #fff; color: #1a73e8;
+    border-radius: 4px; font-size: 14px; font-weight: 500; padding: 9px 24px; }
+  .btn-submit { border: 0; background: #1a73e8; color: #fff;
+    border-radius: 4px; font-size: 14px; font-weight: 500; padding: 10px 26px; }
+
+  /* ---- notice ---- */
+  .notice { background: #e8eaed; display: flex; align-items: center; gap: 16px; padding: 11px 22px; font-size: 13.5px; }
+  .notice .ico { color: #5f6368; font-size: 16px; }
+  .notice .acts { margin-left: auto; display: flex; gap: 26px; color: #1a73e8; font-weight: 500; }
+
+  /* ---- body ---- */
+  .body { display: flex; }
+  .side { width: 250px; padding: 12px 12px 0 0; flex-shrink: 0; }
+  .sideitem { display: flex; align-items: center; gap: 20px; padding: 11px 18px; margin-bottom: 2px;
+    font-size: 14px; color: #3c4043; border-radius: 0 22px 22px 0; }
+  .sideitem.active { background: #e8f0fe; color: #1a73e8; font-weight: 500; }
+  .sideitem .si { width: 18px; text-align: center; opacity: .75; font-size: 15px; }
+  .showless { display: flex; align-items: center; gap: 14px; padding: 11px 18px; font-size: 14px; color: #3c4043; }
+
+  .content { flex: 1; padding: 12px 22px 0 0; }
+  .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(60,64,67,.16); }
+
+  /* welcome */
+  .welcome { padding: 22px 26px 26px; margin-bottom: 14px; }
+  .welcome h2 { font-size: 20px; font-weight: 400; display: flex; align-items: center; gap: 12px; }
+  .welcome h2 .badge { width: 17px; height: 17px; border-radius: 3px; background: #1a73e8; }
+  .welcome .collapse { margin-left: auto; color: #5f6368; }
+  .wcards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 18px; }
+  .wcard { border: 1px solid #dadce0; border-radius: 8px; padding: 17px 18px 14px;
+    display: flex; flex-direction: column; min-height: 178px; }
+  .wcard.hl { border-color: #1a73e8; }
+  .wcard h3 { font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+  .beta { font-size: 9.5px; font-weight: 600; letter-spacing: .05em; color: #137333;
+    background: #e6f4ea; border-radius: 3px; padding: 2px 5px; }
+  .wcard p { font-size: 13px; color: #5f6368; line-height: 1.5; margin-top: 9px; }
+  .wcard .cta { margin-top: auto; align-self: flex-start; color: #1a73e8; font-size: 13.5px;
+    font-weight: 500; padding: 9px 14px; border-radius: 4px; }
+  .wcard.hl .cta { background: #e8f0fe; }
+
+  /* pending changes */
+  .pchead { background: #e8f0fe; border-radius: 8px 8px 0 0; display: flex; align-items: center;
+    padding: 16px 26px; }
+  .pchead h2 { color: #1a73e8; font-size: 17px; font-weight: 500; }
+  .counts { margin-left: auto; display: flex; align-items: center; gap: 34px; }
+  .count { text-align: center; }
+  .count b { display: block; font-size: 17px; font-weight: 400; color: #202124; }
+  .count span { font-size: 12px; color: #5f6368; }
+  .kebab { margin-left: 30px; color: #5f6368; letter-spacing: 1px; }
+
+  .flow { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: center;
+    padding: 16px 26px 14px; }
+  .flow .lbl { font-size: 12.5px; color: #5f6368; margin-bottom: 8px; }
+  .chip { border: 1px solid #dadce0; border-radius: 8px; padding: 11px 14px;
+    display: flex; align-items: center; gap: 13px; }
+  .chip .t { font-size: 13.5px; color: #202124; }
+  .chip .s { font-size: 11.5px; color: #5f6368; margin-top: 1px; }
+  .chipicon { width: 26px; height: 26px; border-radius: 5px; flex-shrink: 0; }
+  .chipicon.gtm { transform: rotate(45deg); border-radius: 4px; width: 22px; height: 22px; margin: 2px;
+    background: linear-gradient(135deg, #8ab4f8 0%, #8ab4f8 50%, #4285f4 50%, #1a73e8 100%); }
+  .chipicon.gtag { background: #1a73e8; color: #fff; display: flex; align-items: center;
+    justify-content: center; font-size: 14px; font-weight: 500; }
+  .chipicon.ga { background: #fff; display: flex; align-items: flex-end; justify-content: center; gap: 2px; }
+  .chipicon.ga i { width: 4px; background: #f9ab00; border-radius: 1px; }
+  .arrowcol { display: flex; align-items: center; padding-top: 20px; }
+  .arrowline { flex: 1; height: 1px; background: #dadce0; }
+  .arrowhead { width: 0; height: 0; border-left: 6px solid #9aa0a6;
+    border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+  .pill { border: 1px solid #dadce0; border-radius: 999px; padding: 8px 12px;
+    display: inline-flex; align-items: center; gap: 10px; font-size: 13.5px; }
+  .pill .n { background: #f1f3f4; border-radius: 999px; font-size: 11.5px; padding: 1px 7px; color: #5f6368; }
+
+  /* quality */
+  .quality { display: flex; align-items: center; gap: 20px; padding: 4px 26px 18px; }
+  .quality .qt { font-size: 13.5px; }
+  .quality .qt b { font-weight: 500; }
+  .bars { display: flex; gap: 6px; margin-top: 7px; }
+  .bars i { width: 58px; height: 4px; border-radius: 2px; background: #fad2cf; }
+  .bars i.on { background: #d93025; }
+  .quality .qm { font-size: 13.5px; color: #5f6368; }
+  .quality .qa { margin-left: auto; color: #1a73e8; font-size: 13.5px; font-weight: 500; }
+
+  /* table */
+  table { width: 100%; border-collapse: collapse; }
+  thead th { text-align: left; font-size: 12.5px; font-weight: 500; color: #5f6368;
+    border-top: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; padding: 13px 0; }
+  thead th:first-child { padding-left: 26px; }
+  tbody td { font-size: 13.5px; color: #202124; padding: 15px 0; border-bottom: 1px solid #f1f3f4; }
+  tbody td:first-child { padding-left: 26px; }
+  tbody td.k { color: #5f6368; letter-spacing: 1px; text-align: center; }
+  .col-name { width: 36%; }
+  .col-type { width: 12%; }
+  .col-change { width: 13%; }
+  .col-edit { width: 15%; }
+  .col-user { width: 22%; }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="back">&larr;</div>
+    <div class="gtmlogo"></div>
+    <div class="product">Tag Manager</div>
+    <div class="crumbwrap">
+      <div class="crumbs">All accounts <span class="sep">&rsaquo;</span> Veyra Electronics</div>
+      <div class="container-name">www.veyra-electronics.com <span class="chev">&#9662;</span></div>
+    </div>
+    <div class="search"><span>&#9906;</span><span>Search workspace</span></div>
+    <div class="hicons">
+      <span>&#9783;</span><span>?</span><span>&#8942;</span>
+      <div class="avatar"></div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <div class="tab active">Workspace</div>
+    <div class="tab">Versions</div>
+    <div class="tab">Admin</div>
+    <div class="navright">
+      <span class="cid">GTM-NX4V9QT</span>
+      <span class="changes">Workspace Changes: 62</span>
+      <button class="btn-preview">Preview</button>
+      <button class="btn-submit">Submit</button>
+    </div>
+  </div>
+
+  <div class="notice">
+    <span class="ico">&#8635;</span>
+    <span>1 template update available</span>
+    <span class="acts"><span>View</span><span>Dismiss</span></span>
+  </div>
+
+  <div class="body">
+    <div class="side">
+      <div class="sideitem active"><span class="si">&#9635;</span>Overview</div>
+      <div class="sideitem"><span class="si">&#9873;</span>Tags</div>
+      <div class="sideitem"><span class="si">&#9678;</span>Triggers</div>
+      <div class="sideitem"><span class="si">&#9636;</span>Variables</div>
+      <div class="sideitem"><span class="si">&#9698;</span>Folders</div>
+      <div class="sideitem"><span class="si">&#9707;</span>Templates</div>
+      <div class="showless"><span>Show less</span><span>&#9652;</span></div>
+    </div>
+
+    <div class="content">
+      <div class="card welcome">
+        <h2><span>Welcome to Google Tag Manager</span><span class="badge"></span><span class="collapse">&#9652;</span></h2>
+        <div class="wcards">
+          <div class="wcard hl">
+            <h3>Measure purchases in Google Ads <span class="beta">BETA</span></h3>
+            <p>Complete a test order on your website to have your tags, triggers, and variables created automatically</p>
+            <div class="cta">Start guided setup</div>
+          </div>
+          <div class="wcard">
+            <h3>Create a new tag</h3>
+            <p>Measure what happens on your website, send the data to your measurement products, and run custom scripts by adding tags</p>
+            <div class="cta">Add tag</div>
+          </div>
+          <div class="wcard">
+            <h3>Safely test your tags</h3>
+            <p>Make sure your pending changes work as expected by previewing them in Tag Assistant</p>
+            <div class="cta">Preview changes</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="pchead">
+          <h2>Pending Changes</h2>
+          <div class="counts">
+            <div class="count"><b>3</b><span>Modified</span></div>
+            <div class="count"><b>18</b><span>Added</span></div>
+            <div class="count"><b>41</b><span>Deleted</span></div>
+            <span class="kebab">&#8942;</span>
+          </div>
+        </div>
+
+        <div class="flow">
+          <div>
+            <div class="lbl">Container</div>
+            <div class="chip">
+              <div class="chipicon gtm"></div>
+              <div><div class="t">www.veyra-electronics.com</div><div class="s">GTM-NX4V9QT</div></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div class="arrowcol" style="flex:1"><div class="arrowline"></div><div class="arrowhead"></div></div>
+            <div style="flex:2">
+              <div class="lbl">Google tags <span class="muted">&#9432;</span></div>
+              <div class="chip">
+                <div class="chipicon gtag">G</div>
+                <div><div class="t">G-VEY4RA92QD</div><div class="s">IDs: G-VEY4RA92QD</div></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div class="arrowcol" style="flex:1"><div class="arrowline"></div><div class="arrowhead"></div></div>
+            <div style="flex:2">
+              <div class="lbl">Destinations <span class="muted">&#9432;</span></div>
+              <div class="pill">
+                <div class="chipicon ga" style="width:20px;height:20px">
+                  <i style="height:7px"></i><i style="height:13px"></i><i style="height:18px"></i>
+                </div>
+                <span>G-VEY4RA92QD</span><span class="n">2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="quality">
+          <div>
+            <div class="qt">Container quality: <b>Needs attention</b></div>
+            <div class="bars"><i class="on"></i><i></i><i></i><i></i></div>
+          </div>
+          <div class="qm">Container issues are likely impacting your measurement.</div>
+          <div class="qa">View 3 issues</div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th class="col-name">Name &uarr;</th>
+              <th class="col-type">Type</th>
+              <th class="col-change">Change</th>
+              <th class="col-edit">Last Edited</th>
+              <th class="col-user">User</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>(allpage) click_btn_request_quote</td>
+              <td>Trigger</td><td>Deleted</td><td>3 months ago</td>
+              <td>a.moreira@veyra-electronics.com</td><td class="k">&#8942;</td>
+            </tr>
+            <tr>
+              <td>(allpage) click_btn_request_quote_id</td>
+              <td>Trigger</td><td>Deleted</td><td>3 months ago</td>
+              <td>a.moreira@veyra-electronics.com</td><td class="k">&#8942;</td>
+            </tr>
+            <tr>
+              <td>GA4 &mdash; view_item (product detail)</td>
+              <td>Tag</td><td>Added</td><td>5 days ago</td>
+              <td>j.ferreira@veyra-electronics.com</td><td class="k">&#8942;</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

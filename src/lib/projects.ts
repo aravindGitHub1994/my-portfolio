@@ -12,8 +12,12 @@ export interface Project {
   outcome: string;
   /** Plain "built with" tech, shown as text — not a skill claim. */
   stack: string[];
-  /** "How I used AI agents" callout text. */
-  howAI: string;
+  /**
+   * "How I used AI agents" callout text. Optional: hand-craft projects have no
+   * honest AI angle (ADR-005), and inventing one would be a lie — "Read the
+   * build" omits the section rather than filling it (ADR-008 §4).
+   */
+  howAI?: string;
   /** Public path, e.g. "/diagrams/taxonomy.svg". */
   diagram: string;
   /**
@@ -23,10 +27,43 @@ export interface Project {
    * renders its Beat-1 image pane only when this is present.
    */
   screenshot?: string;
+  /**
+   * Fictional domain shown in the Safari-frame URL pill (ADR-008 §1). Must
+   * stay inside the recreation universe (ADR-006 §7) — never a real client
+   * or employer domain. Only meaningful on cards with a screenshot.
+   */
+  domain?: string;
   status?: "in-progress";
 }
 
 export const PROJECTS: Project[] = [
+  {
+    // The core-craft card (ADR-008 §4) — manual measurement work, so no
+    // `howAI`: inventing an AI angle would break the honesty rule (ADR-005).
+    slug: "tagging",
+    title: "Tagging & Measurement",
+    tagline:
+      "Five years of hands-on tag architecture — DevTools-driven audits, multi-platform tag plans, client- and server-side GTM built on DOM-level custom variables and triggers, and the post-launch governance that keeps client measurement trustworthy.",
+    capabilities: ["measurement", "governance"],
+    problem:
+      "Client measurement rarely fails loudly — it drifts. Tags double-fire or never fire, dataLayers go stale after a redesign, conversions stop matching platform reports, and every new ad platform bolts on another snippet nobody owns. Media budgets get optimized against those numbers, so a broken tag quietly misdirects real spend.",
+    approach:
+      "Every engagement starts by auditing what actually fires on the site — tracing requests, the dataLayer, and page behaviour in Chrome DevTools until the failure is reproduced, not guessed. From there it's either repairing the existing tagging architecture in place or authoring a new multi-platform tag plan — GA4, Meta, Criteo, Google Ads, CM360, DV360, Kakao, StackAdapt, The Trade Desk, and more — implemented as a structured dataLayer with GTM on top. Where a site exposes no clean data hooks, custom GTM variables and triggers are hand-built in vanilla JS against the DOM itself to set tag parameters reliably; where first-party durability matters, a server-side GTM container carries the measurement past the browser's limits.",
+    outcome:
+      "600+ client accounts audited, tagged, or troubleshot since March 2021 — and kept healthy after launch, with governance and troubleshooting treated as part of the implementation rather than an afterthought.",
+    stack: [
+      "Google Tag Manager",
+      "GA4",
+      "JavaScript",
+      "dataLayer",
+      "Server-side GTM",
+      "Chrome DevTools",
+    ],
+    diagram: "/diagrams/tagging.svg",
+    screenshot: "/screens/tagging.png",
+    // The container shown in the GTM recreation (fictional universe).
+    domain: "www.veyra-electronics.com",
+  },
   {
     slug: "taxonomy",
     title: "Taxonomy Builder",
@@ -44,6 +81,7 @@ export const PROJECTS: Project[] = [
       "Directed Claude Code through spec-driven development end to end — architecture decisions captured as ADRs before code, the recursive taxonomy engine and the fail-closed tenant guard built from written specs, and regression coverage added alongside each feature rather than after.",
     diagram: "/diagrams/taxonomy.svg",
     screenshot: "/screens/taxonomy.png",
+    domain: "app.taxonomy-builder.io",
   },
   {
     slug: "budget",
@@ -62,6 +100,7 @@ export const PROJECTS: Project[] = [
       "Used Claude Code and Gemini CLI as the implementation team for the modeling pipeline — translating MMM domain requirements (priors, spline knots, convergence thresholds) into working Python, and codifying hard-won \"gotchas\" (Meridian's strict dimension naming, API churn between versions) as a standing project context so they get caught automatically on the next run.",
     diagram: "/diagrams/budget.svg",
     screenshot: "/screens/budget.png",
+    domain: "budget-optimizer.app",
   },
   {
     slug: "gmc",
@@ -80,6 +119,7 @@ export const PROJECTS: Project[] = [
       "Had Claude Code drive the build from a written PRD and ADRs — the service-account auth decision, the API call strategy (discovery → aggregate status → on-demand drill-down), and the SQLite caching layer were all specified first and implemented against that spec, keeping Merchant API quota usage predictable from day one.",
     diagram: "/diagrams/gmc.svg",
     screenshot: "/screens/gmc.png",
+    domain: "gmc-insights.app",
   },
   {
     slug: "personas",
@@ -95,7 +135,7 @@ export const PROJECTS: Project[] = [
       "In progress — early use cases under evaluation include market-segmentation pitch testing, cross-market message resonance checks, and bias/localization stress-testing for AI-generated copy, with no real user data involved at any stage.",
     stack: ["Python", "LLM APIs", "Pandas"],
     howAI:
-      "Using Claude Code to prototype the segment-selection and persona-simulation logic conceptually before any production use — this is the earliest-stage project of the four and is explicitly framed here as exploratory, not shipped.",
+      "Using Claude Code to prototype the segment-selection and persona-simulation logic conceptually before any production use — this is the earliest-stage project on this page and is explicitly framed as exploratory, not shipped.",
     diagram: "/diagrams/personas.svg",
     status: "in-progress",
   },

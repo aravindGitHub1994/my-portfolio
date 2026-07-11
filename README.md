@@ -20,16 +20,16 @@ A personal portfolio for a **Data Analytics Manager who ships production softwar
 
 ## 🎯 What it is
 
-One scrolling page in five acts — **Hero · Approach · Work · Trajectory · Contact** — where a persistent WebGL scene reshapes with the story: prism (data refracts into insight) → the prism **crystallizes into a cube** at the Trajectory payoff beat → dissolves into a **point-globe** at Contact.
+One scrolling page in five acts — **Hero · Approach · Work · Trajectory · Contact** — where a persistent WebGL scene works the story around one constant object ([ADR-008](docs/decisions/ADR-008-projection-work-act-and-prism-finale.md)): the prism refracts data into insight, turns **projector** during Work (its beams curve into each project's Safari-framed window), eases home through Trajectory, and ends with its beams forming a soft **underline beneath the contact CTA**.
 
 ## ✨ Features
 
 - 🔷 **The Lens** — dispersion prism (`MeshTransmissionMaterial`), stateless vertex-shader particle streams, and five spectrum light-blades; scroll choreography via GSAP ScrollTrigger + Lenis.
 - 🌀 **Pointer refraction pass** — a screen-space displacement + chromatic-aberration field around the pointer, keyed to pointer speed and scroll velocity (high tier, fine pointers only).
-- 🔤 **Kinetic type** — headings and stat figures render as GL twins of their real DOM elements: they *refract in* from chromatic shards and shear with scroll velocity, while the semantic DOM stays selectable and indexable underneath.
-- 🔢 **Count-up proof band** — Approach-act figures (44 / 19 / 200+ / 4 / 5) count up as they resolve; every number traces to `src/lib/resume.ts` or is derived from content arrays (`src/lib/stats.ts`).
+- 🔤 **Kinetic type** — display text renders as GL twins of the real DOM elements, which stay selectable and indexable underneath. Headings, stat figures, and the small eyebrow / `01 / 05` labels *refract in* from chromatic shards; body copy, taglines, and stat labels join as **distortion-only** twins (crisp on entry, aberrating near the pointer; ADR-010 §1). Interactive text — buttons, nav/contact links — plus chips and the "Read the build" dialog stay crisp DOM.
+- 🔢 **Count-up proof band** — Approach-act figures (600+ / 44 / 19 / 200+ / 5 / 7) count up as they resolve; every number traces to `src/lib/resume.ts`, a project's copy, or is derived from content arrays (`src/lib/stats.ts`).
 - 📊 **Animatable architecture diagrams** — hand-structured SVGs (`public/diagrams/`, [authoring convention](docs/diagram-authoring.md)) that draw on once on entry with a single data-packet pass, then settle.
-- 🎚️ **Graceful reduction** — fidelity tiers (`src/lib/gpuTier.ts`, `?tier=high|low|static` override): low tier gets a calm faux-glass lens, crisp DOM type/imagery and no postprocessing; `prefers-reduced-motion` gets resolved end-states with no motion at all.
+- 🎚️ **High by default + graceful reduction** — `high` fidelity is served to every capable device (`src/lib/gpuTier.ts`, `?tier=high|low|static` override); when a device can't hold framerate a runtime FPS watchdog **asks** — "Switch to basic / Keep full quality" — and only a confirmation hot-swaps to the calm faux-glass `low` tier in place ([ADR-010 §2](docs/decisions/ADR-010-universal-refraction-opt-in-fidelity-projector-assembly-and-tool-inflow.md), reversing ADR-009's silent swap). `prefers-reduced-motion` gets resolved end-states with no motion at all.
 - 🔒 **Security posture** — CSP (`connect-src 'self'`, `font-src 'self'`) with everything local/procedural; security headers via `vercel.json`; no client data in the repo (recreated, dummy-data imagery only — [ADR-006 §7](docs/decisions/ADR-006-lens-refractive-redesign.md)).
 - ⚡ **Static export** — fast, CDN-cacheable, SEO-friendly with `sitemap.ts` + `robots.ts`.
 
@@ -89,7 +89,7 @@ npm run lint         # ESLint (flat config)
 | `NEXT_PUBLIC_SITE_URL` | build-time env (Vercel) | Canonical/OG/sitemap base URL. Falls back to `https://example.com` if unset (`src/lib/nav.ts`). |
 | Site content | `src/lib/*.ts` | Edit `projects.ts`, `resume.ts`, `stats.ts`, `nav.ts`, `capabilities.ts` — not JSX. |
 | Design tokens | `src/app/globals.css` | Tailwind v4 `@theme` — see [design-system](docs/design-system.md). |
-| Fidelity tiers | `src/lib/gpuTier.ts` | Heuristic, CSP-safe detection; `?tier=` override. |
+| Fidelity tiers | `src/lib/gpuTier.ts` | `high` by default; FPS watchdog prompts before downgrading (ADR-010 §2); `?tier=` override. |
 | Security headers | `vercel.json` | Applied on Vercel deploys only. |
 
 ## 📁 Project Structure
@@ -112,7 +112,7 @@ Push to the default branch; Vercel auto-detects Next.js, runs `next build`, and 
 
 ## 📖 Documentation & Help
 
-- 📝 **ADRs** — [ADR-001 Static export](docs/decisions/ADR-001-next-js-static-export.md) · [ADR-005 Electric Dark scroll experience](docs/decisions/ADR-005-threejs-scroll-experience.md) · [ADR-006 The Lens](docs/decisions/ADR-006-lens-refractive-redesign.md)
+- 📝 **ADRs** — [ADR-001 Static export](docs/decisions/ADR-001-next-js-static-export.md) · [ADR-005 Electric Dark scroll experience](docs/decisions/ADR-005-threejs-scroll-experience.md) · [ADR-006 The Lens](docs/decisions/ADR-006-lens-refractive-redesign.md) · [ADR-011 Lens legibility & anonymous inflow](docs/decisions/ADR-011-lens-legibility-and-inflow-simplification.md)
 - 🎨 **Design system** — [docs/design-system.md](docs/design-system.md)
 - 📊 **Diagram authoring** — [docs/diagram-authoring.md](docs/diagram-authoring.md)
 - 🤖 **For AI agents** — [AGENTS.md](AGENTS.md)

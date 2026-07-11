@@ -45,7 +45,7 @@ export function InlineDiagram({
     const svg = host.current?.querySelector("svg");
     if (!svg) return;
     // Fluid inline sizing; the authored width/height stay in the file for
-    // texture rasterization (cube face) and <img> fallback.
+    // texture rasterization and the <img> fallback.
     svg.removeAttribute("width");
     svg.removeAttribute("height");
     svg.style.width = "100%";

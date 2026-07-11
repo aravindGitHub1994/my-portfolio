@@ -4,7 +4,10 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { lensState } from "./lensState";
+import { registerBakeExclusion } from "./bakeExclusions";
+import { PROJECTION_PLANE_Z } from "./projectionTargets";
 import type { FidelityTier } from "@/lib/gpuTier";
+import { mulberry32 } from "@/lib/prng";
 
 /**
  * Particle streams around the Lens (ADR-006 §1): dim raw **data packets**
@@ -16,9 +19,12 @@ import type { FidelityTier } from "@/lib/gpuTier";
  *
  * Choreography (all damped):
  *   approach — the chromatic fan straightens into ordered parallel beams
- *   work     — everything dims/recedes so the image planes own the stage
- *   traject. — beams retract into the crystallizing cube
- *   contact  — beam particles dissolve onto a turning point-globe (finale)
+ *   work     — high tier at lg+: the beams enter PROJECTED mode (ADR-008 §2)
+ *              and curve into the active card's window, endpoint sweeping
+ *              between cards; lower tiers keep the ADR-006 dim/recede
+ *   traject. — the prism returns home and the ordered fan re-forms (recap)
+ *   contact  — high tier: beams bend down into a soft underline beneath the
+ *              CTA row (ADR-008 §3); low/static end on the resolved fan
  */
 
 /** Dispersion ramp: cyan → electric blue → violet (design-system accents). */
@@ -32,7 +38,7 @@ const beamAngle = (k: number, organized: number) =>
 const inflowVertex = /* glsl */ `
   uniform float uTime;
   uniform float uRecede;
-  uniform float uGlobe;
+  uniform float uInSide;
   uniform float uDpr;
   attribute float aSeed;
   attribute vec3 aJitter;
@@ -41,14 +47,18 @@ const inflowVertex = /* glsl */ `
   void main() {
     float speed = mix(0.09, 0.2, fract(aSeed * 7.31));
     float t = fract(uTime * speed + aSeed);
-    // Quadratic bezier: scattered upper-left field -> the lens mouth.
-    vec3 p0 = vec3(-7.5 + aJitter.x * 2.4, 2.4 + aJitter.y * 1.8, aJitter.z * 1.4);
-    vec3 c  = vec3(-2.8, 0.6 + aJitter.y * 0.5, aJitter.z * 0.7);
-    vec3 p1 = vec3(-0.4, 0.0, 0.0);
+    // Quadratic bezier: scattered upper field -> the lens mouth. uInSide
+    // mirrors the source x (ADR-009 §2): while projecting, packets enter
+    // the OUTER face — the one away from the window — so entry and exit
+    // sit on opposite faces. It is damped with the rig, so the entry
+    // sweeps with the prism instead of snapping.
+    vec3 p0 = vec3(uInSide * (-7.5 + aJitter.x * 2.4), 2.4 + aJitter.y * 1.8, aJitter.z * 1.4);
+    vec3 c  = vec3(uInSide * -2.8, 0.6 + aJitter.y * 0.5, aJitter.z * 0.7);
+    vec3 p1 = vec3(uInSide * -0.4, 0.0, 0.0);
     vec3 pos = mix(mix(p0, c, t), mix(c, p1, t), t);
     pos += aJitter * 0.22 * (1.0 - t) * sin(uTime * 2.0 + aSeed * 40.0);
     vFade = smoothstep(0.0, 0.12, t) * (1.0 - smoothstep(0.85, 1.0, t));
-    vFade *= (1.0 - uGlobe) * mix(1.0, 0.35, uRecede);
+    vFade *= mix(1.0, 0.35, uRecede);
     vec4 mv = modelViewMatrix * vec4(pos, 1.0);
     // Pixel-sized packets: 7.0 = camera distance, so the factor is 1 at the
     // lens plane and only mildly attenuates with depth.
@@ -61,12 +71,17 @@ const beamVertex = /* glsl */ `
   uniform float uTime;
   uniform float uApproach;
   uniform float uRecede;
-  uniform float uCrystal;
-  uniform float uGlobe;
+  uniform float uProject;
+  uniform vec3 uTarget;
+  uniform float uHalfW;
+  uniform float uHalfH;
+  uniform float uSide;
+  uniform float uUnderline;
+  uniform vec3 uCta;
+  uniform float uCtaHalfW;
   uniform float uDpr;
   attribute float aSeed;
   attribute float aBeam;
-  attribute vec3 aSphere;
   attribute vec3 aColor;
   varying float vFade;
   varying vec3 vColor;
@@ -78,22 +93,57 @@ const beamVertex = /* glsl */ `
     vec2 dir = vec2(cos(ang), sin(ang));
     float speed = mix(0.14, 0.28, fract(aSeed * 5.13));
     float t = fract(uTime * speed + aSeed);
-    // Crystallization retracts the beams into the solid.
-    float travel = mix(6.2, 1.3, uCrystal);
-    vec3 pos = vec3(0.4, 0.0, 0.0) + vec3(dir * (0.25 + t * travel), 0.0);
+    vec3 pos = vec3(0.4, 0.0, 0.0) + vec3(dir * (0.25 + t * 6.2), 0.0);
     pos.z += (fract(aSeed * 9.7) - 0.5) * 0.4;
     float spread = mix(0.34, 0.1, uApproach);
-    pos.xy += vec2(-dir.y, dir.x) * (fract(aSeed * 3.3) - 0.5) * spread;
-    // Contact finale: beams dissolve onto a slowly turning point-globe.
-    float g = smoothstep(0.0, 1.0, uGlobe);
-    float ca = cos(uTime * 0.22);
-    float sa = sin(uTime * 0.22);
-    vec3 sp = aSphere * 1.7;
-    sp.xz = mat2(ca, -sa, sa, ca) * sp.xz;
-    pos = mix(pos, sp, g);
+    float lane = fract(aSeed * 3.3) - 0.5;
+    pos.xy += vec2(-dir.y, dir.x) * lane * spread;
+
+    // Projected mode (ADR-008 §2, refraction per ADR-009 §2): a quadratic
+    // bezier from the prism exit to the active window (uTarget, group-local).
+    // The origin sits on the face TOWARD the window (0.4 * uSide while
+    // projecting) — packets entered the mirrored outer face, so light
+    // crosses the glass. Endpoints land across the window's actual world
+    // rect (uHalfW/uHalfH): each spectrum band owns a vertical strip with
+    // per-particle scatter, so the cone converges at the prism and opens to
+    // fill the frame — a projector throw, not a wire. The arc bulges
+    // perpendicular to the throw, flipping with uSide.
+    vec3 p0 = vec3(mix(0.4, 0.4 * uSide, uProject), 0.0, 0.0);
+    float row = fract(aSeed * 6.19) - 0.5;
+    float sx = clamp(k * 0.33 + lane * 0.6, -1.0, 1.0);
+    vec3 pEnd = uTarget + vec3(sx * uHalfW * 0.92, row * 2.0 * uHalfH * 0.85, 0.0);
+    pEnd.z += (fract(aSeed * 9.7) - 0.5) * 0.3;
+    vec3 d02 = pEnd - p0;
+    vec3 perp = normalize(vec3(-d02.y, d02.x, 0.0) + 1e-5);
+    // Refraction kink: leave the exit face along its outward normal with a
+    // small per-color angular spread (violet bends hardest) before curving
+    // to the window. uSide/uProject are damped, so the kink sweeps through
+    // zero mid-crossing instead of snapping.
+    vec3 kinkDir = vec3(uSide, 0.08 * k, 0.0);
+    vec3 p1 = p0 + d02 * 0.5 + perp * (uSide * 0.9 + lane * 0.3)
+            + kinkDir * 0.6 * uProject;
+    vec3 bez = mix(mix(p0, p1, t), mix(p1, pEnd, t), t);
+    pos = mix(pos, bez, uProject);
+
+    // Contact finale (ADR-008 §3): beams bend down and converge into a soft
+    // underline beneath the CTA row — the refracted output points at the
+    // invitation. Endpoints spread across the row width (uCtaHalfW).
+    vec3 uEnd = uCta + vec3(
+      (k * 0.18 + lane * 0.4) * 2.0 * uCtaHalfW,
+      0.0,
+      (fract(aSeed * 9.7) - 0.5) * 0.2
+    );
+    vec3 uC = p0 + vec3(1.5 + k * 0.25, -0.1, 0.0);
+    vec3 ubez = mix(mix(p0, uC, t), mix(uC, uEnd, t), t);
+    pos = mix(pos, ubez, uUnderline);
+
     float beamFade = smoothstep(0.0, 0.06, t) * (1.0 - smoothstep(0.72, 1.0, t));
-    vFade = mix(beamFade * mix(1.0, 0.3, uRecede), 0.85, g);
-    vColor = mix(aColor, vec3(0.24, 0.455, 1.0), max(uCrystal * 0.6, g * 0.4));
+    // Curved particles survive the whole throw and land at the target.
+    float throwFade = smoothstep(0.0, 0.05, t) * (1.0 - smoothstep(0.9, 1.0, t));
+    float straight = beamFade * mix(1.0, 0.3, uRecede);
+    float curveMode = max(uProject, uUnderline);
+    vFade = mix(straight, throwFade * 0.9, curveMode);
+    vColor = aColor;
     vec4 mv = modelViewMatrix * vec4(pos, 1.0);
     // Pixel-sized (see inflowVertex) — beams read as streams, not fog.
     gl_PointSize = (2.4 + fract(aSeed * 4.1) * 2.6) * uDpr * (7.0 / -mv.z);
@@ -140,20 +190,6 @@ const bladeVertex = /* glsl */ `
   }
 `;
 
-/**
- * Deterministic PRNG (mulberry32) — geometry attributes must be a pure
- * function of their seed so re-renders are idempotent (react-hooks/purity).
- */
-function mulberry32(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 function makeSeeds(count: number, seed: number) {
   const rand = mulberry32(seed);
   const out = new Float32Array(count);
@@ -195,10 +231,7 @@ export function DataStreams({ tier }: { tier: FidelityTier }) {
     const geo = new THREE.BufferGeometry();
     const beam = new Float32Array(beamCount);
     const color = new Float32Array(beamCount * 3);
-    const sphere = new Float32Array(beamCount * 3);
     const c = new THREE.Color();
-    // Fibonacci sphere so the point-globe reads evenly at any count.
-    const golden = Math.PI * (3 - Math.sqrt(5));
     for (let i = 0; i < beamCount; i += 1) {
       const k = i % BEAMS;
       beam[i] = k;
@@ -206,12 +239,6 @@ export function DataStreams({ tier }: { tier: FidelityTier }) {
       color[i * 3] = c.r;
       color[i * 3 + 1] = c.g;
       color[i * 3 + 2] = c.b;
-      const y = 1 - (i / (beamCount - 1)) * 2;
-      const r = Math.sqrt(Math.max(0, 1 - y * y));
-      const th = golden * i;
-      sphere[i * 3] = Math.cos(th) * r;
-      sphere[i * 3 + 1] = y;
-      sphere[i * 3 + 2] = Math.sin(th) * r;
     }
     geo.setAttribute(
       "aSeed",
@@ -219,7 +246,6 @@ export function DataStreams({ tier }: { tier: FidelityTier }) {
     );
     geo.setAttribute("aBeam", new THREE.BufferAttribute(beam, 1));
     geo.setAttribute("aColor", new THREE.BufferAttribute(color, 3));
-    geo.setAttribute("aSphere", new THREE.BufferAttribute(sphere, 3));
     geo.setAttribute(
       "position",
       new THREE.BufferAttribute(new Float32Array(beamCount * 3), 3),
@@ -240,7 +266,7 @@ export function DataStreams({ tier }: { tier: FidelityTier }) {
     () => ({
       uTime: { value: 0 },
       uRecede: { value: 0 },
-      uGlobe: { value: 0 },
+      uInSide: { value: 1 },
       uDpr: { value: dpr },
       uColor: { value: new THREE.Color("#93a7cd") },
     }),
@@ -252,8 +278,14 @@ export function DataStreams({ tier }: { tier: FidelityTier }) {
       uTime: { value: 0 },
       uApproach: { value: 0 },
       uRecede: { value: 0 },
-      uCrystal: { value: 0 },
-      uGlobe: { value: 0 },
+      uProject: { value: 0 },
+      uTarget: { value: new THREE.Vector3() },
+      uHalfW: { value: 1.6 },
+      uHalfH: { value: 1 },
+      uSide: { value: 1 },
+      uUnderline: { value: 0 },
+      uCta: { value: new THREE.Vector3() },
+      uCtaHalfW: { value: 1 },
       uDpr: { value: dpr },
     }),
     [dpr],
@@ -297,9 +329,28 @@ export function DataStreams({ tier }: { tier: FidelityTier }) {
   const beamMat = useRef<THREE.ShaderMaterial>(null);
 
   // Damped choreography values shared by uniforms + blade transforms.
-  const visual = useRef({ approach: 0, recede: 0, crystal: 0, globe: 0 });
+  const visual = useRef({
+    approach: 0,
+    recede: 0,
+    contact: 0,
+    project: 0,
+    side: 1,
+  });
+  // Group-local scratch for the projection targets (world → LensRig space).
+  const root = useRef<THREE.Group>(null);
+  const targetScratch = useRef(new THREE.Vector3());
+  const scaleScratch = useRef(new THREE.Vector3());
 
-  // Static tier: settle the composition once — cube + ordered beams, no loop.
+  // The streams must never bake into the prism's transmission buffer: their
+  // additive convergence at the mouth is exactly the blow-out (ADR-011
+  // Amendment A). The direct on-screen draw over the glass is unaffected.
+  useEffect(() => {
+    const g = root.current;
+    if (!g) return;
+    return registerBakeExclusion(g);
+  }, []);
+
+  // Static tier: settle the composition once — prism + ordered beams, no loop.
   useEffect(() => {
     if (animated) return;
     bladeRefs.current.forEach((mesh, i) => {
@@ -315,31 +366,105 @@ export function DataStreams({ tier }: { tier: FidelityTier }) {
     const t = state.clock.elapsedTime;
     const v = visual.current;
     const acts = lensState.acts;
+    const proj = lensState.projection;
+    // Projection runs on the high tier with the lg+ pinned layout only
+    // (ADR-008 §2 tier policy; Tailwind lg = 1024px). Everything else keeps
+    // the ADR-006 recede, which the projection cancels while active.
+    const projecting =
+      tier === "high" && proj.index >= 0 && state.size.width >= 1024;
+    // 2.5/2 match LensRig's position/side damps so the bulge, the endpoint
+    // sweep, and the prism's glide all cross to the other window together.
+    v.project = THREE.MathUtils.damp(v.project, projecting ? 1 : 0, 2.5, delta);
+    v.side = THREE.MathUtils.damp(v.side, proj.side, 2, delta);
     v.approach = THREE.MathUtils.damp(v.approach, acts.approach, 3.5, delta);
-    v.recede = THREE.MathUtils.damp(v.recede, acts.work, 3.5, delta);
-    v.crystal = THREE.MathUtils.damp(v.crystal, acts.trajectory, 4, delta);
-    v.globe = THREE.MathUtils.damp(v.globe, acts.contact, 3.5, delta);
+    v.recede = THREE.MathUtils.damp(
+      v.recede,
+      acts.work * (1 - v.project),
+      3.5,
+      delta,
+    );
+    // CTA underline is high-tier only (ADR-008 §3); low/static keep the fan.
+    v.contact = THREE.MathUtils.damp(
+      v.contact,
+      tier === "high" ? acts.contact : 0,
+      3.5,
+      delta,
+    );
+    const underline = THREE.MathUtils.smoothstep(v.contact, 0.25, 0.8);
 
     const iu = inflowMat.current?.uniforms;
     if (iu) {
       iu.uTime.value = t;
       iu.uRecede.value = v.recede;
-      iu.uGlobe.value = v.globe;
+      // Entry face mirrors toward the outer side while projecting
+      // (ADR-009 §2). v.side/v.project are damped above, so this sweeps.
+      iu.uInSide.value = THREE.MathUtils.lerp(1, v.side, v.project);
     }
     const bu = beamMat.current?.uniforms;
     if (bu) {
       bu.uTime.value = t;
       bu.uApproach.value = v.approach;
       bu.uRecede.value = v.recede;
-      bu.uCrystal.value = v.crystal;
-      bu.uGlobe.value = v.globe;
+      bu.uProject.value = v.project;
+      bu.uSide.value = v.side;
+      bu.uUnderline.value = underline;
+      if (root.current && (v.project > 0.001 || underline > 0.001)) {
+        root.current.updateWorldMatrix(true, false);
+        if (v.project > 0.001) {
+          // The tracker writes world coords; the shader works in
+          // LensRig-local space (the rig translates/scales, no rotation).
+          // Damping the uniform itself IS the endpoint sweep between cards —
+          // 2.5 matches the rig's position damp so beams land in step.
+          const local = targetScratch.current.set(
+            proj.targetX,
+            proj.targetY,
+            PROJECTION_PLANE_Z,
+          );
+          root.current.worldToLocal(local);
+          const ut = bu.uTarget.value as THREE.Vector3;
+          ut.x = THREE.MathUtils.damp(ut.x, local.x, 2.5, delta);
+          ut.y = THREE.MathUtils.damp(ut.y, local.y, 2.5, delta);
+          ut.z = THREE.MathUtils.damp(ut.z, local.z, 2.5, delta);
+          // Window half-extents, world → rig-local like ctaHalfW below.
+          const rigScale = Math.max(
+            0.001,
+            root.current.getWorldScale(scaleScratch.current).x,
+          );
+          bu.uHalfW.value = THREE.MathUtils.damp(
+            bu.uHalfW.value,
+            proj.halfW / rigScale,
+            3,
+            delta,
+          );
+          bu.uHalfH.value = THREE.MathUtils.damp(
+            bu.uHalfH.value,
+            proj.halfH / rigScale,
+            3,
+            delta,
+          );
+        }
+        if (underline > 0.001) {
+          const local = targetScratch.current.set(
+            proj.ctaX,
+            proj.ctaY,
+            PROJECTION_PLANE_Z,
+          );
+          root.current.worldToLocal(local);
+          (bu.uCta.value as THREE.Vector3).copy(local);
+          const worldScale = root.current.getWorldScale(
+            scaleScratch.current,
+          ).x;
+          bu.uCtaHalfW.value = proj.ctaHalfW / Math.max(0.001, worldScale);
+        }
+      }
     }
 
-    const len = 5.6 * (1 - 0.72 * v.crystal);
+    const len = 5.6;
+    // Straight blades hand off to the curved streams (ADR-008 §2/§3).
     const alpha =
       (tier === "high" ? 0.2 : 0.14) *
       (1 - 0.65 * v.recede) *
-      (1 - v.globe);
+      (1 - Math.max(v.project, underline));
     bladeRefs.current.forEach((mesh, i) => {
       if (!mesh) return;
       mesh.rotation.z = beamAngle(i, v.approach);
@@ -349,7 +474,7 @@ export function DataStreams({ tier }: { tier: FidelityTier }) {
   });
 
   return (
-    <group>
+    <group ref={root}>
       {animated && (
         <points geometry={inflowGeo} frustumCulled={false}>
           <shaderMaterial

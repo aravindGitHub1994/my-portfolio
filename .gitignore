@@ -27,8 +27,14 @@ recovery-codes.txt
 
 # confidential client screenshots (ADR-006 §7a) — raw product captures must
 # never be committed; published imagery is recreated with dummy data only.
+# Nothing under docs/projects/ is ever a publishable image: recreations are
+# authored as .html here and rasterized into public/screens/.
 docs/**/Screenshot*.png
 docs/**/screenshot*.png
+docs/projects/**/*.png
+docs/projects/**/*.jpg
+docs/projects/**/*.jpeg
+docs/projects/**/*.webp
 
 # debug
 npm-debug.log*

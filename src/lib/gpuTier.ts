@@ -1,48 +1,48 @@
-// Fidelity tier detection (ADR-005 §3). The cube's choreography is identical
-// on every tier — only shader cost changes:
-//   high   — full MeshTransmissionMaterial refraction (desktop, capable GPU)
-//   low    — faux-glass (no per-frame transmission buffer, capped DPR)
+// Fidelity tier selection (ADR-009 §3, superseding ADR-005 §3 / ADR-006 §8).
+// The tier is HIGH BY DEFAULT — the old device-class heuristic (mobile GPU,
+// coarse pointer, low deviceMemory, integrated Intel) guessed wrong on real
+// hardware, including the owner's. Only *correctness* gates stay pre-emptive;
+// *performance* is handled at runtime by an FPS watchdog (LensRoot) that
+// drops an auto-selected high to low and offers "Back to full":
+//   high   — full MeshTransmissionMaterial refraction (the default)
+//   low    — faux-glass (no per-frame transmission buffer, capped DPR);
+//            also the pre-emptive floor for software rasterizers
+//            (SwiftShader/llvmpipe), which render correctly but never fast
 //   static — no motion, render-on-demand (prefers-reduced-motion)
 //   none   — WebGL unavailable; no canvas at all
 //
-// Deliberately heuristic and dependency-free: detect-gpu et al. fetch
-// benchmark data from a CDN at runtime, which the CSP (connect-src 'self')
-// forbids. Calibration knob: append ?tier=high|low|static to the URL.
+// Deliberately dependency-free: detect-gpu et al. fetch benchmark data from a
+// CDN at runtime, which the CSP (connect-src 'self') forbids. Calibration
+// knob: append ?tier=high|low|static to the URL — an explicit override also
+// marks the choice non-auto, which disables the watchdog.
 
 export type FidelityTier = "high" | "low" | "static" | "none";
 
-function classifyRenderer(renderer: string): "mobile" | "weak" | "capable" {
-  if (/mali|adreno|powervr|videocore|apple gpu/i.test(renderer)) {
-    return "mobile";
-  }
-  if (/swiftshader|llvmpipe|software/i.test(renderer)) {
-    return "weak";
-  }
-  // Integrated Intel below Iris/Xe/Arc struggles with per-frame transmission.
-  if (/intel/i.test(renderer) && !/iris|arc|xe/i.test(renderer)) {
-    return "weak";
-  }
-  return "capable";
-}
+export type TierDetection = {
+  tier: FidelityTier;
+  /** False when ?tier= forced the choice — the FPS watchdog runs only on
+   *  auto-selected tiers. */
+  auto: boolean;
+};
 
 /** Client-only — call from an effect or a client-only (ssr:false) component. */
-export function detectTier(): FidelityTier {
-  if (typeof window === "undefined") return "none";
+export function detectTier(): TierDetection {
+  if (typeof window === "undefined") return { tier: "none", auto: true };
 
   const override = new URLSearchParams(window.location.search).get("tier");
   if (override === "high" || override === "low" || override === "static") {
-    return override;
+    return { tier: override, auto: false };
   }
 
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    return "static";
+    return { tier: "static", auto: true };
   }
 
   const probe = document.createElement("canvas");
   const gl =
     probe.getContext("webgl2") ??
     (probe.getContext("webgl") as WebGLRenderingContext | null);
-  if (!gl) return "none";
+  if (!gl) return { tier: "none", auto: true };
 
   const info = gl.getExtension("WEBGL_debug_renderer_info");
   const renderer = String(
@@ -50,13 +50,12 @@ export function detectTier(): FidelityTier {
   );
   gl.getExtension("WEBGL_lose_context")?.loseContext();
 
-  const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
-  const deviceMemory = (navigator as Navigator & { deviceMemory?: number })
-    .deviceMemory;
-  const lowMemory = deviceMemory !== undefined && deviceMemory < 4;
-
-  if (coarsePointer || lowMemory || classifyRenderer(renderer) !== "capable") {
-    return "low";
+  // The one pre-emptive performance floor: a software rasterizer will draw
+  // the high tier correctly but never fast — don't make the watchdog spend
+  // two janky seconds discovering that.
+  if (/swiftshader|llvmpipe|software/i.test(renderer)) {
+    return { tier: "low", auto: true };
   }
-  return "high";
+
+  return { tier: "high", auto: true };
 }

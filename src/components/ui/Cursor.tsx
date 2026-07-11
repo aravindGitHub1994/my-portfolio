@@ -5,12 +5,15 @@ import { gsap } from "gsap";
 
 /**
  * Custom cursor: an accent dot with a trailing ring that swells over
- * interactive elements. Activates only on pointer-fine devices without
- * reduced-motion — touch and reduced-motion users keep the native cursor.
+ * interactive elements, plus a small label that surfaces a target's
+ * `data-cursor-label` (ADR-009 §4 — "Reveal" over project previews).
+ * Activates only on pointer-fine devices without reduced-motion — touch and
+ * reduced-motion users keep the native cursor.
  */
 export function Cursor() {
   const dot = useRef<HTMLDivElement>(null);
   const ring = useRef<HTMLDivElement>(null);
+  const label = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (
@@ -21,7 +24,8 @@ export function Cursor() {
     }
     const dotEl = dot.current;
     const ringEl = ring.current;
-    if (!dotEl || !ringEl) return;
+    const labelEl = label.current;
+    if (!dotEl || !ringEl || !labelEl) return;
 
     document.documentElement.classList.add("has-custom-cursor");
 
@@ -29,9 +33,21 @@ export function Cursor() {
     const dotY = gsap.quickTo(dotEl, "y", { duration: 0.12, ease: "power3" });
     const ringX = gsap.quickTo(ringEl, "x", { duration: 0.45, ease: "power3" });
     const ringY = gsap.quickTo(ringEl, "y", { duration: 0.45, ease: "power3" });
+    // The label rides with the ring — same lag, so it reads as one object.
+    const labelX = gsap.quickTo(labelEl, "x", {
+      duration: 0.45,
+      ease: "power3",
+    });
+    const labelY = gsap.quickTo(labelEl, "y", {
+      duration: 0.45,
+      ease: "power3",
+    });
 
     const show = () => gsap.to([dotEl, ringEl], { opacity: 1, duration: 0.25 });
-    const hide = () => gsap.to([dotEl, ringEl], { opacity: 0, duration: 0.25 });
+    // The label's opacity is owned by onOver; hide() clears it too so it
+    // never lingers after the pointer leaves the window.
+    const hide = () =>
+      gsap.to([dotEl, ringEl, labelEl], { opacity: 0, duration: 0.25 });
 
     let shown = false;
     const onMove = (e: PointerEvent) => {
@@ -43,12 +59,20 @@ export function Cursor() {
       dotY(e.clientY);
       ringX(e.clientX);
       ringY(e.clientY);
+      labelX(e.clientX);
+      labelY(e.clientY);
     };
 
     const onOver = (e: PointerEvent) => {
-      const interactive = (e.target as Element | null)?.closest(
-        "a, button, [data-cursor]",
-      );
+      const target = e.target as Element | null;
+      const interactive = target?.closest("a, button, [data-cursor]");
+      const labelText = target
+        ?.closest("[data-cursor-label]")
+        ?.getAttribute("data-cursor-label");
+      // Only rewrite the text when there is one — the old text keeps its
+      // shape while fading out instead of collapsing mid-fade.
+      if (labelText) labelEl.textContent = labelText;
+      gsap.to(labelEl, { opacity: labelText ? 1 : 0, duration: 0.3 });
       gsap.to(ringEl, {
         scale: interactive ? 1.7 : 1,
         borderColor: interactive
@@ -72,7 +96,7 @@ export function Cursor() {
       window.removeEventListener("pointermove", onMove);
       document.removeEventListener("pointerover", onOver);
       document.documentElement.removeEventListener("pointerleave", onLeave);
-      gsap.killTweensOf([dotEl, ringEl]);
+      gsap.killTweensOf([dotEl, ringEl, labelEl]);
     };
   }, []);
 
@@ -86,6 +110,11 @@ export function Cursor() {
       <div
         ref={dot}
         className="absolute -top-1 -left-1 h-2 w-2 rounded-full bg-accent opacity-0"
+      />
+      {/* Sits below-right of the pointer, clear of the swelled ring. */}
+      <div
+        ref={label}
+        className="absolute top-6 left-7 font-mono text-[10px] tracking-[0.18em] whitespace-nowrap text-accent-bright uppercase opacity-0"
       />
     </div>
   );

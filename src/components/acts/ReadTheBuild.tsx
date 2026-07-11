@@ -19,6 +19,9 @@ const SECTIONS = [
  * overlay — never an in-flow expand — because the project panels are
  * sticky-pinned: growing them would shift every ScrollTrigger below.
  *
+ * Sections whose copy is absent are dropped, not stubbed: `howAI` is optional
+ * (ADR-008 §4) so a hand-craft project shows no AI heading at all.
+ *
  * <dialog> gives the a11y contract for free: focus trap, Esc→close, and
  * focus restored to the trigger on close. On top of that we stop Lenis (and
  * native scroll under reduced-motion, where Lenis doesn't exist) while open,
@@ -26,6 +29,11 @@ const SECTIONS = [
  * layer, so the native cursor comes back for the dialog's lifetime.
  * Entry motion is a CSS @starting-style fade/rise, which the global
  * prefers-reduced-motion rule zeroes out.
+ *
+ * DEVIATION from ADR-010 §1 scope: the dialog copy stays crisp DOM. A native
+ * <dialog> lives in the browser top layer, which always paints above the
+ * kinetic canvas (fixed, -z-10) — a GL twin here would be invisible behind
+ * the opaque dialog surface. Flagged for the 6.2 owner review.
  */
 export function ReadTheBuild({ project }: { project: Project }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -107,16 +115,18 @@ export function ReadTheBuild({ project }: { project: Project }) {
           </div>
 
           <div className="mt-8 space-y-7">
-            {SECTIONS.map(({ heading, key }) => (
-              <section key={key}>
-                <h5 className="font-mono text-xs uppercase tracking-[0.2em] text-accent-bright">
-                  {heading}
-                </h5>
-                <p className="mt-2 text-sm leading-7 text-ink-muted">
-                  {project[key]}
-                </p>
-              </section>
-            ))}
+            {SECTIONS.filter(({ key }) => project[key]).map(
+              ({ heading, key }) => (
+                <section key={key}>
+                  <h5 className="font-mono text-xs uppercase tracking-[0.2em] text-accent-bright">
+                    {heading}
+                  </h5>
+                  <p className="mt-2 text-sm leading-7 text-ink-muted">
+                    {project[key]}
+                  </p>
+                </section>
+              ),
+            )}
 
             <section>
               <h5 className="font-mono text-xs uppercase tracking-[0.2em] text-accent-bright">

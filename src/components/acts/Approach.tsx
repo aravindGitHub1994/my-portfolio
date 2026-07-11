@@ -27,7 +27,9 @@ export function Approach() {
         title="I write the spec, agents write the code"
         description="Spec-driven development: I scope the problem, lock the interfaces, and direct Claude Code / Gemini CLI agents through implementation — owning the architecture decisions and the review."
       />
-      <ul className="mt-16 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-5">
+      {/* Six figures — 2×3 mobile, 3×2 from sm up. (Was lg:grid-cols-5 for
+          the original five; a 5-col row would orphan the sixth.) */}
+      <ul className="mt-16 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3">
         {APPROACH_STATS.map((stat, index) => (
           <StatItem key={stat.label} stat={stat} index={index} />
         ))}
@@ -81,9 +83,13 @@ function StatItem({ stat, index }: { stat: StatFigure; index: number }) {
         {display}
         {stat.suffix}
       </KineticText>
-      <span className="max-w-[16ch] text-sm leading-6 text-ink-muted">
+      <KineticText
+        as="span"
+        variant="plain"
+        className="max-w-[16ch] text-sm leading-6 text-ink-muted"
+      >
         {stat.label}
-      </span>
+      </KineticText>
     </li>
   );
 }

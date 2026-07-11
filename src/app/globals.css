@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 /*
-  Design system: "Electric Dark" (ADR-005)
-  Single dark cinematic theme built around one glass data cube.
+  Design system: "Electric Dark" (ADR-005, object updated by ADR-006/008)
+  Single dark cinematic theme built around one glass dispersion prism.
   Black/charcoal/graphite base, one electric-blue accent used sparingly
-  (glow, active states, diagram highlights, cube caustics). Geist everywhere.
+  (glow, active states, diagram highlights, beam caustics). Geist everywhere.
 */
 
 @theme {
@@ -163,6 +163,16 @@ html.lenis, html.lenis body {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
+/* Inside the Safari frame (ADR-008 §1) the window chrome owns border, radius,
+   and clipping — the preview drops its own box, and the focus ring pulls
+   inward so the frame's overflow:hidden can't swallow it. */
+.safari-viewport .project-preview {
+  border: 0;
+  border-radius: 0;
+}
+.safari-viewport .project-preview:focus-visible {
+  outline-offset: -2px;
+}
 .project-reveal-svg {
   position: absolute;
   inset: 0;
@@ -179,6 +189,53 @@ html.lenis, html.lenis body {
      if CSS paints before hydration, so no half-swept frame is ever shown. */
   .project-reveal-squiggles {
     opacity: 0;
+  }
+}
+/* Reveal affordance (ADR-009 §4): a hint pill bottom-left inside the preview.
+   Decorative only (aria-hidden — the preview's accessible name carries the
+   instruction); fades out while [data-revealing], instantly under
+   reduced-motion (the global reduce block zeroes transition durations). */
+.reveal-hint {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--color-line-strong);
+  background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+  backdrop-filter: blur(8px);
+  color: var(--color-ink-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+  transition: opacity 0.35s var(--ease-out-soft);
+}
+.reveal-hint svg {
+  color: var(--color-accent-bright);
+}
+.project-preview[data-revealing] .reveal-hint {
+  opacity: 0;
+}
+
+/* Contact CTA RGB-split (ADR-009 §5): a whisper of chromatic aberration on
+   the button labels on hover — DOM text-shadow only, no WebGL twin. The
+   channel colours are literal red/blue separations (like the shader CA),
+   not palette tokens. Gated to fine pointers without reduced-motion and
+   kept at 1px so the labels stay legible. */
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .cta-split {
+    transition: text-shadow 0.25s var(--ease-out-soft);
+  }
+  .cta-split:hover,
+  .cta-split:focus-visible {
+    text-shadow:
+      1px 0 0 rgba(255, 92, 92, 0.5),
+      -1px 0 0 rgba(92, 170, 255, 0.5);
   }
 }
 

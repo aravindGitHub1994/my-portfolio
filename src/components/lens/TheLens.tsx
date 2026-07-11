@@ -1,23 +1,24 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { MeshTransmissionMaterial, RoundedBox } from "@react-three/drei";
+import { MeshTransmissionMaterial, useFBO } from "@react-three/drei";
 import { lensState } from "./lensState";
+import { hideBakeExclusions, restoreBakeExclusions } from "./bakeExclusions";
 import type { FidelityTier } from "@/lib/gpuTier";
 
 const ACCENT = "#3d74ff";
 const ACCENT_BRIGHT = "#8fb3ff";
-
-/** Triangle tent around x=c with half-width w — the crystallization beat. */
-function tent(x: number, c: number, w: number) {
-  return Math.max(0, 1 - Math.abs(x - c) / w);
-}
+/** Data-core wireframe — the spectrum's cyan end (see SPECTRUM in DataStreams). */
+const CORE_CYAN = "#46e3ff";
 
 /**
  * Faux-glass for the low/static tiers: clearcoat + env reflections sell the
  * material without MeshTransmissionMaterial's per-frame scene capture.
+ * Toned per ADR-011 §2 — near-mirror clearcoat over full-strength env
+ * reflections was the high tier's blow-out by another route. Magnitudes are
+ * owner-calibrated on real hardware (plan-0008 slice 2.2, 2026-07-11).
  */
 function FauxGlassMaterial() {
   return (
@@ -26,61 +27,177 @@ function FauxGlassMaterial() {
       opacity={0.24}
       roughness={0.08}
       metalness={0}
-      clearcoat={1}
-      clearcoatRoughness={0.06}
-      envMapIntensity={1.7}
+      clearcoat={0.4}
+      clearcoatRoughness={0.5}
+      envMapIntensity={1.2}
       color="#bcd0ff"
       depthWrite={false}
     />
   );
 }
 
-function LensMaterial({ tier }: { tier: FidelityTier }) {
-  if (tier !== "high") return <FauxGlassMaterial />;
+/** Shared by the JSX props and the bake's per-pass overrides below. */
+const GLASS_THICKNESS = 1.15;
+const BACKSIDE_THICKNESS = 0.25;
+/** Front-draw env reflections — near zero per ADR-009 §1. */
+const FRONT_ENV_INTENSITY = 0.03;
+/** Backside-bake env strength — owner-calibrated on real hardware
+ *  (plan-0008 slice 2.2, 2026-07-11). Deliberately NOT the front value:
+ *  the backside pass is what gives the glass its surface response. */
+const BACKSIDE_ENV_INTENSITY = 0.4;
+const BAKE_RESOLUTION = 768;
+
+/** drei types the forwarded ref as the element props type; the runtime
+ *  instance is the material impl — a MeshPhysicalMaterial subclass whose
+ *  `buffer` is uniform-backed. */
+type TransmissionImpl = THREE.MeshPhysicalMaterial & {
+  buffer: THREE.Texture;
+};
+
+/**
+ * High-tier glass with an OWNED transmission bake (ADR-011 Amendment A).
+ *
+ * drei's built-in bake captures the whole scene into the buffer the glass
+ * refracts — including the kinetic text twins in front of the prism and the
+ * additive beam/blade convergence at its mouth — with tone mapping off, and
+ * transmitted content has no intensity knob anywhere in the material. That
+ * baked content, not env reflections, was the blow-out that survived every
+ * calibration value. Passing `buffer` disables drei's internal bake; the
+ * frame loop below repeats its exact pass order
+ * (MeshTransmissionMaterial.js:348–375) with everything in the
+ * bakeExclusions registry hidden, so the glass refracts only the data core,
+ * the environment and the page darkness — streams and type still draw over
+ * the glass on screen, they just never appear inside it.
+ */
+function HighGlass({ geometry }: { geometry: THREE.BufferGeometry }) {
+  // The mesh is owned HERE, not by TheLens — the bake swaps its material
+  // every frame, and the React compiler only sanctions frame-loop mutation
+  // of locally-owned refs (never props).
+  const prism = useRef<THREE.Mesh>(null);
+  const material = useRef<TransmissionImpl | null>(null);
+  const fboBack = useFBO(BAKE_RESOLUTION);
+  const fboMain = useFBO(BAKE_RESOLUTION);
+  // Degenerate vertices — the prism rasterizes nothing in pass 1.
+  const discardMat = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        vertexShader: "void main() { gl_Position = vec4(0.0); }",
+        fragmentShader: "void main() { discard; }",
+      }),
+    [],
+  );
+  useEffect(() => () => discardMat.dispose(), [discardMat]);
+
+  useFrame((state) => {
+    const m = prism.current;
+    const mat = material.current;
+    if (!m || !mat) return;
+    const gl = state.gl;
+    const oldTone = gl.toneMapping;
+    // Bake unmapped, like drei — only the final draw tone maps.
+    gl.toneMapping = THREE.NoToneMapping;
+    hideBakeExclusions();
+    // Pass 1: the scene minus the prism.
+    m.material = discardMat;
+    gl.setRenderTarget(fboBack);
+    gl.render(state.scene, state.camera);
+    // Pass 2: the prism's back faces transmitting pass 1. envMapIntensity
+    // HERE is the drei trap that defeated ADR-009 §1 — its internal bake
+    // overwrote the authored near-zero with a default 1 (ADR-011 §2).
+    // Owning the pass makes the backside intensity an explicit knob.
+    m.material = mat;
+    mat.buffer = fboBack.texture;
+    mat.thickness = BACKSIDE_THICKNESS;
+    mat.side = THREE.BackSide;
+    mat.envMapIntensity = BACKSIDE_ENV_INTENSITY;
+    gl.setRenderTarget(fboMain);
+    gl.render(state.scene, state.camera);
+    // Final on-screen draw: front faces transmitting pass 2.
+    mat.buffer = fboMain.texture;
+    mat.thickness = GLASS_THICKNESS;
+    mat.side = THREE.FrontSide;
+    mat.envMapIntensity = FRONT_ENV_INTENSITY;
+    restoreBakeExclusions();
+    gl.setRenderTarget(null);
+    gl.toneMapping = oldTone;
+  });
+
   return (
-    <MeshTransmissionMaterial
-      transmission={1}
-      thickness={1.4}
-      roughness={0.12}
-      envMapIntensity={0.7}
-      ior={1.45}
-      chromaticAberration={0.38}
-      anisotropicBlur={0.3}
-      distortion={0.14}
-      distortionScale={0.3}
-      temporalDistortion={0.08}
-      samples={6}
-      resolution={768}
-      backside
-      backsideThickness={0.25}
-      attenuationColor={ACCENT_BRIGHT}
-      attenuationDistance={2.6}
-    />
+    <mesh ref={prism} geometry={geometry}>
+      {/* Glass, not chrome (ADR-009 §1): env reflections near zero — they
+          were the metallic shimmer that washed out the core and the text in
+          front — with a faint blue body from short-distance accent
+          attenuation. Low roughness/blur keep the refracted image of the
+          data core sharp through the transmission buffer; the dispersion
+          story lives in the beams, so chromatic fringe on the prism itself
+          stays subtle. */}
+      <MeshTransmissionMaterial
+        ref={(m: unknown) => {
+          material.current = m as TransmissionImpl | null;
+        }}
+        // Our buffer — its presence is what disables drei's internal bake.
+        buffer={fboMain.texture}
+        transmission={1}
+        thickness={GLASS_THICKNESS}
+        roughness={0.06}
+        envMapIntensity={FRONT_ENV_INTENSITY}
+        // Blue, not three.js's default white — highlights resolve mid-blue
+        // so near-white DOM text keeps contrast over the glass (ADR-011 §2).
+        // Intensity owner-calibrated (plan-0008 slice 2.2, 2026-07-11).
+        specularColor={ACCENT_BRIGHT}
+        specularIntensity={0.5}
+        ior={1.45}
+        chromaticAberration={0.05}
+        anisotropicBlur={0.12}
+        distortion={0.05}
+        distortionScale={0.3}
+        temporalDistortion={0.02}
+        samples={6}
+        // Only sizes drei's internal FBOs, which the `buffer` prop idles —
+        // kept tiny so they hold no VRAM. Ours are BAKE_RESOLUTION.
+        resolution={2}
+        attenuationColor={ACCENT_BRIGHT}
+        attenuationDistance={2.5}
+      />
+    </mesh>
   );
 }
 
+/** The prism solid — each tier's material owns its mesh so the high tier's
+ *  bake can swap materials on a locally-owned ref. */
+function PrismSolid({
+  tier,
+  geometry,
+}: {
+  tier: FidelityTier;
+  geometry: THREE.BufferGeometry;
+}) {
+  if (tier !== "high") {
+    return (
+      <mesh geometry={geometry}>
+        <FauxGlassMaterial />
+      </mesh>
+    );
+  }
+  return <HighGlass geometry={geometry} />;
+}
+
 /**
- * The Lens (ADR-006 §1): a dispersion prism that refracts data packets into
- * insight-beams. The solid reshapes across the acts — prism through
- * Hero/Approach/Work, **crystallizes into the cube** as Trajectory enters
- * (the payoff beat), then hands off to the particle point-globe at Contact.
- * The swap happens at the bottom of a scale dip, so geometry never pops.
+ * The Lens (ADR-006 §1, amended by ADR-008 §3): a dispersion prism that
+ * refracts data packets into insight-beams. The prism is the site's constant
+ * object — it never transforms. It drifts idly and tilts toward the pointer
+ * while LensRig moves it between acts: projector pose during Work, a calm
+ * return to center through Trajectory, and the CTA-underline finale at
+ * Contact.
  *
- * Static tier renders the resolved end-state: the crystallized cube at a
- * fixed pose (ADR-006 §8 — no morph, no motion).
+ * Static tier renders the same prism at a fixed pose (ADR-006 §8 — no
+ * morph, no motion).
  */
 export function TheLens({ tier }: { tier: FidelityTier }) {
   const group = useRef<THREE.Group>(null);
-  const shapeGroup = useRef<THREE.Group>(null);
+  const solid = useRef<THREE.Group>(null);
   const core = useRef<THREE.Mesh>(null);
-  const kernel = useRef<THREE.PointLight>(null);
   const animated = tier !== "static";
-  // Which solid is mounted. Only one lives at a time so only one
-  // transmission buffer is ever captured per frame.
-  const [shape, setShape] = useState<"prism" | "cube">(
-    animated ? "prism" : "cube",
-  );
-  const crystalV = useRef(0);
 
   // Triangular prism: a 3-segment cylinder turned to face the camera —
   // the classic dispersion silhouette, one long edge up.
@@ -94,33 +211,13 @@ export function TheLens({ tier }: { tier: FidelityTier }) {
   useFrame((state, delta) => {
     if (!animated) return;
     const g = group.current;
-    const sg = shapeGroup.current;
-    if (!g || !sg) return;
+    const s = solid.current;
+    if (!g || !s) return;
     const t = state.clock.elapsedTime;
-    const { trajectory, contact } = lensState.acts;
 
-    // Damped choreography inputs (raw ScrollTrigger progress is steppy).
-    crystalV.current = THREE.MathUtils.damp(
-      crystalV.current,
-      trajectory,
-      4,
-      delta,
-    );
-    const crystal = crystalV.current;
-    const beat = tent(crystal, 0.5, 0.24); // 1 at the swap point
-
-    const want = crystal > 0.5 ? "cube" : "prism";
-    if (want !== shape) setShape(want);
-
-    // Scale dips to near-zero through the swap; the globe dissolve shrinks
-    // the shell away entirely while the particles take over.
-    const globeFade = 1 - THREE.MathUtils.smoothstep(contact, 0.12, 0.7);
-    const dip = 1 - 0.88 * beat;
-    sg.scale.setScalar(Math.max(0.001, dip * globeFade));
-
-    // Idle drift + a spin surge through the crystallization beat.
-    sg.rotation.y += delta * (0.14 + beat * 2.2);
-    sg.rotation.x = Math.sin(t * 0.2) * 0.12;
+    // Idle drift — constant; there is no beat that interrupts it.
+    s.rotation.y += delta * 0.14;
+    s.rotation.x = Math.sin(t * 0.2) * 0.12;
 
     // Pointer-follow tilt on the outer group, critically damped.
     g.rotation.x = THREE.MathUtils.damp(
@@ -137,55 +234,40 @@ export function TheLens({ tier }: { tier: FidelityTier }) {
     );
     g.position.y = Math.sin(t * 0.5) * 0.07;
 
-    // The data core pulses; the kernel light flashes at crystallization.
+    // The data core pulses steadily inside the glass.
     if (core.current) {
       core.current.rotation.y = -t * 0.3;
       core.current.rotation.z = t * 0.12;
-      core.current.scale.setScalar((1 + Math.sin(t * 1.4) * 0.05) * globeFade);
-    }
-    if (kernel.current) {
-      kernel.current.intensity = (4 + beat * 9) * globeFade;
+      core.current.scale.setScalar(1 + Math.sin(t * 1.4) * 0.05);
     }
   });
 
   return (
     <group ref={group}>
-      <group ref={shapeGroup}>
-        {shape === "prism" ? (
-          <mesh geometry={prismGeo}>
-            <LensMaterial tier={tier} />
-          </mesh>
-        ) : (
-          <RoundedBox
-            args={[1.8, 1.8, 1.8]}
-            radius={0.09}
-            smoothness={8}
-            rotation={animated ? undefined : [0.35, 0.65, 0]}
-          >
-            <LensMaterial tier={tier} />
-          </RoundedBox>
-        )}
+      <group ref={solid} rotation={animated ? undefined : [0.16, 0.55, 0]}>
+        <PrismSolid tier={tier} geometry={prismGeo} />
 
-        {/* Electric data core, refracted through the glass */}
+        {/* Electric data core, refracted through the glass. toneMapped off
+            so the wireframe stays hot through the transmission buffer's
+            blur + tone mapping instead of washing out. */}
         <mesh ref={core}>
-          <icosahedronGeometry args={[0.46, 1]} />
+          <icosahedronGeometry args={[0.56, 1]} />
           <meshBasicMaterial
-            color={ACCENT}
+            color={CORE_CYAN}
             wireframe
             transparent
-            opacity={0.9}
+            opacity={1}
+            toneMapped={false}
           />
         </mesh>
       </group>
 
-      {/* Blue kernel glow bleeding through the glass */}
-      <pointLight
-        ref={kernel}
-        color={ACCENT}
-        intensity={4}
-        distance={5}
-        decay={2}
-      />
+      {/* Blue kernel glow bleeding through the glass. Deliberately
+          position-less — it sits at the prism's core as its internal
+          luminance (ADR-011 §2); with env reflections near zero it is the
+          main thing keeping the glass from going dark and formless.
+          Intensity owner-calibrated (plan-0008 slice 2.2, 2026-07-11). */}
+      <pointLight color={ACCENT} intensity={2.5} distance={5} decay={2} />
     </group>
   );
 }

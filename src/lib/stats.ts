@@ -15,6 +15,13 @@ export interface StatFigure {
 
 export const APPROACH_STATS: StatFigure[] = [
   {
+    // projects.ts PROJECTS["tagging"] outcome: "600+ client accounts audited,
+    // tagged, or troubleshot since March 2021".
+    value: 600,
+    suffix: "+",
+    label: "client accounts audited, tagged, or troubleshot",
+  },
+  {
     // resume.ts EXPERIENCE[Assembly Global]: "…Google Merchant Center
     // (44 sub-accounts)" — also the GMC Insights project scope.
     value: 44,
