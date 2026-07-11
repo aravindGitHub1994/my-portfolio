@@ -4,8 +4,16 @@
 // mutation instead of React state so scroll/pointer never re-render the tree.
 
 import { NO_TARGET } from "./projectionTargets";
+import type { FidelityTier } from "@/lib/gpuTier";
 
 export const lensState = {
+  /**
+   * Resolved fidelity tier, written by LensRoot once detection runs (and on
+   * a confirmed watchdog downgrade, ADR-010 §2). "pending" until the
+   * client-only root mounts. DOM-side effects read this to know whether the
+   * beams exist (high) without threading React state out of the canvas.
+   */
+  fidelityTier: "pending" as FidelityTier | "pending",
   /** Normalized pointer position, -1..1 on both axes (0,0 = center, y down). */
   pointer: { x: 0, y: 0 },
   /**

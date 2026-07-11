@@ -6,6 +6,7 @@ import { useFrame } from "@react-three/fiber";
 import { lensState } from "./lensState";
 import { PROJECTION_PLANE_Z } from "./projectionTargets";
 import type { FidelityTier } from "@/lib/gpuTier";
+import { mulberry32 } from "@/lib/prng";
 
 /**
  * Particle streams around the Lens (ADR-006 §1): dim raw **data packets**
@@ -187,20 +188,6 @@ const bladeVertex = /* glsl */ `
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
-
-/**
- * Deterministic PRNG (mulberry32) — geometry attributes must be a pure
- * function of their seed so re-renders are idempotent (react-hooks/purity).
- */
-function mulberry32(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 function makeSeeds(count: number, seed: number) {
   const rand = mulberry32(seed);

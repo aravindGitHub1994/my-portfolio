@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import LensScene from "./LensScene";
-import { markLensReady } from "./lensState";
+import { lensState, markLensReady } from "./lensState";
 import { detectTier } from "@/lib/gpuTier";
 
 // One watchdog prompt per page load (ADR-010 §2, reversing ADR-009 §3) —
@@ -70,6 +70,12 @@ export default function LensRoot() {
   const [detection] = useState(detectTier);
   const [tier, setTier] = useState(detection.tier);
   const [noticeVisible, setNoticeVisible] = useState(false);
+
+  // Mirror the tier into lensState so DOM-side effects (e.g. the shard
+  // window assembly, ADR-010 §3) can tell whether beams exist.
+  useEffect(() => {
+    lensState.fidelityTier = tier;
+  }, [tier]);
 
   useEffect(() => {
     console.info(
