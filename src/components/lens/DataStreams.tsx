@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { lensState } from "./lensState";
+import { registerBakeExclusion } from "./bakeExclusions";
 import { PROJECTION_PLANE_Z } from "./projectionTargets";
 import type { FidelityTier } from "@/lib/gpuTier";
 import { mulberry32 } from "@/lib/prng";
@@ -339,6 +340,15 @@ export function DataStreams({ tier }: { tier: FidelityTier }) {
   const root = useRef<THREE.Group>(null);
   const targetScratch = useRef(new THREE.Vector3());
   const scaleScratch = useRef(new THREE.Vector3());
+
+  // The streams must never bake into the prism's transmission buffer: their
+  // additive convergence at the mouth is exactly the blow-out (ADR-011
+  // Amendment A). The direct on-screen draw over the glass is unaffected.
+  useEffect(() => {
+    const g = root.current;
+    if (!g) return;
+    return registerBakeExclusion(g);
+  }, []);
 
   // Static tier: settle the composition once — prism + ordered beams, no loop.
   useEffect(() => {

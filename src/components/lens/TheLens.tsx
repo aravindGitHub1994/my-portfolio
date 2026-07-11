@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { MeshTransmissionMaterial } from "@react-three/drei";
+import { MeshTransmissionMaterial, useFBO } from "@react-three/drei";
 import { lensState } from "./lensState";
+import { hideBakeExclusions, restoreBakeExclusions } from "./bakeExclusions";
 import type { FidelityTier } from "@/lib/gpuTier";
 import { readLensTuning, type LensTuning } from "@/lib/lensTuning";
 
@@ -35,51 +36,153 @@ function FauxGlassMaterial({ tuning }: { tuning: LensTuning }) {
   );
 }
 
-function LensMaterial({
+/** Shared by the JSX props and the bake's per-pass overrides below. */
+const GLASS_THICKNESS = 1.15;
+const BACKSIDE_THICKNESS = 0.25;
+/** Front-draw env reflections — near zero per ADR-009 §1. */
+const FRONT_ENV_INTENSITY = 0.03;
+const BAKE_RESOLUTION = 768;
+
+/** drei types the forwarded ref as the element props type; the runtime
+ *  instance is the material impl — a MeshPhysicalMaterial subclass whose
+ *  `buffer` is uniform-backed. */
+type TransmissionImpl = THREE.MeshPhysicalMaterial & {
+  buffer: THREE.Texture;
+};
+
+/**
+ * High-tier glass with an OWNED transmission bake (ADR-011 Amendment A).
+ *
+ * drei's built-in bake captures the whole scene into the buffer the glass
+ * refracts — including the kinetic text twins in front of the prism and the
+ * additive beam/blade convergence at its mouth — with tone mapping off, and
+ * transmitted content has no intensity knob anywhere in the material. That
+ * baked content, not env reflections, was the blow-out that survived every
+ * calibration value. Passing `buffer` disables drei's internal bake; the
+ * frame loop below repeats its exact pass order
+ * (MeshTransmissionMaterial.js:348–375) with everything in the
+ * bakeExclusions registry hidden, so the glass refracts only the data core,
+ * the environment and the page darkness — streams and type still draw over
+ * the glass on screen, they just never appear inside it.
+ */
+function HighGlass({
+  geometry,
+  tuning,
+}: {
+  geometry: THREE.BufferGeometry;
+  tuning: LensTuning;
+}) {
+  // The mesh is owned HERE, not by TheLens — the bake swaps its material
+  // every frame, and the React compiler only sanctions frame-loop mutation
+  // of locally-owned refs (never props).
+  const prism = useRef<THREE.Mesh>(null);
+  const material = useRef<TransmissionImpl | null>(null);
+  const fboBack = useFBO(BAKE_RESOLUTION);
+  const fboMain = useFBO(BAKE_RESOLUTION);
+  // Degenerate vertices — the prism rasterizes nothing in pass 1.
+  const discardMat = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        vertexShader: "void main() { gl_Position = vec4(0.0); }",
+        fragmentShader: "void main() { discard; }",
+      }),
+    [],
+  );
+  useEffect(() => () => discardMat.dispose(), [discardMat]);
+
+  useFrame((state) => {
+    const m = prism.current;
+    const mat = material.current;
+    if (!m || !mat) return;
+    const gl = state.gl;
+    const oldTone = gl.toneMapping;
+    // Bake unmapped, like drei — only the final draw tone maps.
+    gl.toneMapping = THREE.NoToneMapping;
+    hideBakeExclusions();
+    // Pass 1: the scene minus the prism.
+    m.material = discardMat;
+    gl.setRenderTarget(fboBack);
+    gl.render(state.scene, state.camera);
+    // Pass 2: the prism's back faces transmitting pass 1. envMapIntensity
+    // HERE is the drei trap that defeated ADR-009 §1 — its internal bake
+    // overwrote the authored near-zero with a default 1 (ADR-011 §2).
+    // Owning the pass makes the backside intensity an explicit knob.
+    m.material = mat;
+    mat.buffer = fboBack.texture;
+    mat.thickness = BACKSIDE_THICKNESS;
+    mat.side = THREE.BackSide;
+    mat.envMapIntensity = tuning.backsideEnv;
+    gl.setRenderTarget(fboMain);
+    gl.render(state.scene, state.camera);
+    // Final on-screen draw: front faces transmitting pass 2.
+    mat.buffer = fboMain.texture;
+    mat.thickness = GLASS_THICKNESS;
+    mat.side = THREE.FrontSide;
+    mat.envMapIntensity = FRONT_ENV_INTENSITY;
+    restoreBakeExclusions();
+    gl.setRenderTarget(null);
+    gl.toneMapping = oldTone;
+  });
+
+  return (
+    <mesh ref={prism} geometry={geometry}>
+      {/* Glass, not chrome (ADR-009 §1): env reflections near zero — they
+          were the metallic shimmer that washed out the core and the text in
+          front — with a faint blue body from short-distance accent
+          attenuation. Low roughness/blur keep the refracted image of the
+          data core sharp through the transmission buffer; the dispersion
+          story lives in the beams, so chromatic fringe on the prism itself
+          stays subtle. */}
+      <MeshTransmissionMaterial
+        ref={(m: unknown) => {
+          material.current = m as TransmissionImpl | null;
+        }}
+        // Our buffer — its presence is what disables drei's internal bake.
+        buffer={fboMain.texture}
+        transmission={1}
+        thickness={GLASS_THICKNESS}
+        roughness={0.06}
+        envMapIntensity={FRONT_ENV_INTENSITY}
+        // Blue, not three.js's default white — highlights resolve mid-blue
+        // so near-white DOM text keeps contrast over the glass (ADR-011 §2).
+        specularColor={ACCENT_BRIGHT}
+        specularIntensity={tuning.specular}
+        ior={1.45}
+        chromaticAberration={0.05}
+        anisotropicBlur={0.12}
+        distortion={0.05}
+        distortionScale={0.3}
+        temporalDistortion={0.02}
+        samples={6}
+        // Only sizes drei's internal FBOs, which the `buffer` prop idles —
+        // kept tiny so they hold no VRAM. Ours are BAKE_RESOLUTION.
+        resolution={2}
+        attenuationColor={ACCENT_BRIGHT}
+        attenuationDistance={2.5}
+      />
+    </mesh>
+  );
+}
+
+/** The prism solid — each tier's material owns its mesh so the high tier's
+ *  bake can swap materials on a locally-owned ref. */
+function PrismSolid({
   tier,
   tuning,
+  geometry,
 }: {
   tier: FidelityTier;
   tuning: LensTuning;
+  geometry: THREE.BufferGeometry;
 }) {
-  if (tier !== "high") return <FauxGlassMaterial tuning={tuning} />;
-  return (
-    // Glass, not chrome (ADR-009 §1): env reflections near zero — they were
-    // the metallic shimmer that washed out the core and the text in front —
-    // with a faint blue body from short-distance accent attenuation. Low
-    // roughness/blur keep the refracted image of the data core sharp through
-    // the transmission buffer; the dispersion story lives in the beams, so
-    // chromatic fringe on the prism itself stays subtle.
-    <MeshTransmissionMaterial
-      transmission={1}
-      thickness={1.15}
-      roughness={0.06}
-      envMapIntensity={0.03}
-      // NOT redundant with envMapIntensity — do not "clean up" (ADR-011 §2).
-      // While baking the backside transmission buffer, drei overwrites
-      // envMapIntensity with THIS prop (default 1) and bakes with tone
-      // mapping off, then restores envMapIntensity for the front draw only.
-      // Omitting it re-bakes the buffer we look through at full strength —
-      // the white blow-out ADR-009 §1 thought it had fixed.
-      backsideEnvMapIntensity={tuning.backsideEnv}
-      // Blue, not three.js's default white — highlights resolve mid-blue so
-      // near-white DOM text keeps contrast over the glass (ADR-011 §2).
-      specularColor={ACCENT_BRIGHT}
-      specularIntensity={tuning.specular}
-      ior={1.45}
-      chromaticAberration={0.05}
-      anisotropicBlur={0.12}
-      distortion={0.05}
-      distortionScale={0.3}
-      temporalDistortion={0.02}
-      samples={6}
-      resolution={768}
-      backside
-      backsideThickness={0.25}
-      attenuationColor={ACCENT_BRIGHT}
-      attenuationDistance={2.5}
-    />
-  );
+  if (tier !== "high") {
+    return (
+      <mesh geometry={geometry}>
+        <FauxGlassMaterial tuning={tuning} />
+      </mesh>
+    );
+  }
+  return <HighGlass geometry={geometry} tuning={tuning} />;
 }
 
 /**
@@ -150,9 +253,7 @@ export function TheLens({ tier }: { tier: FidelityTier }) {
   return (
     <group ref={group}>
       <group ref={solid} rotation={animated ? undefined : [0.16, 0.55, 0]}>
-        <mesh geometry={prismGeo}>
-          <LensMaterial tier={tier} tuning={tuning} />
-        </mesh>
+        <PrismSolid tier={tier} tuning={tuning} geometry={prismGeo} />
 
         {/* Electric data core, refracted through the glass. toneMapped off
             so the wireframe stays hot through the transmission buffer's

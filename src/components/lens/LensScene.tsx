@@ -12,6 +12,7 @@ import {
   PROJECTION_PLANE_Z,
 } from "./projectionTargets";
 import { rectToWorld } from "./rectToWorld";
+import { BakeExcluded } from "./bakeExclusions";
 import { TheLens } from "./TheLens";
 import { DataStreams } from "./DataStreams";
 import { RefractionPass } from "./RefractionPass";
@@ -301,9 +302,16 @@ export default function LensScene({
       </LensRig>
 
       {/* WebGL twins of DOM headings/imagery — high tier only; lower tiers
-          keep the crisp DOM originals (ADR-006 §8). */}
-      {tier === "high" && <KineticTextLayer />}
-      {tier === "high" && <GlassImageLayer />}
+          keep the crisp DOM originals (ADR-006 §8). BakeExcluded keeps the
+          near-white twins out of the prism's transmission bake — refracted
+          copies of the type inside the glass were half the blow-out
+          (ADR-011 Amendment A). */}
+      {tier === "high" && (
+        <BakeExcluded>
+          <KineticTextLayer />
+          <GlassImageLayer />
+        </BakeExcluded>
+      )}
 
       <Environment resolution={256} frames={1}>
         {/* Cool key strips + one electric accent, arranged for a dark studio */}
