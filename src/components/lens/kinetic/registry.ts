@@ -9,10 +9,19 @@
 
 export type KineticKind = "text" | "image";
 
+/**
+ * Entrance behaviour for a text twin (ADR-010 §1). "refract" plays the
+ * shard refract-in on entry (headings/labels/counters); "plain" starts
+ * crisp — progress pinned to 1 — and only aberrates near the pointer and
+ * with scroll velocity (display body copy, chips, stats).
+ */
+export type KineticEntrance = "refract" | "plain";
+
 export interface KineticTarget {
   id: number;
   el: HTMLElement;
   kind: KineticKind;
+  entrance: KineticEntrance;
 }
 
 let nextId = 1;
@@ -28,10 +37,11 @@ function notify() {
 export function registerKineticTarget(
   el: HTMLElement,
   kind: KineticKind,
+  entrance: KineticEntrance = "refract",
 ): () => void {
   const id = nextId;
   nextId += 1;
-  targets.set(id, { id, el, kind });
+  targets.set(id, { id, el, kind, entrance });
   notify();
   return () => {
     targets.delete(id);

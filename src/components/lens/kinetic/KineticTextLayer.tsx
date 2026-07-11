@@ -72,7 +72,8 @@ function KineticPlane({ target }: { target: KineticTarget }) {
   // the memoized uniforms object (react-hooks/immutability).
   const material = useRef<THREE.ShaderMaterial>(null);
   const [raster, setRaster] = useState<TextRaster | null>(null);
-  const progress = useRef({ value: 0 });
+  // Plain twins (ADR-010 §1) skip the refract-in: born settled at 1.
+  const progress = useRef({ value: target.entrance === "plain" ? 1 : 0 });
   const shear = useRef(0);
 
   const texture = useMemo(() => {
@@ -114,8 +115,10 @@ function KineticPlane({ target }: { target: KineticTarget }) {
     };
   }, [target]);
 
-  // Refract-in once, on entry.
+  // Refract-in once, on entry. Plain twins stay settled; velocity shear
+  // still applies to both variants via the frame loop.
   useEffect(() => {
+    if (target.entrance === "plain") return;
     const io = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;

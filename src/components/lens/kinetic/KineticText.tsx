@@ -10,20 +10,27 @@ import {
 type HeadingTag = "h1" | "h2" | "h3" | "p" | "span";
 
 /**
- * A heading that refracts (ADR-006 §3). Renders the REAL semantic element —
- * it's what crawlers/ATS/screen-readers see and what the static prerender
- * ships. On the high tier the GL text layer claims ownership: this element
- * turns transparent (still selectable, still in the a11y tree) and its
- * WebGL twin renders the refract-in / velocity-shear choreography at the
- * exact same layout position. On low/static tiers nothing claims, and this
- * is just a normal heading.
+ * Text that refracts (ADR-006 §3, ADR-010 §1). Renders the REAL semantic
+ * element — it's what crawlers/ATS/screen-readers see and what the static
+ * prerender ships. On the high tier the GL text layer claims ownership: this
+ * element turns transparent (still selectable, still in the a11y tree) and
+ * its WebGL twin renders at the exact same layout position. On low/static
+ * tiers nothing claims, and this is just a normal element.
+ *
+ * `variant="refract"` (default) plays the shard refract-in on entry —
+ * headings, mono labels, counters. `variant="plain"` (ADR-010 §1) is the
+ * distortion-only twin for display body copy: crisp on first paint, no
+ * entrance choreography (GL or DOM fade), aberrating only near the pointer
+ * and with scroll velocity.
  */
 export function KineticText({
   as = "span",
+  variant = "refract",
   className,
   children,
 }: {
   as?: HeadingTag;
+  variant?: "refract" | "plain";
   className?: string;
   children: ReactNode;
 }) {
@@ -45,14 +52,16 @@ export function KineticText({
     const unsubscribe = subscribeKinetic(() =>
       setClaimed(isKineticClaimed("text")),
     );
-    const unregister = registerKineticTarget(el, "text");
+    const unregister = registerKineticTarget(el, "text", variant);
     return () => {
       unregister();
       unsubscribe();
     };
-  }, []);
+  }, [variant]);
 
   useEffect(() => {
+    // Plain twins are crisp on entry everywhere — no DOM fade either.
+    if (variant === "plain") return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const el = ref.current;
     if (!el) return;
@@ -72,7 +81,7 @@ export function KineticText({
     });
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [variant]);
 
   return (
     <Tag
