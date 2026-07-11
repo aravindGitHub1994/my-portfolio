@@ -7,7 +7,6 @@ import { lensState } from "./lensState";
 import { PROJECTION_PLANE_Z } from "./projectionTargets";
 import type { FidelityTier } from "@/lib/gpuTier";
 import { mulberry32 } from "@/lib/prng";
-import { TOOL_ICONS } from "@/lib/techIcons";
 
 /**
  * Particle streams around the Lens (ADR-006 §1): dim raw **data packets**
@@ -190,156 +189,6 @@ const bladeVertex = /* glsl */ `
   }
 `;
 
-// ---- Tool-coin inflow (ADR-010 §4) --------------------------------------
-// A sparse procession of tumbling glass coins carrying the owner's real
-// stack rides the SAME inflow bezier as the packets and dissolves into the
-// beams at the prism mouth. Decorative only — pure WebGL, nothing in the
-// DOM. Concurrency is tiny (≤4), so each coin is its own mesh whose face
-// samples one cell of a runtime canvas atlas built from TOOL_ICONS.
-
-const COIN_ATLAS_COLS = 6;
-const COIN_ATLAS_ROWS = 3;
-const COIN_CELL = 160;
-
-/** Draw every TOOL_ICONS entry (glyph paths + monospace tokens) white on
- *  transparent into one atlas canvas; the shader reads the alpha channel. */
-function buildCoinAtlas(): HTMLCanvasElement {
-  const canvas = document.createElement("canvas");
-  canvas.width = COIN_ATLAS_COLS * COIN_CELL;
-  canvas.height = COIN_ATLAS_ROWS * COIN_CELL;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return canvas;
-  ctx.fillStyle = "#ffffff";
-  TOOL_ICONS.forEach((icon, i) => {
-    const cx = (i % COIN_ATLAS_COLS) * COIN_CELL;
-    const cy = Math.floor(i / COIN_ATLAS_COLS) * COIN_CELL;
-    if (icon.kind === "glyph") {
-      const path = new Path2D(icon.path);
-      ctx.save();
-      const s = (COIN_CELL * 0.62) / 24;
-      ctx.translate(cx + COIN_CELL * 0.19, cy + COIN_CELL * 0.19);
-      ctx.scale(s, s);
-      ctx.fill(path, "nonzero");
-      ctx.restore();
-    } else {
-      // Brand/code text-token chips, scaled down until they fit the face.
-      ctx.save();
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      let size = icon.kind === "code" ? 30 : 34;
-      const font = (px: number) =>
-        `600 ${px}px ui-monospace, Menlo, Consolas, monospace`;
-      ctx.font = font(size);
-      const maxW = COIN_CELL * 0.86;
-      const w = ctx.measureText(icon.token).width;
-      if (w > maxW) {
-        size = Math.max(10, Math.floor((size * maxW) / w));
-        ctx.font = font(size);
-      }
-      ctx.fillText(icon.token, cx + COIN_CELL / 2, cy + COIN_CELL / 2);
-      ctx.restore();
-    }
-  });
-  return canvas;
-}
-
-const coinVertex = /* glsl */ `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-// Glass-coin face: soft disc + rim, the atlas glyph tinted with the coin's
-// single spectrum color (monochrome by design), and a chromatic split that
-// grows as the coin dissolves into the beams at the mouth.
-const coinFragment = /* glsl */ `
-  uniform sampler2D uMap;
-  uniform vec2 uUvOffset;
-  uniform vec2 uUvScale;
-  uniform vec3 uTint;
-  uniform float uFade;
-  uniform float uDissolve;
-  varying vec2 vUv;
-
-  void main() {
-    vec2 p = vUv - 0.5;
-    float r = length(p);
-    float disc = 1.0 - smoothstep(0.46, 0.5, r);
-    if (disc < 0.004) discard;
-    float rim = smoothstep(0.34, 0.47, r);
-    vec2 uv = uUvOffset + vUv * uUvScale;
-    vec2 ca = vec2(uDissolve * 0.035, 0.0);
-    float gr = texture2D(uMap, uv + ca).a;
-    float gg = texture2D(uMap, uv).a;
-    float gb = texture2D(uMap, uv - ca).a;
-    float glyph = max(gr, max(gg, gb));
-    vec3 col = uTint * (0.16 + rim * 0.28) + uTint * vec3(gr, gg, gb) * 1.15;
-    float a = (0.10 + rim * 0.12 + glyph * 0.8) * disc * uFade;
-    gl_FragColor = vec4(col, a);
-  }
-`;
-
-/** Mutable per-coin slot state, owned by the frame loop (never React). */
-interface CoinSlot {
-  rand: () => number;
-  active: boolean;
-  wait: number;
-  t: number;
-  duration: number;
-  cycle: number;
-  icon: number;
-  jx: number;
-  jy: number;
-  jz: number;
-  spinX: number;
-  spinY: number;
-}
-
-function buildCoinSlots(count: number): CoinSlot[] {
-  return Array.from({ length: count }, (_, i) => {
-    const rand = mulberry32(4200 + i * 977);
-    return {
-      rand,
-      active: false,
-      // Staggered first spawns: ~one coin every couple of seconds.
-      wait: i * 2.1 + rand() * 0.6,
-      t: 0,
-      duration: 8,
-      cycle: 0,
-      icon: 0,
-      jx: 0,
-      jy: 0,
-      jz: 0,
-      spinX: 0,
-      spinY: 0,
-    };
-  });
-}
-
-function spawnCoin(slot: CoinSlot, slotIndex: number) {
-  const r = slot.rand;
-  // 5/7 are coprime with the 18-icon set, so every slot cycles the full
-  // stack over time instead of repeating a subset.
-  slot.icon = (slotIndex * 5 + slot.cycle * 7) % TOOL_ICONS.length;
-  slot.cycle += 1;
-  slot.jx = r() * 2 - 1;
-  slot.jy = r() * 2 - 1;
-  slot.jz = r() * 2 - 1;
-  slot.duration = 7 + r() * 2.5;
-  slot.spinX = (0.5 + r() * 0.8) * (r() < 0.5 ? -1 : 1);
-  slot.spinY = (0.6 + r() * 0.9) * (r() < 0.5 ? -1 : 1);
-  slot.t = 0;
-  slot.active = true;
-}
-
-const quadBez = (a: number, b: number, c: number, t: number) => {
-  const ab = a + (b - a) * t;
-  const bc = b + (c - b) * t;
-  return ab + (bc - ab) * t;
-};
-
 function makeSeeds(count: number, seed: number) {
   const rand = mulberry32(seed);
   const out = new Float32Array(count);
@@ -351,9 +200,6 @@ export function DataStreams({ tier }: { tier: FidelityTier }) {
   const animated = tier !== "static";
   const inflowCount = tier === "high" ? 800 : 260;
   const beamCount = tier === "high" ? 1500 : 480;
-  // Coin procession (ADR-010 §4): high 4 concurrent, low 2, static none
-  // (reduced-motion lands on static via detectTier, so it's covered).
-  const coinSlots = tier === "high" ? 4 : 2;
 
   const dpr = Math.min(
     typeof window === "undefined" ? 1 : window.devicePixelRatio,
@@ -480,67 +326,6 @@ export function DataStreams({ tier }: { tier: FidelityTier }) {
   // memoized uniform objects (react-hooks/immutability).
   const inflowMat = useRef<THREE.ShaderMaterial>(null);
   const beamMat = useRef<THREE.ShaderMaterial>(null);
-
-  // Coin layer resources. The atlas needs canvas 2D (DOM), so it's built in
-  // an effect and handed to the frame loop through a ref — no React state.
-  const coinGeo = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
-  const coinMats = useMemo(
-    () =>
-      Array.from(
-        { length: coinSlots },
-        () =>
-          new THREE.ShaderMaterial({
-            uniforms: {
-              uMap: { value: null as THREE.Texture | null },
-              uUvOffset: { value: new THREE.Vector2() },
-              uUvScale: {
-                value: new THREE.Vector2(
-                  1 / COIN_ATLAS_COLS,
-                  1 / COIN_ATLAS_ROWS,
-                ),
-              },
-              uTint: { value: new THREE.Color(SPECTRUM[2]) },
-              uFade: { value: 0 },
-              uDissolve: { value: 0 },
-            },
-            vertexShader: coinVertex,
-            fragmentShader: coinFragment,
-            transparent: true,
-            depthWrite: false,
-            blending: THREE.AdditiveBlending,
-            side: THREE.DoubleSide,
-          }),
-      ),
-    [coinSlots],
-  );
-  const coinRefs = useRef<(THREE.Mesh | null)[]>([]);
-  const coinAtlas = useRef<THREE.CanvasTexture | null>(null);
-  const coinState = useRef<CoinSlot[] | null>(null);
-
-  useEffect(
-    () => () => {
-      coinGeo.dispose();
-    },
-    [coinGeo],
-  );
-  useEffect(
-    () => () => coinMats.forEach((m) => m.dispose()),
-    [coinMats],
-  );
-  useEffect(() => {
-    if (!animated) return;
-    const tex = new THREE.CanvasTexture(buildCoinAtlas());
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.minFilter = THREE.LinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.generateMipmaps = false;
-    tex.anisotropy = 4;
-    coinAtlas.current = tex;
-    return () => {
-      coinAtlas.current = null;
-      tex.dispose();
-    };
-  }, [animated]);
 
   // Damped choreography values shared by uniforms + blade transforms.
   const visual = useRef({
@@ -676,72 +461,6 @@ export function DataStreams({ tier }: { tier: FidelityTier }) {
       mesh.scale.set(len, 0.26, 1);
       (mesh.material as THREE.ShaderMaterial).uniforms.uAlpha.value = alpha;
     });
-
-    // Tool-coin procession (ADR-010 §4). Slot state lives entirely in this
-    // loop; spawning slows as Work rises so the projector act owns the
-    // stage, and each coin dissolves (fade + chromatic split) at the mouth.
-    if (coinState.current?.length !== coinSlots) {
-      coinState.current = buildCoinSlots(coinSlots);
-    }
-    const atlas = coinAtlas.current;
-    const inSide = THREE.MathUtils.lerp(1, v.side, v.project);
-    coinState.current.forEach((slot, i) => {
-      const mesh = coinRefs.current[i];
-      if (!mesh) return;
-      if (!atlas) {
-        mesh.visible = false;
-        return;
-      }
-      const mat = mesh.material as THREE.ShaderMaterial;
-      if (!slot.active) {
-        slot.wait -= delta;
-        if (slot.wait > 0) {
-          mesh.visible = false;
-          return;
-        }
-        spawnCoin(slot, i);
-        mat.uniforms.uMap.value = atlas;
-        (mat.uniforms.uUvOffset.value as THREE.Vector2).set(
-          (slot.icon % COIN_ATLAS_COLS) / COIN_ATLAS_COLS,
-          (COIN_ATLAS_ROWS - 1 - Math.floor(slot.icon / COIN_ATLAS_COLS)) /
-            COIN_ATLAS_ROWS,
-        );
-        (mat.uniforms.uTint.value as THREE.Color).set(
-          SPECTRUM[slot.icon % BEAMS],
-        );
-      }
-      slot.t += delta / slot.duration;
-      if (slot.t >= 1) {
-        slot.active = false;
-        // Respawn cooldown: brief at rest, long while Work holds the stage.
-        slot.wait = 0.6 + slot.rand() * 0.9 + 5.5 * acts.work;
-        mesh.visible = false;
-        return;
-      }
-      // Same quadratic bezier as inflowVertex (entry face mirrors with the
-      // projection, ADR-009 §2) so coins ride among the packets.
-      const tt = slot.t;
-      mesh.position.set(
-        quadBez(
-          inSide * (-7.5 + slot.jx * 2.4),
-          inSide * -2.8,
-          inSide * -0.4,
-          tt,
-        ),
-        quadBez(2.4 + slot.jy * 1.8, 0.6 + slot.jy * 0.5, 0, tt),
-        quadBez(slot.jz * 1.4, slot.jz * 0.7, 0, tt),
-      );
-      mesh.rotation.x += delta * slot.spinX;
-      mesh.rotation.y += delta * slot.spinY;
-      const fade =
-        THREE.MathUtils.smoothstep(tt, 0, 0.12) *
-        (1 - THREE.MathUtils.smoothstep(tt, 0.8, 0.97));
-      const dissolve = THREE.MathUtils.smoothstep(tt, 0.7, 0.97);
-      mat.uniforms.uFade.value = fade * (1 - 0.3 * v.recede);
-      mat.uniforms.uDissolve.value = dissolve;
-      mesh.scale.setScalar(0.52 * (1 - 0.16 * dissolve));
-      mesh.visible = true;
-    });
   });
 
   return (
@@ -772,19 +491,6 @@ export function DataStreams({ tier }: { tier: FidelityTier }) {
           />
         </points>
       )}
-      {animated &&
-        coinMats.map((mat, i) => (
-          <mesh
-            key={i}
-            ref={(m) => {
-              coinRefs.current[i] = m;
-            }}
-            geometry={coinGeo}
-            material={mat}
-            visible={false}
-            frustumCulled={false}
-          />
-        ))}
       <group position={[0.4, 0, 0]}>
         {SPECTRUM.map((hex, i) => (
           <mesh

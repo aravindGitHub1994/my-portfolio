@@ -1,8 +1,7 @@
 /**
  * Deterministic PRNG (mulberry32) — seeded sequences keep render/memo work
  * a pure function of the seed (react-hooks/purity; no Math.random in
- * render). Shared by the Lens geometry, the shard window assembly, and the
- * tool-coin inflow.
+ * render). Shared by the Lens geometry and the shard window assembly.
  */
 export function mulberry32(seed: number) {
   let a = seed >>> 0;
