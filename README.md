@@ -26,10 +26,10 @@ One scrolling page in five acts — **Hero · Approach · Work · Trajectory · 
 
 - 🔷 **The Lens** — dispersion prism (`MeshTransmissionMaterial`), stateless vertex-shader particle streams, and five spectrum light-blades; scroll choreography via GSAP ScrollTrigger + Lenis.
 - 🌀 **Pointer refraction pass** — a screen-space displacement + chromatic-aberration field around the pointer, keyed to pointer speed and scroll velocity (high tier, fine pointers only).
-- 🔤 **Kinetic type** — headings, stat figures, and the small eyebrow / `01 / 05` labels render as GL twins of their real DOM elements: they *refract in* from chromatic shards and shear/aberrate near the pointer, while the semantic DOM stays selectable and indexable underneath. Body copy stays crisp.
+- 🔤 **Kinetic type** — display text renders as GL twins of the real DOM elements, which stay selectable and indexable underneath. Headings, stat figures, and the small eyebrow / `01 / 05` labels *refract in* from chromatic shards; body copy, taglines, and stat labels join as **distortion-only** twins (crisp on entry, aberrating near the pointer; ADR-010 §1). Interactive text — buttons, nav/contact links — plus chips and the "Read the build" dialog stay crisp DOM.
 - 🔢 **Count-up proof band** — Approach-act figures (600+ / 44 / 19 / 200+ / 5 / 7) count up as they resolve; every number traces to `src/lib/resume.ts`, a project's copy, or is derived from content arrays (`src/lib/stats.ts`).
 - 📊 **Animatable architecture diagrams** — hand-structured SVGs (`public/diagrams/`, [authoring convention](docs/diagram-authoring.md)) that draw on once on entry with a single data-packet pass, then settle.
-- 🎚️ **High by default + graceful reduction** — `high` fidelity is served to every capable device (`src/lib/gpuTier.ts`, `?tier=high|low|static` override); a runtime FPS watchdog hot-swaps to the calm faux-glass `low` tier (and shows a dismissible popup) only when a device can't hold framerate. `prefers-reduced-motion` gets resolved end-states with no motion at all. ([ADR-009](docs/decisions/ADR-009-lens-refinement-glass-refraction-and-high-default-fidelity.md))
+- 🎚️ **High by default + graceful reduction** — `high` fidelity is served to every capable device (`src/lib/gpuTier.ts`, `?tier=high|low|static` override); when a device can't hold framerate a runtime FPS watchdog **asks** — "Switch to basic / Keep full quality" — and only a confirmation hot-swaps to the calm faux-glass `low` tier in place ([ADR-010 §2](docs/decisions/ADR-010-universal-refraction-opt-in-fidelity-projector-assembly-and-tool-inflow.md), reversing ADR-009's silent swap). `prefers-reduced-motion` gets resolved end-states with no motion at all.
 - 🔒 **Security posture** — CSP (`connect-src 'self'`, `font-src 'self'`) with everything local/procedural; security headers via `vercel.json`; no client data in the repo (recreated, dummy-data imagery only — [ADR-006 §7](docs/decisions/ADR-006-lens-refractive-redesign.md)).
 - ⚡ **Static export** — fast, CDN-cacheable, SEO-friendly with `sitemap.ts` + `robots.ts`.
 
@@ -89,7 +89,7 @@ npm run lint         # ESLint (flat config)
 | `NEXT_PUBLIC_SITE_URL` | build-time env (Vercel) | Canonical/OG/sitemap base URL. Falls back to `https://example.com` if unset (`src/lib/nav.ts`). |
 | Site content | `src/lib/*.ts` | Edit `projects.ts`, `resume.ts`, `stats.ts`, `nav.ts`, `capabilities.ts` — not JSX. |
 | Design tokens | `src/app/globals.css` | Tailwind v4 `@theme` — see [design-system](docs/design-system.md). |
-| Fidelity tiers | `src/lib/gpuTier.ts` | `high` by default + runtime FPS-watchdog fallback (ADR-009); `?tier=` override. |
+| Fidelity tiers | `src/lib/gpuTier.ts` | `high` by default; FPS watchdog prompts before downgrading (ADR-010 §2); `?tier=` override. |
 | Security headers | `vercel.json` | Applied on Vercel deploys only. |
 
 ## 📁 Project Structure

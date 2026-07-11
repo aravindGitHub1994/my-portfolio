@@ -109,15 +109,22 @@ see. On the **high tier only**, a GL layer (`KineticTextLayer`,
 twin renders at the exact layout position:
 
 - **Refract-in** (ADR-006 §3): glyphs assemble from RGB-split chromatic shards
-  on entry; settled text **shears** with scroll velocity.
+  on entry; settled text **shears** with scroll velocity. **Distortion-only**
+  twins (ADR-010 §1, `KineticText variant="plain"`) skip the entrance — born
+  settled, they only aberrate near the pointer and shear with scroll.
 - The rasterizer (`rasterize.ts`) walks per-character Ranges at
   browser-computed positions — survives `text-wrap: balance` and reproduces
   `.text-electric` — and **re-rasters on text mutation** (rAF-coalesced), which
   is how count-up stat figures stay live on the GL side.
-- **Twinned elements** (ADR-006 §3, extended by ADR-009 §5): all `h1`/`h2`/`h3`
-  headings, the Approach stat figures, and the small mono eyebrow + `01 / 05`
-  counter labels. Body copy, taglines, and capability chips stay crisp DOM
-  (ADR-006 §2); the Contact CTA labels get a separate lightweight DOM RGB-split.
+- **Twinned elements** (ADR-006 §3, extended by ADR-009 §5 and ADR-010 §1):
+  refract-in for all `h1`/`h2`/`h3` headings, the Approach stat figures, and
+  the small mono eyebrow + `01 / 05` counter labels; distortion-only twins for
+  the Hero subhead/eyebrow, section descriptions, project taglines, and stat
+  labels. **Kept crisp DOM**: interactive text (buttons, nav/contact links,
+  Trajectory's disclosure rows), `Tag`/`CapabilityTag` chips and the "Read the
+  build" dialog (both paint above the `-z-10` canvas, so a twin could never
+  show through), and the reveal preview; the Contact CTA labels get a separate
+  lightweight DOM RGB-split.
 - Where no layer claims (low/static tiers, WebGL unavailable), the DOM element
   is simply visible — **zero drift risk, the DOM node is the source** — and
   gets a **plain fade** on first viewport entry (never hidden in the prerender;
@@ -134,19 +141,21 @@ or is derived from `PROJECTS`/`CAPABILITY_LIST` lengths — nothing invented.
 Dependency-free detection (CSP forbids CDN GPU benchmarks). **`high` is the
 default** for any capable WebGL context (ADR-009, superseding ADR-006 §8's
 device-class heuristic); a runtime **FPS watchdog** samples framerate after load
-and, if it can't hold ~40fps, **hot-swaps to `low` in place** (no reload) and
-shows a dismissible "switched to basic" popup — session-only, so a later visit
-re-detects `high`. Floors: `prefers-reduced-motion → static`, no-WebGL → `none`,
-software renderers → `low`. Override any of it with `?tier=high|low|static`
-(which also suppresses the watchdog). **Graceful reduction** — lower tiers stay
+and, if it can't hold ~40fps, **asks first** (ADR-010 §2, reversing ADR-009's
+silent swap): "Switch to basic" hot-swaps to `low` in place (no reload), "Keep
+full quality" stays `high` — one prompt per load, session-only, so a later
+visit re-detects `high`. Floors: `prefers-reduced-motion → static`, no-WebGL →
+`none`, software renderers → `low`. Override any of it with
+`?tier=high|low|static` (which also suppresses the watchdog). **Graceful reduction** — lower tiers stay
 calmer, honestly non-identical:
 
-| | high (default) | low (watchdog fallback / opt-out) | static (`prefers-reduced-motion`) | none (no WebGL) |
+| | high (default) | low (confirmed watchdog prompt / opt-out) | static (`prefers-reduced-motion`) | none (no WebGL) |
 |---|---|---|---|---|
 | Lens solid | transmission dispersion | faux-glass, calm | faux-glass prism, fixed pose | — |
 | Particles | 800 + 1500, animated | 260 + 480, animated | none (blades settled) | — |
+| Tool coins (ADR-010 §4) | 4 concurrent | 2 concurrent | none | — |
 | Refraction pass | ✓ (fine pointer only) | — | — | — |
-| Headings | GL refract-in + shear | DOM, plain fade | DOM, static (CSS kills transitions) | DOM |
+| Kinetic text | GL twins: refract-in headings, distortion-only display copy | DOM, plain fade | DOM, static (CSS kills transitions) | DOM |
 | Imagery | GL planes, snap crisp | crisp DOM `<img>` | crisp DOM `<img>` | DOM |
 | Diagrams | draw-on + one packet pass on entry | same | resting state (fully drawn) | resting state |
 | Frameloop | always | always | demand | no canvas |

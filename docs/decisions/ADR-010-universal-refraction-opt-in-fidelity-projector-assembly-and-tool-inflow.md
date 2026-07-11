@@ -75,6 +75,15 @@ Every *display* text element becomes a kinetic twin so the whole-screen `Refract
   layout read, extending `layoutPlaneToRect`'s existing cull) so the twin count doesn't
   linearly tax the frame budget the watchdog measures.
 
+> **Implementation note (2026-07-11).** Three scope items were pulled back to crisp
+> DOM during implementation because the kinetic canvas is fixed at `-z-10` and GL
+> twins paint **under** every DOM background: `Tag`/`CapabilityTag` chips paint their
+> own surface (opaque / 60%) over where their twin would render; the "Read the build"
+> `<dialog>` lives in the browser top layer, which always paints above the canvas; and
+> Trajectory's disclosure content is interactive (hover color a static raster can't
+> follow) and sits in `overflow-hidden` collapse panels a twin can't clip to. All
+> three are flagged for the 6.2 owner review (implementation-plan-0007).
+
 ### 2. Opt-in fidelity downgrade (reverses ADR-009 §3)
 The `FpsWatchdog` still detects a sustained sub-40fps window, but `handleSlow`
 (`LensRoot.tsx`) **no longer calls `setTier("low")`**. Instead the `FidelityNotice`
