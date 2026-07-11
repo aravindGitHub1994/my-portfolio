@@ -36,7 +36,13 @@ export function SectionHeader({
         {title}
       </KineticText>
       {description && (
-        <p className="mt-4 text-lg leading-8 text-ink-muted">{description}</p>
+        <KineticText
+          as="p"
+          variant="plain"
+          className="mt-4 text-lg leading-8 text-ink-muted"
+        >
+          {description}
+        </KineticText>
       )}
     </div>
   );

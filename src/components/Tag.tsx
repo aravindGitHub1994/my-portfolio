@@ -1,3 +1,10 @@
+// DEVIATION from ADR-010 §1 scope: chip text stays crisp DOM. The kinetic
+// canvas is fixed at -z-10 — GL twins paint UNDER every DOM background, and
+// these chips paint their own (Tag: opaque bg-surface; CapabilityTag:
+// bg-surface/60, which would wash a twin to 40%). Twinning the whole chip
+// instead would drop its border/background while claimed (the rasterizer
+// draws glyphs only). Flagged for the 6.2 owner review.
+
 import type { CapabilityKey } from "@/lib/capabilities";
 import { CAPABILITIES } from "@/lib/capabilities";
 

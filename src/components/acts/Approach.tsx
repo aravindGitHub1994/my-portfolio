@@ -83,9 +83,13 @@ function StatItem({ stat, index }: { stat: StatFigure; index: number }) {
         {display}
         {stat.suffix}
       </KineticText>
-      <span className="max-w-[16ch] text-sm leading-6 text-ink-muted">
+      <KineticText
+        as="span"
+        variant="plain"
+        className="max-w-[16ch] text-sm leading-6 text-ink-muted"
+      >
         {stat.label}
-      </span>
+      </KineticText>
     </li>
   );
 }

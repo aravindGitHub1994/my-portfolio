@@ -28,6 +28,12 @@ const idFor = (org: string) =>
  * aria-expanded/-controls) expanding to its achievement points; the expand
  * is a CSS grid-rows 0fr→1fr transition, which the global reduced-motion
  * rule flattens to instant. The current (first) role starts open.
+ *
+ * DEVIATION from ADR-010 §1 scope: all Trajectory text stays crisp DOM. The
+ * role rows are interactive (hover color transitions a raster can't follow),
+ * and the achievement points sit inside overflow-hidden collapse panels — a
+ * GL twin ignores DOM clipping, so collapsed copy would paint over the page.
+ * Flagged for the 6.2 owner review.
  */
 export function Trajectory() {
   return (

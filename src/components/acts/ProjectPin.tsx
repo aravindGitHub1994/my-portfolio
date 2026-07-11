@@ -163,9 +163,13 @@ export function ProjectPin({
             <KineticText as="h3" className="mt-4 text-3xl text-ink sm:text-4xl">
               {project.title}
             </KineticText>
-            <p className="mt-4 max-w-md text-base leading-7 text-ink-muted">
+            <KineticText
+              as="p"
+              variant="plain"
+              className="mt-4 max-w-md text-base leading-7 text-ink-muted"
+            >
               {project.tagline}
-            </p>
+            </KineticText>
             <div className="mt-6 flex flex-wrap items-center gap-2">
               {project.capabilities.map((key) => (
                 <CapabilityTag key={key} capability={key} />
