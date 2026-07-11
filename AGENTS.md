@@ -22,14 +22,11 @@ shipped as a **static export** (`output: "export"`) to Vercel. See `README.md` a
 
 ## Conventions
 - **Content in `src/lib/*.ts`** (`projects.ts`, `resume.ts`, `stats.ts`, `nav.ts`, `capabilities.ts`).
-- **`techIcons.ts`** feeds the Lens inflow coins (ADR-010 §4): glyph path data is
-  **verbatim from simple-icons** (24×24, nonzero fill) — the drawn cookie is the one
-  exception — plus monospace text/code token chips. Don't hand-edit glyph path data.
 - **Diagrams** are hand-structured animatable SVGs in `public/diagrams/`
   (`docs/diagram-authoring.md`): inlined via `InlineDiagram` for the one-shot
   draw-on + packet pass (ADR-006 §6), `<img>` as fallback only.
 - **Design tokens** in `src/app/globals.css` (Tailwind v4 `@theme`) — use semantic classes, not raw hex.
-- **The Lens** (`src/components/lens/`, ADR-006, amended by ADR-008/009/010): fidelity is
+- **The Lens** (`src/components/lens/`, ADR-006, amended by ADR-008/009/010/011): fidelity is
   high by default; a runtime FPS watchdog **prompts** before any downgrade to `low`
   (opt-in, ADR-010 §2; tier threaded from
   `LensCanvas` and mirrored to `lensState.fidelityTier`). `LensChoreography` is the sole owner of

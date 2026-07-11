@@ -1,5 +1,9 @@
 # ADR-010: Universal display-text refraction, opt-in fidelity downgrade, projector-assembled windows, and a tool-icon inflow
 
+> **Status pointer (2026-07-11):** §4 (tool-icon inflow) was **retracted** by
+> [ADR-011](ADR-011-lens-legibility-and-inflow-simplification.md); the filename is
+> retained because ADRs are immutable records. §1/§2/§3/§5 stand.
+
 ## Status
 Accepted — **reverses ADR-009 §3** (the silent auto-downgrade to `low` becomes an
 **opt-in prompt** that switches only on user confirmation) **and ADR-009 §5 /

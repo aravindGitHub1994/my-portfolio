@@ -8,12 +8,13 @@
 > "Low/static tiers unchanged" no longer holds). Decisions were resolved branch-by-branch
 > in a fourth `/grill-with-docs` session (2026-07-11).
 >
-> **Status — slices 1.1, 2.1 and 2.1b complete (2026-07-11).** The first 2.2 sweep
-> found the blow-out immune to every knob, falsifying ADR-011 §2's *sufficiency*;
-> the diagnosis (scene content baked into the transmission buffer) and fix (owned
-> bake + exclusions) are recorded as **ADR-011 Amendment A** and implemented as
-> slice 2.1b. **Blocked on the re-run of the calibration sweep (2.2, HITL)**;
-> 2.3 and 3.x follow from its four values.
+> **Status — all AFK slices complete (2026-07-11): 1.1, 2.1, 2.1b, 2.3, 3.1.**
+> The first 2.2 sweep found the blow-out immune to every knob, falsifying
+> ADR-011 §2's *sufficiency*; the diagnosis and fix (owned bake + exclusions)
+> are **ADR-011 Amendment A**, implemented as slice 2.1b. The re-run sweep
+> landed the four values (env 0.4 · spec 0.5 · light 2.5 · faux 1.2), baked in
+> 2.3 with the tuner deleted. **Awaiting 3.2 owner re-QA + sign-off**, then
+> merge `ui-refinement` → `main`.
 
 ## Context / Why
 

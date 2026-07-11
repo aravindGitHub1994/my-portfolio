@@ -153,7 +153,6 @@ calmer, honestly non-identical:
 |---|---|---|---|---|
 | Lens solid | transmission dispersion | faux-glass, calm | faux-glass prism, fixed pose | — |
 | Particles | 800 + 1500, animated | 260 + 480, animated | none (blades settled) | — |
-| Tool coins (ADR-010 §4) | 4 concurrent | 2 concurrent | none | — |
 | Refraction pass | ✓ (fine pointer only) | — | — | — |
 | Kinetic text | GL twins: refract-in headings, distortion-only display copy | DOM, plain fade | DOM, static (CSS kills transitions) | DOM |
 | Imagery | GL planes, snap crisp | crisp DOM `<img>` | crisp DOM `<img>` | DOM |
@@ -217,8 +216,7 @@ fallback are complete diagrams.
 | `Reveal` | Generic scroll-reveal wrapper (available; acts use their own choreography) |
 
 Content lives in `src/lib/*.ts` (`projects.ts`, `resume.ts`, `stats.ts`,
-`capabilities.ts`, `nav.ts`, `techIcons.ts`) — components render it, never
-hardcode it.
+`capabilities.ts`, `nav.ts`) — components render it, never hardcode it.
 
 ---
 

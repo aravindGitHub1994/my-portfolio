@@ -8,8 +8,9 @@ full agent rules and conventions live in `@AGENTS.md` (imported below). Quick fa
 The background is one persistent WebGL `<canvas>` in `src/components/lens/` —
 **The Lens** ([ADR-006](docs/decisions/ADR-006-lens-refractive-redesign.md),
 amended by [ADR-008](docs/decisions/ADR-008-projection-work-act-and-prism-finale.md),
-[ADR-009](docs/decisions/ADR-009-lens-refinement-glass-refraction-and-high-default-fidelity.md)
-and [ADR-010](docs/decisions/ADR-010-universal-refraction-opt-in-fidelity-projector-assembly-and-tool-inflow.md)):
+[ADR-009](docs/decisions/ADR-009-lens-refinement-glass-refraction-and-high-default-fidelity.md),
+[ADR-010](docs/decisions/ADR-010-universal-refraction-opt-in-fidelity-projector-assembly-and-tool-inflow.md)
+and [ADR-011](docs/decisions/ADR-011-lens-legibility-and-inflow-simplification.md)):
 a dispersion prism refracting data-packet particles into insight-beams. The prism
 is the site's **constant object** — during Work it turns projector (beams curve
 into each card's Safari-framed window; `projectionTargets.ts`), and at Contact

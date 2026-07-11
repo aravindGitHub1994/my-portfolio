@@ -1,86 +1,73 @@
-# Handoff — Lens refinement round 3 (ADR-010) — implementation COMPLETE, awaiting owner QA
+# Handoff — Lens legibility round (ADR-011 + Amendment A) — implementation COMPLETE, awaiting owner sign-off
 
 _Branch: `ui-refinement`. Refreshed 2026-07-11. All AFK slices of
-implementation-plan-0007 (1.1 → 6.1) are implemented, gated (lint + build
-green per slice), and committed. Only **6.2 owner visual QA** remains._
+implementation-plan-0008 (1.1 → 3.1, including mid-plan 2.1b) are implemented,
+gated (lint + build green per slice), and committed. The owner calibration
+sweep (2.2) ran **twice** — see the falsification note below. Only **3.2 owner
+re-QA + sign-off** remains, then merge to `main`._
 
 ## Current Status
 - **Done and committed, one commit per slice:**
-  - 1.1 `a2d33f7` — distortion-only `variant="plain"` entrance (registry +
-    KineticText + KineticTextLayer); also lands ADR-010 + plan-0007 docs.
-  - 1.2 `7753172` — near-viewport gate (300px IO margin): offscreen twins hold
-    no raster, do no per-frame `getBoundingClientRect`.
-  - 1.3 `a0fa4dc` — display text wrapped in plain twins (Hero eyebrow/subhead/
-    scroll cue, SectionHeader descriptions, stat labels, project taglines).
-    **Deviations — stayed crisp, see below.**
-  - 2.1 `aa63585` — watchdog now asks ("Switch to basic" / "Keep full
-    quality"); no tier change until confirmed; one prompt per load.
-  - 3.1 `49a6343` — chromatic-shard window assembly synced to beam-lock via
-    new `lensState.fidelityTier` + `gsap.ticker` wait; plain-fade fallback
-    (non-high / 1.2s lock timeout); `mulberry32` extracted to `src/lib/prng.ts`.
-  - 4.1 `a85d8b4` — `TOOL_ICONS` (glyph | token | code): 10 verbatim
-    simple-icons glyphs, 4 brand tokens (Excel/Looker Studio/CM360/Criteo have
-    no simple-icons glyph), 3 JS code tokens + drawn cookie.
-  - 4.2 `f37ddb8` — coin procession in DataStreams: 4 slot meshes high / 2 low
-    / none static, runtime canvas atlas, same inflow bezier, dissolve at the
-    mouth, respawn cooldown stretches with `acts.work`.
-  - 5.1 `beed00a` — Tagging card copy (DevTools, DOM-built GTM variables/
-    triggers, server-side GTM; stack +2 chips).
-  - 5.2 `b32b011` — `tagging.svg` Server GTM node off Implement (steps
-    renumbered +2 after step 4).
-  - 6.1 `ba282bc` — living docs reconciled; ADR-010 §1 gained an
-    implementation note for the 1.3 deviations.
-- Working tree clean apart from this file. Task tracker #1–#10 completed;
-  #11 (6.2 HITL) pending.
+  - docs `7d0f877` — ADR-011 + plan-0008 land.
+  - 1.1 `9cf0fc2` — coin inflow excised from `DataStreams.tsx` (atlas, coin
+    shaders, slot machinery, dead `quadBez`); `techIcons.ts` deleted; inflow
+    back to ADR-006 §1 anonymous packets. Particle counts unchanged.
+  - 2.1 `d2ef9e0` — `backsideEnvMapIntensity` passed explicitly (the drei
+    trap that defeated ADR-009 §1), blue `specularColor`, kernel light kept
+    at core, FauxGlass clearcoat toned; all four magnitudes behind a
+    temporary `lensTuning.ts` URL-param tuner.
+  - **Falsification + Amendment A** `29a18bb` — the first 2.2 sweep found
+    the blow-out immune to every knob. Root cause: **transmitted scene
+    content has no intensity knob** — the additive blade/beam convergence at
+    the prism mouth and the near-white kinetic text twins baked into the
+    transmission buffer unclamped (plus, desktop-only, `EffectComposer`
+    removes ACES from the prism, the scene's only tone-mapped material).
+  - 2.1b `631a318` — the owned bake: MTM's `buffer` prop disables drei's
+    whole-scene bake; `HighGlass` runs the same two passes with the new
+    `bakeExclusions` registry hidden (`DataStreams` root + kinetic text /
+    glass image layers). Glass now refracts only the data core, environment
+    and page darkness; streams/type still draw over it on screen.
+  - 2.3 — owner's re-sweep values baked as literals, tuner deleted:
+    **backside env 0.4 · specular 0.5 · kernel light 2.5 · faux env 1.2**.
+  - 3.1 — living docs reconciled (this commit).
 
-## 1.3 Deviations (owner must rule at 6.2 — also in ADR-010 §1 note)
-The kinetic canvas is `fixed -z-10`: GL twins paint UNDER every DOM
-background, so three ADR-010 §1 scope items stayed crisp DOM:
-- **`Tag`/`CapabilityTag` chips** — they paint their own surface (opaque /
-  60% `bg-surface`); a twin behind it is invisible/washed out.
-- **"Read the build" dialog copy** — native `<dialog>` top layer always
-  paints above the canvas; twinning is physically impossible there.
-- **Trajectory** — interactive hover rows + `overflow-hidden` collapse panels
-  a twin can't clip to (collapsed copy would paint over the page).
+## Unresolved Threads (owner-facing, at 3.2)
+- **Contact is the acceptance hinge** — the rig centres the prism behind the
+  CTA heading; text readability there is the whole point of the round.
+- **Prism-too-dark risk** (ADR-011 Consequences) — calibrated values came
+  from the owner's own re-sweep, so this should be settled; flag at 3.2 if
+  any act still reads formless.
+- **Low tier** faux glass (`?tier=low`) was calibrated (`1.2`) but the
+  clearcoat drop (1 → 0.4, roughness 0.06 → 0.5) is agent-chosen — judge it.
 
-## Unresolved Threads (all owner-facing, at 6.2)
-- **Icon lifecycle default** (coins thin during Work via spawn cooldown) was
-  implemented per plan default — owner-vetoable.
-- **Coin legibility/density** (0.52 world-unit faces, token chips like
-  `addEventListener` are small) — owner judges on real hardware.
-- **Shard assembly timing** (lock threshold blend > 0.05, 1.2s give-up,
-  250ms non-high beat) — tunable constants in `ProjectPin.tsx`.
-- **Performance**: agent ran no browser QA (standing preference). Watch the
-  watchdog prompt on mid hardware now that twins multiplied — if it fires,
-  that's the opt-in flow working, not a bug.
-
-## 6.2 Owner QA checklist (plan-0007 acceptance)
-- [ ] **High:** display text distorts near pointer; buttons/links/window/chips
-      crisp; opt-in prompt (never auto-swap) on frame drops — confirm AND
-      decline paths behave; no re-prompt after decline.
-- [ ] **High:** each Work window assembles from shards once, synced to beams;
-      curtain reveal normal afterwards; re-scroll does not rebuild.
-- [ ] **High:** coins read as recognizable tools, sparse, dissolve at mouth,
-      thin during Work.
-- [ ] **Low / static / reduced-motion:** crisp DOM, plain window fade, no
-      coins, no console errors. (`?tier=low|static` to force.)
-- [ ] Tagging card copy + diagram read well; nothing confidential.
+## 3.2 Owner QA checklist (plan-0008 acceptance)
+- [ ] **High:** no white blow-out anywhere; text readable over the prism in
+      *every* act, especially Contact; prism reads as lit blue glass,
+      data-core visible; beams and packets unchanged; **no coins**.
+- [ ] **Low** (`?tier=low`): faux glass no longer mirrors the Lightformers;
+      text readable.
+- [ ] **Static** (`?tier=static`) / reduced-motion: crisp, no motion, no
+      console errors.
+- [ ] No `?env=`/`?spec=`/`?light=`/`?faux=` param has any effect (tuner gone).
+- [ ] ADR-010 §1/§2/§3/§5 features still behave (twins, opt-in prompt, shard
+      assembly, Tagging card).
 
 ## Key References
-- ADR: `docs/decisions/ADR-010-universal-refraction-opt-in-fidelity-projector-assembly-and-tool-inflow.md`
-  (now carries the §1 implementation note)
-- Plan: `docs/plans/implementation-plan-0007.md`
-- New/changed load-bearing bits: `lensState.fidelityTier` (LensRoot mirrors
-  the tier for DOM-side effects), `src/lib/prng.ts` (shared mulberry32),
-  `TOOL_ICONS` in `src/lib/techIcons.ts`, coin block in `DataStreams.tsx`,
-  shard overlay + lock-wait in `ProjectPin.tsx`.
+- ADR: `docs/decisions/ADR-011-lens-legibility-and-inflow-simplification.md`
+  (**including Amendment A** — the owned-bake decision and the drei/composer
+  trace live there).
+- Plan: `docs/plans/implementation-plan-0008.md` (slice 2.1b added mid-plan).
+- New/changed load-bearing bits: `bakeExclusions.tsx` (registry +
+  `<BakeExcluded>`), `HighGlass` in `TheLens.tsx` (owns the prism mesh and
+  the two-pass bake — the mesh must stay locally owned, react-compiler),
+  `DataStreams.tsx` root registration, `LensScene.tsx` kinetic-layer wrap.
+- **Do not "clean up":** the `resolution={2}` on MTM (idles drei's internal
+  FBOs), the per-pass `envMapIntensity` writes in the bake, and the
+  `BACKSIDE_ENV_INTENSITY ≠ FRONT_ENV_INTENSITY` pair are all load-bearing
+  and commented in place.
 
 ## Recommended Next Steps
-- [ ] Owner: run 6.2 checklist above (`npm run dev`, port 3004).
-- [ ] After sign-off: merge `ui-refinement` → `main` (PR #2 pattern);
+- [ ] Owner: run the 3.2 checklist above (`npm run dev`, port 3004).
+- [ ] After sign-off: merge `ui-refinement` → `main`;
       `code-review-and-quality` before merge if desired.
 - [ ] Confidentiality rule (CLAUDE.md) held: no client names/figures added.
-
-## Recommended Skills
-- `code-review-and-quality` before merge; `git-workflow-and-versioning` for
-  the merge/PR.

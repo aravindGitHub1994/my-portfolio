@@ -112,7 +112,7 @@ Push to the default branch; Vercel auto-detects Next.js, runs `next build`, and 
 
 ## 📖 Documentation & Help
 
-- 📝 **ADRs** — [ADR-001 Static export](docs/decisions/ADR-001-next-js-static-export.md) · [ADR-005 Electric Dark scroll experience](docs/decisions/ADR-005-threejs-scroll-experience.md) · [ADR-006 The Lens](docs/decisions/ADR-006-lens-refractive-redesign.md)
+- 📝 **ADRs** — [ADR-001 Static export](docs/decisions/ADR-001-next-js-static-export.md) · [ADR-005 Electric Dark scroll experience](docs/decisions/ADR-005-threejs-scroll-experience.md) · [ADR-006 The Lens](docs/decisions/ADR-006-lens-refractive-redesign.md) · [ADR-011 Lens legibility & anonymous inflow](docs/decisions/ADR-011-lens-legibility-and-inflow-simplification.md)
 - 🎨 **Design system** — [docs/design-system.md](docs/design-system.md)
 - 📊 **Diagram authoring** — [docs/diagram-authoring.md](docs/diagram-authoring.md)
 - 🤖 **For AI agents** — [AGENTS.md](AGENTS.md)
