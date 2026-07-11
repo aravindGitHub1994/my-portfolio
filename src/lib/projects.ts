@@ -43,15 +43,22 @@ export const PROJECTS: Project[] = [
     slug: "tagging",
     title: "Tagging & Measurement",
     tagline:
-      "Five years of hands-on tag architecture — audits, multi-platform tag plans, dataLayer/GTM implementation, and the post-launch governance that keeps client measurement trustworthy.",
+      "Five years of hands-on tag architecture — DevTools-driven audits, multi-platform tag plans, client- and server-side GTM built on DOM-level custom variables and triggers, and the post-launch governance that keeps client measurement trustworthy.",
     capabilities: ["measurement", "governance"],
     problem:
       "Client measurement rarely fails loudly — it drifts. Tags double-fire or never fire, dataLayers go stale after a redesign, conversions stop matching platform reports, and every new ad platform bolts on another snippet nobody owns. Media budgets get optimized against those numbers, so a broken tag quietly misdirects real spend.",
     approach:
-      "Every engagement starts by auditing what actually fires on the site. From there it's either repairing the existing tagging architecture in place or authoring a new multi-platform tag plan — GA4, Meta, Criteo, Google Ads, CM360, DV360, Kakao, StackAdapt, The Trade Desk, and more — implemented as a structured dataLayer with GTM on top. Where a site exposes no clean data hooks, deep vanilla-JS DOM work scrapes the page itself to set tag parameters reliably.",
+      "Every engagement starts by auditing what actually fires on the site — tracing requests, the dataLayer, and page behaviour in Chrome DevTools until the failure is reproduced, not guessed. From there it's either repairing the existing tagging architecture in place or authoring a new multi-platform tag plan — GA4, Meta, Criteo, Google Ads, CM360, DV360, Kakao, StackAdapt, The Trade Desk, and more — implemented as a structured dataLayer with GTM on top. Where a site exposes no clean data hooks, custom GTM variables and triggers are hand-built in vanilla JS against the DOM itself to set tag parameters reliably; where first-party durability matters, a server-side GTM container carries the measurement past the browser's limits.",
     outcome:
       "600+ client accounts audited, tagged, or troubleshot since March 2021 — and kept healthy after launch, with governance and troubleshooting treated as part of the implementation rather than an afterthought.",
-    stack: ["Google Tag Manager", "GA4", "JavaScript", "dataLayer"],
+    stack: [
+      "Google Tag Manager",
+      "GA4",
+      "JavaScript",
+      "dataLayer",
+      "Server-side GTM",
+      "Chrome DevTools",
+    ],
     diagram: "/diagrams/tagging.svg",
     screenshot: "/screens/tagging.png",
     // The container shown in the GTM recreation (fictional universe).
