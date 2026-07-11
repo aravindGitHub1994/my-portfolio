@@ -8,8 +8,12 @@
 > "Low/static tiers unchanged" no longer holds). Decisions were resolved branch-by-branch
 > in a fourth `/grill-with-docs` session (2026-07-11).
 >
-> **Status — slices 1.1 and 2.1 complete (2026-07-11). Blocked on the owner
-> calibration sweep (slice 2.2, HITL); 2.3 and 3.x follow from its four values.**
+> **Status — slices 1.1, 2.1 and 2.1b complete (2026-07-11).** The first 2.2 sweep
+> found the blow-out immune to every knob, falsifying ADR-011 §2's *sufficiency*;
+> the diagnosis (scene content baked into the transmission buffer) and fix (owned
+> bake + exclusions) are recorded as **ADR-011 Amendment A** and implemented as
+> slice 2.1b. **Blocked on the re-run of the calibration sweep (2.2, HITL)**;
+> 2.3 and 3.x follow from its four values.
 
 ## Context / Why
 
@@ -53,7 +57,8 @@ sign-off.
 | 1.1 | Excise the coin layer; delete `techIcons.ts` | AFK | — |
 | **P2** | **Prism legibility** (ADR-011 §2/§3) | | |
 | 2.1 | Backside bake + blue specular + FauxGlass tone, behind a temp tuner | AFK | — |
-| 2.2 | **Owner calibration sweep** → four numbers | **HITL** | 1.1, 2.1 |
+| 2.1b | Owned transmission bake + bake exclusions (ADR-011 Amendment A) | AFK | 2.1 |
+| 2.2 | **Owner calibration sweep** → four numbers | **HITL** | 1.1, 2.1b |
 | 2.3 | Bake the owner's values; **delete the tuner** | AFK | 2.2 |
 | **P3** | **Docs + close-out** | | |
 | 3.1 | Reconcile living docs + ADR-010 status pointer | AFK | 1.1, 2.3 |
@@ -132,6 +137,25 @@ header must state, unmissably, that it is **scaffolding deleted in slice 2.3**.
 
 **Acceptance:** lint + build green; no `window` access outside the memo; defaults render
 without any URL param; each param demonstrably moves only its own knob.
+
+---
+
+## 2.1b — Owned transmission bake + bake exclusions  · AFK · added mid-plan
+
+> Added after the first 2.2 sweep reported "no setting works — the reflection is
+> always blown out", triggering this plan's falsification clause. Root cause and
+> decision: **ADR-011 Amendment A** (scene content baked into the transmission
+> buffer has no intensity knob; the twins and the additive stream convergence were
+> the surviving white).
+
+**Files:** `src/components/lens/bakeExclusions.tsx` (**new** — registry +
+`<BakeExcluded>`), `src/components/lens/TheLens.tsx` (`HighGlass` owns the prism
+mesh and the two-pass bake; `buffer` prop disables drei's), `DataStreams.tsx`
+(registers its root), `LensScene.tsx` (wraps the kinetic layers).
+
+**Acceptance:** lint + build green; the bake hides only registered objects and
+restores their own visibility; drei's internal bake demonstrably skipped (`buffer`
+passed); tuner knobs still live. **Done.**
 
 ---
 

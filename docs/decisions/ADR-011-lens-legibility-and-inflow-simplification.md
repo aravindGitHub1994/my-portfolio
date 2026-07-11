@@ -9,6 +9,10 @@ overwrites during the backside pass; and its closing "Low/static tiers
 dispersion identity and the anonymous inflow as originally specified), ADR-008 §2/§3,
 and ADR-010 §1/§2/§3/§5.
 
+**Amendment A (same day):** the first calibration sweep falsified §2's *sufficiency* —
+a second, independent cause (scene content baked into the transmission buffer) is
+diagnosed and fixed below. §2's mechanisms and knobs stand.
+
 ## Date
 2026-07-11
 
@@ -165,3 +169,72 @@ hardcoded defaults and the tuner deleted in the same PR.** The scaffold must not
   (`FauxGlassMaterial`) unchanged" no longer holds.
 - **ADR-010** — §4 **superseded (retracted)**. §1 (universal refraction), §2 (opt-in
   fidelity), §3 (projector assembly) and §5 (Tagging card) stand unchanged.
+
+---
+
+## Amendment A (2026-07-11) — the bake content was a second, independent cause
+
+### Context
+
+The plan-0008 slice-2.2 calibration sweep falsified §2's *sufficiency*: the blow-out
+survived every knob setting. §2's mechanisms are real — the backside pass genuinely
+baked env reflections at 33× the authored value — but they are all *reflections*. The
+surviving white is **transmitted scene content**, and transmission has no intensity
+knob anywhere in the material: drei's shader mixes the baked buffer into the final
+color at full strength (`MeshTransmissionMaterial.js:297`).
+
+What bakes into that buffer (the whole scene minus the prism, tone mapping off,
+`HalfFloatType` — unclamped):
+
+- **The prism's own output.** All five light blades stack additively at their shared
+  root at the prism mouth (5 × 0.2 alpha ≥ 1.0), plus ~1500 additive beam particles
+  converging at the same point — the buffer is white-hot exactly where the glass is,
+  in **every act**. The material then smears it across the whole face
+  (`anisotropicBlur`, 6 samples, chromatic aberration).
+- **The kinetic text twins** (ADR-010 §1). On the high tier the visible headings are
+  near-white GL planes at z≈2.6 — *in front of* the prism at z=0 — while the DOM
+  originals sit at `opacity: 0`. The bake captures the planes, so at Contact the glass
+  renders a blurred, displaced copy of the CTA heading directly behind the real one.
+- **Aggravator, desktop high tier only:** mounting the RefractionPass `EffectComposer`
+  sets the renderer to `NoToneMapping` (confirmed in the installed
+  `@react-three/postprocessing`), and the chain adds no tone-mapping effect. Every
+  other object is a raw `ShaderMaterial` (never tone-mapped) or `toneMapped={false}`,
+  so the prism is the **only** object that loses ACES compression — on exactly the
+  hardware the owner QAs. Recorded as fact, deliberately unchanged: the twins match
+  DOM text *because* they bypass tone mapping.
+
+This explains the recurrence across three rounds: ADR-009 tuned a prop the bake
+overwrote; §2 above fixed the overwrite; both times the transmitted content stayed.
+The symptom worsened when ADR-010 §1 moved the site's headings into the GL scene.
+
+### Decision
+
+**Own the bake.** `MeshTransmissionMaterial`'s `buffer` prop is drei's documented
+escape hatch — when set, its internal whole-scene bake never runs. `TheLens` (the
+high-tier `HighGlass` component) now performs the same two-pass bake itself: same
+pass order (`MeshTransmissionMaterial.js:348–375`), same tone-mapping juggle, same
+768² `HalfFloatType` targets — with every object in a new **`bakeExclusions`
+registry** (module-scope, projectionTargets pattern) hidden for exactly those two
+renders:
+
+- **`DataStreams`' root** (packets, beams, blades) — registered by the component;
+- **the kinetic text + glass image layers** — wrapped in `<BakeExcluded>` in
+  `LensScene`.
+
+The glass therefore refracts only the data core, the environment — still governed by
+§2/§3's calibratable intensities, and owning the pass turns the backside
+`envMapIntensity` overwrite from a library trap into an explicit, commented knob — and
+the page darkness. Streams and type still draw **over** the glass on screen; only
+their refracted copies inside it are gone. Text floats in front of lit blue glass by
+construction.
+
+### Consequences
+
+- §3's calibration sweep remains the path to the final magnitudes and is **re-run**
+  against the corrected image; the tuner is unchanged.
+- The **legibility scrim stays rejected** — this amendment removes its remaining
+  justification.
+- drei's internal FBOs still allocate but idle; the `resolution` prop is set to `2`
+  so they hold no meaningful VRAM.
+- The bake now costs the same two scene renders it always did — the passes moved,
+  they were not added.
