@@ -7,7 +7,6 @@ import { MeshTransmissionMaterial, useFBO } from "@react-three/drei";
 import { lensState } from "./lensState";
 import { hideBakeExclusions, restoreBakeExclusions } from "./bakeExclusions";
 import type { FidelityTier } from "@/lib/gpuTier";
-import { readLensTuning, type LensTuning } from "@/lib/lensTuning";
 
 const ACCENT = "#3d74ff";
 const ACCENT_BRIGHT = "#8fb3ff";
@@ -18,9 +17,10 @@ const CORE_CYAN = "#46e3ff";
  * Faux-glass for the low/static tiers: clearcoat + env reflections sell the
  * material without MeshTransmissionMaterial's per-frame scene capture.
  * Toned per ADR-011 §2 — near-mirror clearcoat over full-strength env
- * reflections was the high tier's blow-out by another route.
+ * reflections was the high tier's blow-out by another route. Magnitudes are
+ * owner-calibrated on real hardware (plan-0008 slice 2.2, 2026-07-11).
  */
-function FauxGlassMaterial({ tuning }: { tuning: LensTuning }) {
+function FauxGlassMaterial() {
   return (
     <meshPhysicalMaterial
       transparent
@@ -29,7 +29,7 @@ function FauxGlassMaterial({ tuning }: { tuning: LensTuning }) {
       metalness={0}
       clearcoat={0.4}
       clearcoatRoughness={0.5}
-      envMapIntensity={tuning.fauxEnv}
+      envMapIntensity={1.2}
       color="#bcd0ff"
       depthWrite={false}
     />
@@ -41,6 +41,10 @@ const GLASS_THICKNESS = 1.15;
 const BACKSIDE_THICKNESS = 0.25;
 /** Front-draw env reflections — near zero per ADR-009 §1. */
 const FRONT_ENV_INTENSITY = 0.03;
+/** Backside-bake env strength — owner-calibrated on real hardware
+ *  (plan-0008 slice 2.2, 2026-07-11). Deliberately NOT the front value:
+ *  the backside pass is what gives the glass its surface response. */
+const BACKSIDE_ENV_INTENSITY = 0.4;
 const BAKE_RESOLUTION = 768;
 
 /** drei types the forwarded ref as the element props type; the runtime
@@ -65,13 +69,7 @@ type TransmissionImpl = THREE.MeshPhysicalMaterial & {
  * the environment and the page darkness — streams and type still draw over
  * the glass on screen, they just never appear inside it.
  */
-function HighGlass({
-  geometry,
-  tuning,
-}: {
-  geometry: THREE.BufferGeometry;
-  tuning: LensTuning;
-}) {
+function HighGlass({ geometry }: { geometry: THREE.BufferGeometry }) {
   // The mesh is owned HERE, not by TheLens — the bake swaps its material
   // every frame, and the React compiler only sanctions frame-loop mutation
   // of locally-owned refs (never props).
@@ -111,7 +109,7 @@ function HighGlass({
     mat.buffer = fboBack.texture;
     mat.thickness = BACKSIDE_THICKNESS;
     mat.side = THREE.BackSide;
-    mat.envMapIntensity = tuning.backsideEnv;
+    mat.envMapIntensity = BACKSIDE_ENV_INTENSITY;
     gl.setRenderTarget(fboMain);
     gl.render(state.scene, state.camera);
     // Final on-screen draw: front faces transmitting pass 2.
@@ -145,8 +143,9 @@ function HighGlass({
         envMapIntensity={FRONT_ENV_INTENSITY}
         // Blue, not three.js's default white — highlights resolve mid-blue
         // so near-white DOM text keeps contrast over the glass (ADR-011 §2).
+        // Intensity owner-calibrated (plan-0008 slice 2.2, 2026-07-11).
         specularColor={ACCENT_BRIGHT}
-        specularIntensity={tuning.specular}
+        specularIntensity={0.5}
         ior={1.45}
         chromaticAberration={0.05}
         anisotropicBlur={0.12}
@@ -168,21 +167,19 @@ function HighGlass({
  *  bake can swap materials on a locally-owned ref. */
 function PrismSolid({
   tier,
-  tuning,
   geometry,
 }: {
   tier: FidelityTier;
-  tuning: LensTuning;
   geometry: THREE.BufferGeometry;
 }) {
   if (tier !== "high") {
     return (
       <mesh geometry={geometry}>
-        <FauxGlassMaterial tuning={tuning} />
+        <FauxGlassMaterial />
       </mesh>
     );
   }
-  return <HighGlass geometry={geometry} tuning={tuning} />;
+  return <HighGlass geometry={geometry} />;
 }
 
 /**
@@ -201,11 +198,6 @@ export function TheLens({ tier }: { tier: FidelityTier }) {
   const solid = useRef<THREE.Group>(null);
   const core = useRef<THREE.Mesh>(null);
   const animated = tier !== "static";
-
-  // Temporary calibration knobs (plan-0008 slice 2.2; deleted in 2.3).
-  // Reading window here is safe: LensRoot mounts this ssr:false, so it
-  // never prerenders.
-  const tuning = useMemo(() => readLensTuning(), []);
 
   // Triangular prism: a 3-segment cylinder turned to face the camera —
   // the classic dispersion silhouette, one long edge up.
@@ -253,7 +245,7 @@ export function TheLens({ tier }: { tier: FidelityTier }) {
   return (
     <group ref={group}>
       <group ref={solid} rotation={animated ? undefined : [0.16, 0.55, 0]}>
-        <PrismSolid tier={tier} tuning={tuning} geometry={prismGeo} />
+        <PrismSolid tier={tier} geometry={prismGeo} />
 
         {/* Electric data core, refracted through the glass. toneMapped off
             so the wireframe stays hot through the transmission buffer's
@@ -273,13 +265,9 @@ export function TheLens({ tier }: { tier: FidelityTier }) {
       {/* Blue kernel glow bleeding through the glass. Deliberately
           position-less — it sits at the prism's core as its internal
           luminance (ADR-011 §2); with env reflections near zero it is the
-          main thing keeping the glass from going dark and formless. */}
-      <pointLight
-        color={ACCENT}
-        intensity={tuning.kernelLight}
-        distance={5}
-        decay={2}
-      />
+          main thing keeping the glass from going dark and formless.
+          Intensity owner-calibrated (plan-0008 slice 2.2, 2026-07-11). */}
+      <pointLight color={ACCENT} intensity={2.5} distance={5} decay={2} />
     </group>
   );
 }
