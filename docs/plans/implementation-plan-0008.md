@@ -8,7 +8,8 @@
 > "Low/static tiers unchanged" no longer holds). Decisions were resolved branch-by-branch
 > in a fourth `/grill-with-docs` session (2026-07-11).
 >
-> **Status — NOT STARTED.**
+> **Status — slices 1.1 and 2.1 complete (2026-07-11). Blocked on the owner
+> calibration sweep (slice 2.2, HITL); 2.3 and 3.x follow from its four values.**
 
 ## Context / Why
 
