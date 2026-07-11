@@ -1,10 +1,10 @@
-# Handoff — Lens legibility round (ADR-011 + Amendment A) — implementation COMPLETE, awaiting owner sign-off
+# Handoff — Lens legibility round (ADR-011 + Amendment A) — COMPLETE, signed off, merged
 
-_Branch: `ui-refinement`. Refreshed 2026-07-11. All AFK slices of
-implementation-plan-0008 (1.1 → 3.1, including mid-plan 2.1b) are implemented,
-gated (lint + build green per slice), and committed. The owner calibration
-sweep (2.2) ran **twice** — see the falsification note below. Only **3.2 owner
-re-QA + sign-off** remains, then merge to `main`._
+_Branch: `ui-refinement`, merged to `main` 2026-07-11. All slices of
+implementation-plan-0008 (1.1 → 3.2, including mid-plan 2.1b) are done and
+gated (lint + build green per slice). The owner calibration sweep (2.2) ran
+**twice** — see the falsification note below — and **3.2 owner re-QA passed**.
+This round is closed; the checklist below is retained as the QA record._
 
 ## Current Status
 - **Done and committed, one commit per slice:**
@@ -41,15 +41,15 @@ re-QA + sign-off** remains, then merge to `main`._
   clearcoat drop (1 → 0.4, roughness 0.06 → 0.5) is agent-chosen — judge it.
 
 ## 3.2 Owner QA checklist (plan-0008 acceptance)
-- [ ] **High:** no white blow-out anywhere; text readable over the prism in
+- [x] **High:** no white blow-out anywhere; text readable over the prism in
       *every* act, especially Contact; prism reads as lit blue glass,
       data-core visible; beams and packets unchanged; **no coins**.
-- [ ] **Low** (`?tier=low`): faux glass no longer mirrors the Lightformers;
+- [x] **Low** (`?tier=low`): faux glass no longer mirrors the Lightformers;
       text readable.
-- [ ] **Static** (`?tier=static`) / reduced-motion: crisp, no motion, no
+- [x] **Static** (`?tier=static`) / reduced-motion: crisp, no motion, no
       console errors.
-- [ ] No `?env=`/`?spec=`/`?light=`/`?faux=` param has any effect (tuner gone).
-- [ ] ADR-010 §1/§2/§3/§5 features still behave (twins, opt-in prompt, shard
+- [x] No `?env=`/`?spec=`/`?light=`/`?faux=` param has any effect (tuner gone).
+- [x] ADR-010 §1/§2/§3/§5 features still behave (twins, opt-in prompt, shard
       assembly, Tagging card).
 
 ## Key References
@@ -67,7 +67,7 @@ re-QA + sign-off** remains, then merge to `main`._
   and commented in place.
 
 ## Recommended Next Steps
-- [ ] Owner: run the 3.2 checklist above (`npm run dev`, port 3004).
-- [ ] After sign-off: merge `ui-refinement` → `main`;
+- [x] Owner: ran the 3.2 checklist above (`npm run dev`, port 3004).
+- [x] After sign-off: merged `ui-refinement` → `main`;
       `code-review-and-quality` before merge if desired.
-- [ ] Confidentiality rule (CLAUDE.md) held: no client names/figures added.
+- [x] Confidentiality rule (CLAUDE.md) held: no client names/figures added.
