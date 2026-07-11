@@ -75,6 +75,30 @@ function KineticPlane({ target }: { target: KineticTarget }) {
   // Plain twins (ADR-010 §1) skip the refract-in: born settled at 1.
   const progress = useRef({ value: target.entrance === "plain" ? 1 : 0 });
   const shear = useRef(0);
+  // Near-viewport gate (ADR-010 §1 cost containment): offscreen twins do no
+  // per-frame measurement and hold no raster. State drives the raster
+  // effect; the ref mirrors it for the frame loop. The margin comfortably
+  // exceeds the 160px layout cull so an entering twin re-rasters before it
+  // could ever be seen.
+  const [near, setNear] = useState(false);
+  const nearRef = useRef(false);
+
+  useEffect(() => {
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        nearRef.current = entry.isIntersecting;
+        setNear(entry.isIntersecting);
+        // Far offscreen: drop the raster (its texture disposes with it).
+        if (!entry.isIntersecting) setRaster(null);
+      },
+      { rootMargin: "300px 0px" },
+    );
+    io.observe(target.el);
+    return () => {
+      nearRef.current = false;
+      io.disconnect();
+    };
+  }, [target]);
 
   const texture = useMemo(() => {
     if (!raster) return null;
@@ -88,10 +112,12 @@ function KineticPlane({ target }: { target: KineticTarget }) {
   }, [raster]);
   useEffect(() => () => texture?.dispose(), [texture]);
 
-  // Rasterize on mount + whenever the element resizes or its text mutates
-  // (count-up stats change digits without resizing — the DOM stays the
-  // source of truth). Observer bursts coalesce to one raster per frame.
+  // Rasterize while near-viewport + whenever the element resizes or its
+  // text mutates (count-up stats change digits without resizing — the DOM
+  // stays the source of truth). Observer bursts coalesce to one raster per
+  // frame. Far offscreen no raster is built (the IO callback above drops it).
   useEffect(() => {
+    if (!near) return;
     const el = target.el;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let raf = 0;
@@ -113,7 +139,7 @@ function KineticPlane({ target }: { target: KineticTarget }) {
       ro.disconnect();
       mo.disconnect();
     };
-  }, [target]);
+  }, [target, near]);
 
   // Refract-in once, on entry. Plain twins stay settled; velocity shear
   // still applies to both variants via the frame loop.
@@ -149,6 +175,11 @@ function KineticPlane({ target }: { target: KineticTarget }) {
     const m = mesh.current;
     const u = material.current?.uniforms;
     if (!m || !u || !raster || !texture) return;
+    // Raster teardown lags the IO flip by a commit — skip measuring now.
+    if (!nearRef.current) {
+      m.visible = false;
+      return;
+    }
     u.uMap.value = texture;
     u.uProgress.value = progress.current.value;
     shear.current = THREE.MathUtils.damp(
