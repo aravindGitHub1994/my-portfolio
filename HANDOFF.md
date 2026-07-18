@@ -7,13 +7,16 @@
 > stuck-dock defect found and fixed during QA (see Current Status).
 > **Gate 4.3 passed on a served production build of `e66cd75`** —
 > owner docked fine, no defects reported. **5.1 committed
-> (`95bbf76`)** — Explorer + project windows + IE frame, lazy-chunk
-> loading live (`lazyApps.ts` → `register51.ts`, hourglass
-> placeholder, verified split in the export). Next: **5.2 / 5.3**,
-> then P6 audio / P7 mobile-perf / P8 eggs / 9.1 docs → final gate
-> 9.2. New 5.2 hooks already in place: Explorer's `C:\Career` item
-> currently deadpans "Disk 2" — replace with the career tree; WordPad/
-> Notepad appIds have no loader yet (add them to `lazyApps.ts`).
+> (`95bbf76`)** — Explorer + project windows + IE frame + the
+> lazy-chunk pattern (`lazyApps.ts` LOADERS → `register5x.ts`,
+> hourglass placeholder, splits verified in the export). **5.2
+> committed (`493d4ea`)** — WordPad resume (real PDF download),
+> C:\Career keyboard-navigable folder tree inside Explorer,
+> Add/Remove Programs (Start menu), ABOUT_ME.txt Notepad with new
+> `src/lib/aboutMe.ts` draft copy (**owner reviews at 9.2**). Next:
+> **5.3** (Outlook compose + dial-up shortcuts + ch. 5 contact
+> layer), then P6 audio / P7 mobile-perf / P8 eggs / 9.1 docs →
+> final gate 9.2.
 
 ## Current Status
 
@@ -116,9 +119,11 @@
 
 - [x] **HITL gate 4.3** — PASSED (owner, 2026-07-18).
 - [x] 5.1 Explorer/project windows/IE frame — committed `95bbf76`.
-- [ ] 5.2 WordPad resume + C:\Career\ + Add/Remove + ABOUT_ME.txt ·
-      5.3 Outlook/dial-up/sign-off (extend `lazyApps.ts` LOADERS with
-      each new chunk; pattern established in 5.1).
+- [x] 5.2 WordPad/C:\Career/Add-Remove/ABOUT_ME — committed `493d4ea`.
+- [ ] 5.3 Outlook compose + dial-up shortcuts + ch. 5 contact layer
+      (blocked by nothing; extend `lazyApps.ts` LOADERS; the dial-up
+      appIds `dialup-linkedin`/`dialup-github` already exist in
+      APP_DEFS; contact layer hooks into Choreography ch. 5).
 - [ ] Then P6 audio (6.1 unlock rides the PowerOn press), P7
       mobile/perf, P8 eggs (cuttable), 9.1 docs, 9.2 final gate.
 
