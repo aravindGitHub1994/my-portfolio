@@ -6,9 +6,14 @@
 > (`e66cd75`) — full dock/undock/re-dock cycle verified headless, a
 > stuck-dock defect found and fixed during QA (see Current Status).
 > **Gate 4.3 passed on a served production build of `e66cd75`** —
-> owner docked fine, no defects reported. Next: **P5 apps** (5.1–5.3
-> via `registerApp` lazy chunks), then P6 audio / P7 mobile-perf /
-> P8 eggs / 9.1 docs → final gate 9.2.
+> owner docked fine, no defects reported. **5.1 committed
+> (`95bbf76`)** — Explorer + project windows + IE frame, lazy-chunk
+> loading live (`lazyApps.ts` → `register51.ts`, hourglass
+> placeholder, verified split in the export). Next: **5.2 / 5.3**,
+> then P6 audio / P7 mobile-perf / P8 eggs / 9.1 docs → final gate
+> 9.2. New 5.2 hooks already in place: Explorer's `C:\Career` item
+> currently deadpans "Disk 2" — replace with the career tree; WordPad/
+> Notepad appIds have no loader yet (add them to `lazyApps.ts`).
 
 ## Current Status
 
@@ -110,9 +115,10 @@
 ## Recommended Next Steps
 
 - [x] **HITL gate 4.3** — PASSED (owner, 2026-07-18).
-- [ ] P5 next: 5.1 Explorer/project windows/IE frame ·
-      5.2 WordPad resume + C:\Career\ + Add/Remove + ABOUT_ME.txt ·
-      5.3 Outlook/dial-up/sign-off (all via `registerApp`, lazy chunks).
+- [x] 5.1 Explorer/project windows/IE frame — committed `95bbf76`.
+- [ ] 5.2 WordPad resume + C:\Career\ + Add/Remove + ABOUT_ME.txt ·
+      5.3 Outlook/dial-up/sign-off (extend `lazyApps.ts` LOADERS with
+      each new chunk; pattern established in 5.1).
 - [ ] Then P6 audio (6.1 unlock rides the PowerOn press), P7
       mobile/perf, P8 eggs (cuttable), 9.1 docs, 9.2 final gate.
 
