@@ -1,11 +1,12 @@
 # HANDOFF — Win98 Workstation redesign (2026-07-18, session 4)
 
-> For the next agent session. P0–P2 AFK slices are committed and gate
-> 1.2 PASSED. **All four gate-2.3 defects are FIXED and owner-verified
-> in the headed browser (2026-07-18, session 4)** — the owner still has
-> to run the rest of the plan §2.3 checklist (dusk mood, figure/room
-> separation, idle+typing read). Do not pass the gate autonomously.
-> Read the two Key References before writing anything.
+> For the next agent session. **Gates 1.2 and 2.3 PASSED** (owner,
+> 2026-07-18). P3 is COMMITTED (3.1 `e7a106b`, 3.2 `89670dc`,
+> 3.3 `d816bda`) and 4.1 is COMMITTED (`ad493db`, ride-through verified
+> headlessly). **Next slice: 4.2 (dock swap — precision slice), then
+> HITL gate 4.3 (owner full ride-through on a production build). Do not
+> pass gates autonomously.** P5 (apps) can run in parallel now that 3.2
+> is in. Read the two Key References before writing anything.
 
 ## Current Status
 
@@ -43,33 +44,42 @@
 
 ## Unresolved Threads
 
-- **GATE 2.3 DEFECTS — all four FIXED, owner-verified in the headed
-  browser (2026-07-18, session 4):**
-  1. Fingers/keyboard: `ARM_JOINTS.wrist` raised+retracted to
-     (0.12, 0.79, -0.365); palm hover + finger droop shortened so
-     fingertips rest ON the keycap tops (world y ≈ 0.753–0.756) and the
-     tap dip reads as a key press. Typing rig untouched.
-  2. Boot flicker: boot luminance capped at 0.7 (`0.15 + 0.55·flicker`),
-     emissive ceiling lowered to `0.35 + lum·1.2`, and `CAST_MAX 2.6`
-     clamp added in `Lighting.tsx`. Verified in `?scene=full` (high
-     tier, owner) and `?scene=room` (low tier, isolated headless
-     session). Teal/BSOD/amber kept their approved read.
-  3. Torso: `chest.scale.z = 0.7` (0.85 was still too round at owner
-     QA), chest rows trimmed to 0.162/0.168, shoulder→neck taper spread
-     over 6 rows (the old 3-row drop read as a phantom shirt collar),
-     and the lathe's +Z back vertices soft-clamped (`BACK_Z 0.09`,
-     factor 0.25) to kill the back hump. Owner approved in profile.
-  4. Mustache/beard: beard tuck `high` ramp starts at dirY -0.5 (was
-     -0.62) so the beard reaches the mustache; mustache pulled to
-     z -0.102, depth 0.044 (front face now at the nose tip). Owner:
-     "looks good".
-- Self-noted nits (owner has NOT flagged these — mention, don't gold-plate):
-  shaft billboard reads as a pale streak edge-on against the window;
-  chair backrest is plain boxes.
-- NEXT: owner completes the plan §2.3 checklist
-  (dusk mood, figure/room separation, idle+typing read) → then P3
-  (screen content: 3.1 targets the `crtScreen` mesh + writes
-  `screenLight` for real, replacing `ScreenTestPattern`).
+- **P3 + 4.1 state (all committed, lint+build green each):**
+  - `win98State` (src/lib) is the both-renderers store: boot machine
+    (off/post/splash/desktop/shutdown), postLines, icons, z-ordered
+    windows, focus, Start menu, version counter (useSyncExternalStore
+    key). Pure, no DOM/three imports.
+  - Painter (`win98/painter.ts`) is EVENT-DRIVEN only; CrtScreen owns
+    canvas→CanvasTexture→CRT shader on the `crtScreen` mesh, samples
+    average tone per repaint (8×6 downsample) and writes `screenLight`
+    per frame **capped at luminance 0.7** (gate-2.3 brightness
+    contract; `CAST_MAX 2.6` in Lighting is the second belt — preserve
+    both in all future screen work).
+  - Shell (`win98/shell/`): 640×480 virtual space; `Window.tsx` drag/
+    resize divides client px by `scale` — 4.2 must pass the CRT-quad
+    scale the same way. Taskbar is a div (a `<footer>` is hidden by the
+    floor-hiding CSS rule — don't regress). Apps register content
+    components via `appDefs.ts` registry (`registerApp`); unregistered
+    apps show a deadpan "Insert Disk 2" placeholder.
+  - Boot: `bootScript.ts` (stats.ts-interpolated POST lines, no
+    hardcoded numbers) + `bootSequencer.ts` (`startBoot()` → controller
+    with cancel/skip; per-line work promises = boot-as-loader hook).
+  - 4.1: `cameraPath.ts` keyframes (rest points ON keyframes; ch2→3 arc
+    key prevents hair clip; dock key = square-on, `DOCK_DISTANCE`
+    0.26). `PowerOn.tsx` (entry gesture, Lenis parked till desktop,
+    localStorage `w98-intro-seen` skip), `TitleBeats.tsx` (rAF opacity,
+    no React state), keyboard stepping + `duskDeepen` in Choreography,
+    dusk damping refs in Lighting.
+- Self-noted nits (owner has NOT flagged these — mention, don't
+  gold-plate): shaft billboard reads pale edge-on; chair backrest plain
+  boxes; ch2 rest framing may want owner calibration at 4.3; faint CRT
+  moiré rings at some distances (scanline×minification, already
+  softened once).
+- NEXT: slice 4.2 (dock swap: `DockSwap.tsx` + `dockAlignment.ts`,
+  matrix3d the 640×480 shell onto the screen quad, painter→DOM
+  cross-fade ≤150 ms, Lenis stop while docked, undock on scroll after
+  all windows idle — `allWindowsIdle()` exists) → **HITL gate 4.3**.
+  P5 apps (5.1/5.2/5.3) unblocked in parallel; 8.x eggs cuttable.
 - `src/lib/aboutMe.ts` copy (slice 5.2) needs owner review at gate 9.2.
 
 ## Key References
@@ -93,14 +103,16 @@
 
 ## Recommended Next Steps
 
-- [ ] Owner finishes the plan §2.3 checklist (dusk mood, figure/room
-      separation, idle+typing read). **Do not pass the gate
-      autonomously.**
-- [ ] After 2.3 passes: slice 3.1 (CRT screen content — targets the
-      `crtScreen` material slot, writes `screenLight`, replaces
-      `ScreenTestPattern`; `Lighting.tsx` CAST_MAX clamp + the
-      ScreenTestPattern emissive formula are the brightness contract to
-      preserve).
+- [ ] Slice 4.2: dock swap (DockSwap.tsx + dockAlignment.ts; ≤1 px
+      alignment at 1×/1.5×/2× DPR, painter→DOM fade ≤150 ms, scroll
+      contract via Lenis stop/start + `allWindowsIdle()` hint).
+- [ ] **HITL gate 4.3:** owner full ride-through on a served
+      production build. Do not pass autonomously.
+- [ ] P5 (5.1 Explorer/projects/IE, 5.2 resume/career/skills/about,
+      5.3 Outlook/dial-up/sign-off) — register via `registerApp`,
+      lazy chunks.
+- [ ] Then P6 audio, P7 mobile/perf, P8 eggs (cuttable), 9.1 docs,
+      9.2 final gate.
 
 ## Recommended Skills
 
