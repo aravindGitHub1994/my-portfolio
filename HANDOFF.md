@@ -57,6 +57,27 @@
      emissive ceiling in `ScreenTestPattern` (currently 0.4 + lum·1.6 →
      2.0), and/or raise the CAST_SCALE clamp in `Lighting.tsx`. A boot
      flash should read as a flash, not a floodlight.
+  3. **Chest protrudes too much / too rounded**
+     (`assets-src/workstation/QA-chest-reshape.png` — owner drew the
+     desired front line in red: much flatter from collar to lap). The
+     torso is a LatheGeometry, so its cross-section is circular — depth
+     equals width, which is why the chest balloons in profile. Fix:
+     scale the torso/chest group z (front-back) to ~0.85, and/or trim
+     the chest-row radii in the lathe profile (`buildBody.ts` rows
+     y 0.34/0.42, radii 0.168/0.178). Match the red line in profile from
+     the owner's QA angle; keep the shoulder width.
+  4. **Gap between mustache and beard; mustache sticks out**
+     (`assets-src/workstation/QA-beard-moustache-gap.png`, red circle).
+     The beard's face-window tuck leaves bare skin between the mustache's
+     lower edge and the beard's visible front boundary, and the mustache
+     bar reads proud of the face. Owner accepts either fix — pull the
+     mustache in, or raise the beard's front coverage to meet it —
+     whichever looks right; likely both: in `buildBeard.ts` shift the
+     tuck's `high` ramp so beard shows up to just under the mustache
+     (`(dirY + 0.62)/0.18` → start nearer -0.5), and pull the mustache
+     back a touch (z -0.108 → ≈ -0.104, or reduce its depth). Verify in
+     profile AND three-quarter — the gap reads worst at the owner's
+     angle (left three-quarter, slightly below).
 - Self-noted nits (owner has NOT flagged these — mention, don't gold-plate):
   shaft billboard reads as a pale streak edge-on against the window;
   chair backrest is plain boxes.
@@ -73,8 +94,10 @@
 - **Plan:** `docs/plans/implementation-plan-0009.md` — 24 slices, HITL
   gates 1.2 ✅ / 2.3 (in progress) / 4.3 / 9.2. AFK gate is always lint +
   build green.
-- **Owner QA screenshot:** `assets-src/workstation/QA.png` (untracked —
-  never commit assets-src).
+- **Owner QA screenshots** (untracked — never commit assets-src):
+  `assets-src/workstation/QA.png` (flicker blow-out, fingers),
+  `QA-chest-reshape.png` (red line = target torso profile),
+  `QA-beard-moustache-gap.png` (red circle = mustache/beard gap).
 - **Reference assets:** `assets-src/workstation/` (3 concept sheets —
   their "model stats" panels are fictional; `tattoo01–04.jpg` — never
   ship; `prompt-redesign.txt`).
@@ -89,6 +112,10 @@
       the headed browser from the owner's angle before committing).
 - [ ] Fix gate-2.3 defect 2: boot-flicker brightness (cap luminance +
       emissive ceiling; check both `?scene=room` and `?scene=full`).
+- [ ] Fix gate-2.3 defect 3: flatten the torso front (match the red line
+      in QA-chest-reshape.png; z-scale and/or lathe profile).
+- [ ] Fix gate-2.3 defect 4: close the mustache↔beard gap (tuck ramp
+      and/or mustache pull-in; owner is flexible on which).
 - [ ] Lint + build → commit → hand back to the owner to finish the §2.3
       checklist. **Do not pass the gate autonomously.**
 - [ ] After 2.3 passes: slice 3.1 (CRT screen content — targets the
