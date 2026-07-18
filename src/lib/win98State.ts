@@ -232,6 +232,15 @@ export function setStartMenuOpen(open: boolean): void {
   notify();
 }
 
+/**
+ * Re-notify without a state mutation — a lazy app chunk arriving (5.x)
+ * re-renders open windows so the registered content replaces the
+ * hourglass placeholder.
+ */
+export function touchWin98(): void {
+  notify();
+}
+
 /** Topmost window that isn't minimized, or null. */
 export function topVisibleWindow(): Win98Window | null {
   for (let i = win98State.windows.length - 1; i >= 0; i--) {

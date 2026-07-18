@@ -7,7 +7,7 @@
 // runs in the shell's 640×480 virtual space — `scale` converts client
 // pixels (4.2's dock reuses this for the CRT-quad transform).
 
-import { createElement, useRef } from "react";
+import { createElement, useEffect, useRef } from "react";
 import {
   closeWindow,
   focusWindow,
@@ -20,6 +20,7 @@ import {
   type Win98Window,
 } from "@/lib/win98State";
 import { PixelIcon } from "../pixelIcons";
+import { ensureAppLoaded, hasAppLoader } from "../apps/lazyApps";
 import { resolveApp } from "./appDefs";
 
 interface DragState {
@@ -82,6 +83,12 @@ export function Window({
   // their chunk load; createElement keeps the react-compiler rule happy.
   const content = resolveApp(win.appId);
 
+  // Lazy apps (ADR-012 §8) load on first open; touchWin98() re-renders
+  // this window when the chunk registers.
+  useEffect(() => {
+    if (!content) ensureAppLoaded(win.appId);
+  }, [content, win.appId]);
+
   return (
     <section
       className="w98-raised absolute flex flex-col p-[3px]"
@@ -143,8 +150,17 @@ export function Window({
       <div className="w98-field relative mt-[2px] min-h-0 flex-1 overflow-auto p-2">
         {content ? (
           createElement(content, { win })
+        ) : hasAppLoader(win.appId) ? (
+          // Chunk in flight — the §8 period-appropriate hourglass.
+          <p
+            className="font-w98 text-[9px] text-w98-ink"
+            style={{ cursor: "wait" }}
+            aria-live="polite"
+          >
+            ⌛ Loading, please wait...
+          </p>
         ) : (
-          // 5.x/8.x app not registered yet — deadpan period placeholder.
+          // App's slice hasn't shipped — deadpan period placeholder.
           <p className="font-w98 text-[9px] text-w98-ink">
             {win.title}
             <br />
