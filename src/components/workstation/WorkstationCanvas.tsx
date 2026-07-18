@@ -7,6 +7,10 @@ import type { Group } from "three";
 import { experienceState } from "@/lib/experienceState";
 import { mulberry32 } from "@/lib/prng";
 import type { FidelityTier } from "@/lib/gpuTier";
+import {
+  CharacterScene,
+  CHARACTER_CAMERA,
+} from "./character/CharacterScene";
 
 /**
  * The experience's single persistent canvas (plan-0009 §0.2). Two modes:
@@ -17,7 +21,7 @@ import type { FidelityTier } from "@/lib/gpuTier";
  *   (P2 replaces the stub; the wiring stays).
  * - `scene === "<name>"` — the `?scene=` harness (owner QA / P1–P2 dev):
  *   mounts an isolated scene from HARNESS_SCENES with an orbitable camera,
- *   no choreography. Unknown names fall back to the marker field.
+ *   no choreography. Unknown names fall back to the stub field.
  *
  * The wrapper is aria-hidden (ADR-012 §9): the canvas is cinematic only;
  * content always exists in the DOM.
@@ -76,9 +80,35 @@ function JourneyRig() {
   return null;
 }
 
-/** Isolated scenes the `?scene=` harness can mount (P1 adds "character"). */
-const HARNESS_SCENES: Record<string, React.ComponentType> = {
-  stub: MarkerField,
+function StubScene() {
+  return (
+    <>
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[4, 6, 8]} intensity={1.2} />
+      <MarkerField />
+    </>
+  );
+}
+
+interface HarnessSceneDef {
+  Component: React.ComponentType;
+  /** Initial camera pose — the character preset is 1.2's "chapter 2 frame". */
+  position: [number, number, number];
+  target: [number, number, number];
+}
+
+/** Isolated scenes the `?scene=` harness can mount. */
+const HARNESS_SCENES: Record<string, HarnessSceneDef> = {
+  stub: {
+    Component: StubScene,
+    position: [0, 0, CAMERA_START_Z],
+    target: [0, 0, 0],
+  },
+  character: {
+    Component: CharacterScene,
+    position: CHARACTER_CAMERA.position,
+    target: CHARACTER_CAMERA.target,
+  },
 };
 
 export function WorkstationCanvas({
@@ -88,29 +118,28 @@ export function WorkstationCanvas({
   tier: FidelityTier;
   scene: string | null;
 }) {
-  const HarnessScene =
-    scene !== null ? (HARNESS_SCENES[scene] ?? MarkerField) : null;
+  const harness =
+    scene !== null ? (HARNESS_SCENES[scene] ?? HARNESS_SCENES.stub) : null;
 
   return (
     <div aria-hidden="true" className="fixed inset-0 -z-10">
-      <Canvas
-        camera={{ position: [0, 0, CAMERA_START_Z], fov: 55 }}
-        dpr={tier === "low" ? 1 : [1, 2]}
-      >
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[4, 6, 8]} intensity={1.2} />
-        {HarnessScene ? (
-          <>
-            <HarnessScene />
-            <OrbitControls makeDefault />
-          </>
-        ) : (
-          <>
-            <MarkerField />
-            <JourneyRig />
-          </>
-        )}
-      </Canvas>
+      {harness ? (
+        <Canvas
+          camera={{ position: harness.position, fov: 50 }}
+          dpr={tier === "low" ? 1 : [1, 2]}
+        >
+          <harness.Component />
+          <OrbitControls makeDefault target={harness.target} />
+        </Canvas>
+      ) : (
+        <Canvas
+          camera={{ position: [0, 0, CAMERA_START_Z], fov: 55 }}
+          dpr={tier === "low" ? 1 : [1, 2]}
+        >
+          <StubScene />
+          <JourneyRig />
+        </Canvas>
+      )}
     </div>
   );
 }

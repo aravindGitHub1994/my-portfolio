@@ -1,68 +1,96 @@
-# HANDOFF — Win98 Workstation redesign (2026-07-18)
+# HANDOFF — Win98 Workstation redesign (2026-07-18, session 2)
 
-> For the next agent session. Documentation is committed and **slice 0.1 has
-> landed** — the Lens is deleted and the homepage is the static floor. Read
-> the two Key References before writing anything.
+> For the next agent session. P0 and slice 1.1 (character prototype) are
+> committed; AFK gate (lint + build) verified green 2026-07-18. **Stopped at
+> HITL gate 1.2** — owner QA required before any further character work.
+> Read the two Key References before writing anything.
 
 ## Current Status
 
-- Branch **`redesign-attempt2`** (off `main` @ `7969e26`). Docs committed at
-  `9ea8f96`; slice 0.1 committed on top with owner go-ahead (2026-07-18,
-  "start the first slice"). The prior `complete-redesign` branch (NOISE/SIGNAL)
-  was **deleted local+remote** with 18 unpushed commits at the owner's request —
-  its old ADR-012/plan-0009 numbers were reused cleanly here.
-- Full `/grill-with-docs` interview (10 questions) ran 2026-07-18; every
-  decision is locked and recorded in ADR-012 — do **not** re-litigate them.
-- **Slice 0.1 done:** `src/components/lens/` and the Lens-gated
-  `ui/Loader.tsx` deleted; the page is plain-DOM sections composed from
-  `src/lib` — hero, approach stats, pinned project cards (curtain reveal +
-  diagram draw-on kept; projection/shard tie-ins removed), a **new Skills
-  section** rendering `SKILL_TIERS` (previously unrendered anywhere),
-  trajectory, contact. Lint + build green; export carries zero `<canvas>`.
-- `assets-src/` is **untracked deliberately** — reference material only; the
-  tattoo photos must never be committed or shipped (ADR-012 §3).
+- Branch **`redesign-attempt2`** (off `main` @ `7969e26`). Committed this far:
+  - `9ea8f96` — ADR-012 + plan-0009 + handoff (docs locked, owner-approved).
+  - `064a225` — **slice 0.1**: Lens deleted wholesale (+ Lens-gated
+    `ui/Loader.tsx`); homepage is the static floor from `src/lib` content,
+    incl. a new Skills section (`SKILL_TIERS` was previously unrendered) and
+    a `#skills` nav anchor. Export verified: semantic headings, zero
+    `<canvas>`, diagrams/screens/resume.pdf intact.
+  - `6d31dac` — **slice 0.2**: experience scaffold. `WorkstationRoot`
+    (thin ssr:false wrapper) → `WorkstationExperience` (tier routing via
+    lazy `useState(detectTier)` — the LensRoot pattern; static/none/
+    reduced-motion return null and keep the floor) → `WorkstationCanvas`
+    (stub dolly journey) + `choreography/Choreography` (one ScrollTrigger
+    writes `experienceState`; soft snap via **`lenis/snap`**, not
+    ScrollTrigger snap, which fights Lenis's raf) + `src/lib/chapters.ts`
+    (spans are placeholders until 4.1) + `src/lib/experienceState.ts`
+    (mutable singleton, lensState pattern). Floor hides via
+    `html[data-experience]` CSS when the experience mounts; prerender always
+    ships the floor.
+- **Slice 1.1 committed** (same commit as this handoff update):
+  `src/components/workstation/character/` — `buildBody.ts` (capsule/lathe
+  seated pose, named `chest`/`forearmR` nodes), `buildHead.ts` (brow/nose/
+  cheek planes, eyelid blink plane, ears, earbuds, left hoop earring),
+  `buildHair.ts` (scalp cap + 3 instanced tube-curl archetypes, seeded
+  scatter, faded sides), `buildBeard.ts` (displaced lower-sphere shell +
+  mustache), `idle.ts` (breathing/blink/sway driver, zero per-frame
+  allocation), `Figure.tsx` (assembly, clay material, dispose, tri-count
+  console log), `CharacterScene.tsx` (harness scene: stool proxy, dusk
+  preview lights, chapter-2 camera preset) + `WorkstationCanvas.tsx` edit
+  (harness registry: `?scene=stub|character`).
+- AFK gate for 1.1 verified 2026-07-18: `npm run lint` clean,
+  `npm run build` static export green.
+- Coordinate conventions (concept sheets, `assets-src/workstation/`): figure
+  faces **-Z** (screen/desk at negative Z), so the figure's left = **-X** —
+  earring sits at -X. Head group pivots at `NECK_PIVOT` (buildBody export);
+  skull local frame in `buildHead` (`SKULL_CENTER`/`SKULL_RADIUS`).
+- Poly budget: estimated ~51 k tris at high detail (target < 60 k, plan
+  §1.1); `Figure.tsx` logs the actual count in the harness console — record
+  it in the slice notes at gate 1.2.
+- `assets-src/` stays **untracked deliberately** (tattoo photos never enter
+  git or the bundle — ADR-012 §3).
+- Session style note: owner enabled `/caveman` (terse chat) mid-session —
+  conversation-scoped, not a repo convention.
 
 ## Unresolved Threads
 
-- **Slice 0.2 not started** (experience scaffold: `ssr:false` canvas,
-  Lenis+GSAP scrub skeleton, `chapters.ts`, tier routing, `?scene=` harness) —
-  next up; the owner scoped this session to the first slice, so get go-ahead.
-- `src/lib/aboutMe.ts` copy (slice 5.2) needs owner review at gate 9.2 — flagged
-  in the plan, nothing to do yet.
+- **HITL gate 1.2 — do not pass autonomously.** Owner QA:
+  `npm run dev` → `localhost:3004/?scene=character` (checklist in plan
+  §1.2: silhouette, no uncanny read, curls at mid-shot, earring/earbuds in
+  profile; default camera IS the chapter-2 frame). **Falsification clause:**
+  two failed iterations → reopen ADR-012 stylization alternatives, don't
+  polish toward the uncanny valley.
+- After 1.2 passes: 1.3 (color/wardrobe/tattoos/typing) and/or 2.1
+  (props + room — blocked only by 0.2, so it can run before/parallel).
+- `src/lib/aboutMe.ts` copy (slice 5.2) needs owner review at gate 9.2.
 
 ## Key References
 
-- **ADR:** `docs/decisions/ADR-012-win98-workstation-cinematic-redesign.md` —
-  concept, all 10 locked decisions (§1–§10), architecture, alternatives, risks.
-  Supersedes ADR-005…011 as experience layer; retains ADR-001/002 + content
-  model + confidentiality/imagery rules + new zero-Microsoft-assets IP rule (§10).
-- **Plan:** `docs/plans/implementation-plan-0009.md` — 9 milestones / 24 slices /
-  4 HITL gates (1.2 character likeness w/ falsification clause, 2.3 scene, 4.3
-  ride-through, 9.2 final). Per-slice files + acceptance criteria. AFK gate is
-  always `npm run lint` + `npm run build` green; **no agent browser QA** unless
-  the owner offers the `agent-browser` skill.
+- **ADR:** `docs/decisions/ADR-012-win98-workstation-cinematic-redesign.md`
+  — all ten locked decisions; do not re-litigate.
+- **Plan:** `docs/plans/implementation-plan-0009.md` — 24 slices, 4 HITL
+  gates (1.2, 2.3, 4.3, 9.2); per-slice files + acceptance criteria. AFK
+  gate is always lint + build green; **no agent browser QA** unless the
+  owner offers `agent-browser`.
 - **Reference assets:** `assets-src/workstation/` (3 concept sheets — their
-  "model stats" panels are fictional; `tattoo01–04.jpg` — **never ship the
-  photos**, painted canvas approximations only; `prompt-redesign.txt` — original
-  brief, its Phase-1/2 requirements are now satisfied by the two docs above).
-- **Standing rules:** root `CLAUDE.md` / `AGENTS.md` (confidentiality — no
-  client names/figures anywhere incl. jokes; static export; React-compiler
-  purity; port 3004). Agent memory: `noise-signal-redesign-state.md` (current),
-  `owner-motif-privacy.md`, `client-name-leak-accepted.md`,
-  `windows-shell-gotchas.md` (commit via `-F` file on this Windows shell).
+  "model stats" panels are fictional; `tattoo01–04.jpg` — never ship;
+  `prompt-redesign.txt`).
+- **Standing rules:** root `CLAUDE.md` / `AGENTS.md` (confidentiality, static
+  export, React-compiler purity, port 3004). Agent memory:
+  `noise-signal-redesign-state.md`, `owner-motif-privacy.md`,
+  `client-name-leak-accepted.md`, `windows-shell-gotchas.md`.
 
 ## Recommended Next Steps
 
-- [x] Docs committed (`9ea8f96`); slice 0.1 landed — Lens gone, homepage is
-      the static floor (plan §0.1 acceptance verified).
-- [ ] Slice 0.2 — experience scaffold (`ssr:false` canvas, Lenis+GSAP scrub
-      skeleton, `chapters.ts`, tier routing, `?scene=` harness).
-- [ ] Then P1: character prototype (1.1) → **stop at HITL gate 1.2** for owner
-      QA. Do not proceed past any HITL gate autonomously.
+- [x] `npm run lint` + `npm run build` → commit slice 1.1 on
+      `redesign-attempt2`. (Done 2026-07-18.)
+- [ ] **Stop at HITL gate 1.2** — owner runs the `?scene=character` harness
+      and approves or files a defect list (then iterate 1.1, max two rounds
+      per the falsification clause).
+- [ ] After 1.2: slice 1.3 (tattoos as painted canvas ops — photos stay in
+      `assets-src/`) and/or slice 2.1 (procedural props + room).
 
 ## Recommended Skills
 
-- None required for 0.1–1.1 (plain implementation; plan is the spec).
+- None required for 1.3/2.1 (plain implementation; the plan is the spec).
 - `agent-browser` — only if the owner offers it or reports a visual bug.
-- `/grill-with-docs` — only if a slice surfaces a genuine decision gap not
-  covered by ADR-012 (expected: none before P4).
+- `/grill-with-docs` — only for a genuine decision gap not covered by
+  ADR-012 (expected: none before P4).
