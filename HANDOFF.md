@@ -1,13 +1,14 @@
 # HANDOFF — Win98 Workstation redesign (2026-07-18, session 5 wrap)
 
-> For the next agent session. **Gates 1.2 and 2.3 PASSED** (owner,
-> 2026-07-18). P3 committed (3.1 `e7a106b` · 3.2 `89670dc` ·
-> 3.3 `d816bda`), 4.1 committed (`ad493db`), **4.2 (dock swap)
-> committed this session** — full dock/undock/re-dock cycle verified
-> in an isolated headless session, including a stuck-dock defect found
-> and fixed during QA (see Current Status). Next: **HITL gate 4.3**
-> (owner ride-through on a served production build) — never pass gates
-> autonomously. P5 apps are unblocked in parallel.
+> For the next agent session. **Gates 1.2, 2.3 and 4.3 PASSED**
+> (owner, 2026-07-18). P3 committed (3.1 `e7a106b` · 3.2 `89670dc` ·
+> 3.3 `d816bda`), 4.1 committed (`ad493db`), 4.2 committed
+> (`e66cd75`) — full dock/undock/re-dock cycle verified headless, a
+> stuck-dock defect found and fixed during QA (see Current Status).
+> **Gate 4.3 passed on a served production build of `e66cd75`** —
+> owner docked fine, no defects reported. Next: **P5 apps** (5.1–5.3
+> via `registerApp` lazy chunks), then P6 audio / P7 mobile-perf /
+> P8 eggs / 9.1 docs → final gate 9.2.
 
 ## Current Status
 
@@ -78,13 +79,11 @@
 
 ## Unresolved Threads
 
-- **Gate 4.3 is next** (owner, production build: `npm run build`
-  then serve `out/`): seam invisibility, pacing, dock feel,
-  reverse-scrub. Pacing numbers are owner-calibrated — don't guess.
-  4.3 review notes from 4.2: the single-`scale` Window drag leaves a
-  ~5 % x-drag error (scaleY passed, screen ~5:4 vs desktop 4:3 —
-  accepted in design); undocking via key can leave progress a few
-  thousandths past the rest point (snap settles it; hysteresis holds).
+- **Gate 4.3 PASSED** (owner, 2026-07-18, served production build of
+  `e66cd75` — docked fine, no defects flagged). The two review notes
+  survive as accepted behavior: single-`scale` Window drag ~5 %
+  x error (screen ~5:4 vs desktop 4:3), and keyboard undock can leave
+  progress a few thousandths past the rest point (snap settles it).
 - Self-noted nits (owner has NOT flagged — mention, don't gold-plate):
   shaft billboard pale edge-on; chair backrest plain boxes; ch2 rest
   framing may want calibration; faint CRT moiré at some distances
@@ -110,9 +109,8 @@
 
 ## Recommended Next Steps
 
-- [ ] **HITL gate 4.3** — hand to the owner with a served production
-      build. Do not pass autonomously.
-- [ ] P5 in parallel: 5.1 Explorer/project windows/IE frame ·
+- [x] **HITL gate 4.3** — PASSED (owner, 2026-07-18).
+- [ ] P5 next: 5.1 Explorer/project windows/IE frame ·
       5.2 WordPad resume + C:\Career\ + Add/Remove + ABOUT_ME.txt ·
       5.3 Outlook/dial-up/sign-off (all via `registerApp`, lazy chunks).
 - [ ] Then P6 audio (6.1 unlock rides the PowerOn press), P7
