@@ -75,6 +75,8 @@ const DEFAULT_ICONS: Win98Icon[] = [
 
 export interface Win98State {
   phase: BootPhase;
+  /** POST lines currently on screen (3.3 sequencer pushes them). */
+  postLines: string[];
   icons: Win98Icon[];
   /** Z-order list — LAST entry is topmost. */
   windows: Win98Window[];
@@ -87,6 +89,7 @@ export interface Win98State {
 
 export const win98State: Win98State = {
   phase: "off",
+  postLines: [],
   icons: DEFAULT_ICONS,
   windows: [],
   focusId: null,
@@ -124,6 +127,17 @@ export function setBootPhase(phase: BootPhase): void {
   if (phase !== "desktop") {
     win98State.startMenuOpen = false;
   }
+  notify();
+}
+
+export function pushPostLine(line: string): void {
+  win98State.postLines.push(line);
+  notify();
+}
+
+export function clearPostLines(): void {
+  if (win98State.postLines.length === 0) return;
+  win98State.postLines.length = 0;
   notify();
 }
 

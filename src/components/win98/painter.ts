@@ -166,23 +166,21 @@ function drawFrameMark(
   ctx.stroke();
 }
 
-function paintPost(ctx: CanvasRenderingContext2D) {
+function paintPost(ctx: CanvasRenderingContext2D, state: Win98State) {
   ctx.fillStyle = "#050505";
   ctx.fillRect(0, 0, DESKTOP_W, DESKTOP_H);
   ctx.fillStyle = "#b8b8a8";
   ctx.font = "13px 'Courier New', monospace";
   ctx.textAlign = "left";
-  // Placeholder POST — 3.3's bootScript paces the real stats-as-hardware
-  // lines here (sourced from stats.ts, ADR-012 §5 ch. 0).
-  const lines = [
-    "WORKSTATION-98 BIOS  v0.9",
-    "",
-    "Checking memory ................ OK",
-    "Detecting drives ............... OK",
-    "",
-    "Starting Workstation 98 ...",
-  ];
-  lines.forEach((line, i) => ctx.fillText(line, 24, 40 + i * 20));
+  // 3.3: the bootScript sequencer pushes the stats-as-hardware lines
+  // into state one beat at a time; a block cursor sits on the last line.
+  state.postLines.forEach((line, i) => ctx.fillText(line, 24, 40 + i * 20));
+  ctx.fillRect(
+    24 + ctx.measureText(state.postLines.at(-1) ?? "").width + 6,
+    28 + Math.max(state.postLines.length - 1, 0) * 20,
+    9,
+    14,
+  );
 }
 
 function paintSplash(ctx: CanvasRenderingContext2D) {
@@ -368,7 +366,7 @@ export function paintScreen(
       ctx.fillRect(0, 0, DESKTOP_W, DESKTOP_H);
       break;
     case "post":
-      paintPost(ctx);
+      paintPost(ctx, state);
       break;
     case "splash":
       paintSplash(ctx);

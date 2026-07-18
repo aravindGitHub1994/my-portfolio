@@ -19,12 +19,12 @@ import {
   type Mesh,
 } from "three";
 import {
-  advanceBoot,
   DESKTOP_H,
   DESKTOP_W,
   subscribeWin98,
   win98State,
 } from "@/lib/win98State";
+import { startBoot, type BootController } from "@/lib/bootSequencer";
 import { paintScreen } from "@/components/win98/painter";
 import { screenLight } from "../scene/screenLight";
 import { createCrtMaterial, type CrtUniforms } from "./crtShader";
@@ -34,10 +34,6 @@ const LUMINANCE_CAP = 0.7;
 /** Downsample size for the average-tone read (event-driven, tiny). */
 const TONE_W = 8;
 const TONE_H = 6;
-
-/** Harness boot pacing (ms per step). 3.3's bootScript sequencer replaces
- *  this with real work-paced POST lines; the phases themselves are final. */
-const AUTO_BOOT_STEPS = [400, 1800, 1600];
 
 interface Tone {
   r: number;
@@ -110,18 +106,15 @@ export function CrtScreen({
     const unsubscribe = subscribeWin98(repaint);
     repaint();
 
-    // Harness auto-boot: off → post → splash → desktop on simple timers.
-    const timers: ReturnType<typeof setTimeout>[] = [];
+    // Auto-boot through the 3.3 sequencer (POST lines paced from
+    // bootScript; 4.1's power press will own this in the journey).
+    let boot: BootController | null = null;
     if (autoBoot && win98State.phase === "off") {
-      let at = 0;
-      for (const step of AUTO_BOOT_STEPS) {
-        at += step;
-        timers.push(setTimeout(advanceBoot, at));
-      }
+      boot = startBoot();
     }
 
     return () => {
-      for (const timer of timers) clearTimeout(timer);
+      boot?.cancel();
       unsubscribe();
       mesh.material = previous;
       material.dispose();

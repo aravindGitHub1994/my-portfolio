@@ -16,6 +16,7 @@ import {
   win98State,
 } from "@/lib/win98State";
 import { useWin98Version } from "./useWin98";
+import { Boot } from "../apps/Boot";
 import { Icon } from "./Icon";
 import { Window } from "./Window";
 import { Taskbar } from "./Taskbar";
@@ -36,25 +37,8 @@ export function Desktop({ scale = 1 }: { scale?: number }) {
   const { phase, icons, windows, focusId, startMenuOpen } = win98State;
 
   if (phase !== "desktop") {
-    // Minimal parity screens — 3.3 owns the real boot/shutdown beats.
-    const text =
-      phase === "post"
-        ? "WORKSTATION-98 BIOS  v0.9"
-        : phase === "shutdown"
-          ? "It's now safe to turn off your computer."
-          : "";
-    return (
-      <div
-        className="relative flex items-center justify-center overflow-hidden bg-black"
-        style={{ width: DESKTOP_W, height: DESKTOP_H }}
-      >
-        <p
-          className={`font-w98-mono text-lg ${phase === "shutdown" ? "text-w98-amber" : "text-w98-chrome"}`}
-        >
-          {text}
-        </p>
-      </div>
-    );
+    // 3.3 boot/shutdown parity screens (painter equivalents in DOM).
+    return <Boot />;
   }
 
   return (
