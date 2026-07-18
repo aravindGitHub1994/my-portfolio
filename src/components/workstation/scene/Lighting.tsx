@@ -7,7 +7,8 @@
 
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import type { PointLight } from "three";
+import type { AmbientLight, DirectionalLight, PointLight } from "three";
+import { experienceState } from "@/lib/experienceState";
 import { screenLight } from "./screenLight";
 import { effectsState } from "./sheddable";
 
@@ -26,6 +27,9 @@ export function Lighting({
   screenPosition?: [number, number, number];
 }) {
   const cast = useRef<PointLight>(null);
+  const ambient = useRef<AmbientLight>(null);
+  const shaft = useRef<DirectionalLight>(null);
+  const bounce = useRef<DirectionalLight>(null);
 
   useFrame((_, delta) => {
     const light = cast.current;
@@ -43,19 +47,28 @@ export function Lighting({
       light.intensity += (target - light.intensity) * k;
       light.color.lerp(screenLight.tint, k);
     }
+
+    // Ch. 5 dusk deepening (4.1): the cool fill sinks with the scrub;
+    // the CRT cast is untouched, so the screen becomes the last light.
+    const dusk = 1 - 0.55 * experienceState.duskDeepen;
+    if (ambient.current) ambient.current.intensity = 0.5 * dusk;
+    if (shaft.current) shaft.current.intensity = 0.85 * dusk;
+    if (bounce.current) bounce.current.intensity = 0.25 * dusk;
   });
 
   return (
     <>
-      <ambientLight color="#2c3d5c" intensity={0.5} />
+      <ambientLight ref={ambient} color="#2c3d5c" intensity={0.5} />
       {/* Blue-hour shaft through the +X window. */}
       <directionalLight
+        ref={shaft}
         color="#7a9bd8"
         position={[2.5, 2.2, 0.6]}
         intensity={0.85}
       />
       {/* Faint bounce so the room's dark side never clips to black. */}
       <directionalLight
+        ref={bounce}
         color="#40465c"
         position={[-1.5, 1.2, 1.8]}
         intensity={0.25}

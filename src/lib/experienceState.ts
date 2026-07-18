@@ -13,6 +13,9 @@ export const experienceState = {
   /** True while chapter 4's dock is active — scroll suspended, DOM shell
    *  live (lands in slice 4.2). */
   docked: false,
+  /** 0..1 across chapter 5 — the dusk-deepening lighting cue (4.1);
+   *  Lighting damps the cool fill from it per frame. */
+  duskDeepen: 0,
   /** Mirrored from WorkstationRoot's tier detection; "pending" pre-detect. */
   fidelityTier: "pending" as FidelityTier | "pending",
 };

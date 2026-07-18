@@ -39,6 +39,13 @@ export function Choreography({
       onUpdate: (self) => {
         experienceState.scrollProgress = self.progress;
         experienceState.chapterIndex = chapterAtProgress(self.progress);
+        // Dusk deepens across chapter 5 (4.1 lighting cue) — rides the
+        // same scrub, so it reverses cleanly too.
+        const signOffStart = REST_POINTS[4];
+        experienceState.duskDeepen = Math.min(
+          Math.max((self.progress - signOffStart) / (1 - signOffStart), 0),
+          1,
+        );
       },
     });
 
@@ -68,7 +75,31 @@ export function Choreography({
     // whenever ScrollTrigger refreshes (resize, font load, etc.).
     ScrollTrigger.addEventListener("refresh", addSnaps);
 
+    // Keyboard stepping (ADR-012 §5/§9): arrows/space/page keys drive the
+    // SAME timeline by scrolling to the neighbouring rest point via Lenis.
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (experienceState.docked) return; // 4.2: dock owns input
+      const forward = ["ArrowDown", "ArrowRight", "PageDown", " "].includes(
+        e.key,
+      );
+      const back = ["ArrowUp", "ArrowLeft", "PageUp"].includes(e.key);
+      if (!forward && !back) return;
+      e.preventDefault();
+      const points = [0, ...REST_POINTS];
+      const current = trigger.progress;
+      const next = forward
+        ? points.find((p) => p > current + 0.005)
+        : [...points].reverse().find((p) => p < current - 0.005);
+      if (next === undefined) return;
+      const span = trigger.end - trigger.start;
+      const px = trigger.start + next * span;
+      if (lenis) lenis.scrollTo(px, { duration: 1.1 });
+      else window.scrollTo({ top: px, behavior: "smooth" });
+    };
+    window.addEventListener("keydown", onKeyDown);
+
     return () => {
+      window.removeEventListener("keydown", onKeyDown);
       ScrollTrigger.removeEventListener("refresh", addSnaps);
       removeSnaps.forEach((remove) => remove());
       snap?.destroy();

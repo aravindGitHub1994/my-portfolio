@@ -40,9 +40,12 @@ const TOWER_TOP = DESK_TOP_Y + TOWER_SIZE.height + 0.008;
 export function RoomScene({
   seed = 1998,
   detail = "high",
+  autoBoot = true,
 }: {
   seed?: number;
   detail?: "low" | "high";
+  /** Journey mode passes false — 4.1's power press owns the boot. */
+  autoBoot?: boolean;
 }) {
   const scene = useMemo(() => {
     const materials = createRoomMaterials(seed);
@@ -108,7 +111,7 @@ export function RoomScene({
       <Postprocessing />
       {/* 3.1: real Win98 feed on the crtScreen mesh (painter + CRT
           shader + screenLight); replaced the 2.2 ScreenTestPattern. */}
-      <CrtScreen root={scene.root} />
+      <CrtScreen root={scene.root} autoBoot={autoBoot} />
       <primitive object={scene.root} />
     </>
   );

@@ -3,10 +3,11 @@
 import { useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import type { Group } from "three";
+import { Vector3, type Group } from "three";
 import { experienceState } from "@/lib/experienceState";
 import { mulberry32 } from "@/lib/prng";
 import type { FidelityTier } from "@/lib/gpuTier";
+import { sampleCameraPath } from "./choreography/cameraPath";
 import {
   CharacterScene,
   CHARACTER_CAMERA,
@@ -73,11 +74,17 @@ function MarkerField() {
   );
 }
 
-/** Frame loop reads the mutable singleton only — never React state. */
-function JourneyRig() {
+/** Journey camera (4.1): samples the chapter path from the mutable
+ *  singleton each frame — allocation-free, never React state. */
+function JourneyCamera() {
+  const target = useRef(new Vector3());
   useFrame(({ camera }) => {
-    camera.position.z =
-      CAMERA_START_Z - experienceState.scrollProgress * TRACK_LENGTH;
+    sampleCameraPath(
+      experienceState.scrollProgress,
+      camera.position,
+      target.current,
+    );
+    camera.lookAt(target.current);
   });
   return null;
 }
@@ -144,12 +151,12 @@ export function WorkstationCanvas({
           <OrbitControls makeDefault target={harness.target} />
         </Canvas>
       ) : (
-        <Canvas
-          camera={{ position: [0, 0, CAMERA_START_Z], fov: 55 }}
-          dpr={tier === "low" ? 1 : [1, 2]}
-        >
-          <StubScene />
-          <JourneyRig />
+        // The journey (4.1): the full dressed scene; boot waits for the
+        // PowerOn press (WorkstationExperience layer), camera rides the
+        // chapter path.
+        <Canvas camera={{ fov: 50 }} dpr={tier === "low" ? 1 : [1, 2]}>
+          <FullScene autoBoot={false} />
+          <JourneyCamera />
         </Canvas>
       )}
     </div>

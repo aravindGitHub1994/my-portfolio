@@ -15,10 +15,10 @@ export const FULL_CAMERA = {
   target: [-0.05, 0.9, -0.5] as [number, number, number],
 };
 
-export function FullScene() {
+export function FullScene({ autoBoot = true }: { autoBoot?: boolean }) {
   return (
     <>
-      <RoomScene />
+      <RoomScene autoBoot={autoBoot} />
       <Figure />
     </>
   );
