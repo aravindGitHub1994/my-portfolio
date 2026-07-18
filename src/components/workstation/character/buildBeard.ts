@@ -58,7 +58,9 @@ export function buildBeard({ seed, detail, material }: BuilderOptions): Group {
     // Steep ramps + a deep pull: a soft ramp left a skin-tight dark film
     // over the mid-face once the beard got its own material.
     const front = clamp01((-dirZ - 0.1) / 0.25);
-    const high = clamp01((dirY + 0.62) / 0.18);
+    // Tuck starts at dirY -0.5 (was -0.62): full beard shows up to just
+    // under the mustache, closing the bare-skin gap (gate-2.3 defect 4).
+    const high = clamp01((dirY + 0.5) / 0.18);
     const tuck = front * high;
     const n = surfaceNoise(x * 1.7, y * 1.7, z * 1.7, seed % 97);
     const taper = clamp01((topY - y) / 0.08);
@@ -78,11 +80,12 @@ export function buildBeard({ seed, detail, material }: BuilderOptions): Group {
   beard.scale.set(0.9, 0.9, 1.0);
   group.add(beard);
 
-  // Mustache — front face just behind the nose tip; deep enough to root
-  // into the skull (the tucked shell no longer backs it — a shallow box
-  // floated in mid-air at side angles, gate-1.2 follow-up).
-  const mustache = new Mesh(new BoxGeometry(0.058, 0.02, 0.052), material);
-  mustache.position.set(0, cy - 0.046, -0.108);
+  // Mustache — front face at the nose tip, no longer proud of it
+  // (gate-2.3 defect 4); still deep enough to root into the skull (the
+  // tucked shell no longer backs it — a shallow box floated in mid-air at
+  // side angles, gate-1.2 follow-up).
+  const mustache = new Mesh(new BoxGeometry(0.058, 0.02, 0.044), material);
+  mustache.position.set(0, cy - 0.046, -0.102);
   mustache.rotation.x = 0.28;
   group.add(mustache);
 

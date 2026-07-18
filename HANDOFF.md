@@ -1,10 +1,11 @@
-# HANDOFF — Win98 Workstation redesign (2026-07-18, session 3)
+# HANDOFF — Win98 Workstation redesign (2026-07-18, session 4)
 
-> For the next agent session. P0–P2 AFK slices are committed and gates
-> 1.2 PASSED. **Gate 2.3 (owner QA of `?scene=full`) is IN PROGRESS with a
-> defect list** — fix the defects below, then return to the owner for the
-> rest of the §2.3 checklist. Read the two Key References before writing
-> anything.
+> For the next agent session. P0–P2 AFK slices are committed and gate
+> 1.2 PASSED. **All four gate-2.3 defects are FIXED and owner-verified
+> in the headed browser (2026-07-18, session 4)** — the owner still has
+> to run the rest of the plan §2.3 checklist (dusk mood, figure/room
+> separation, idle+typing read). Do not pass the gate autonomously.
+> Read the two Key References before writing anything.
 
 ## Current Status
 
@@ -42,46 +43,30 @@
 
 ## Unresolved Threads
 
-- **GATE 2.3 DEFECTS (owner QA 2026-07-18, screenshot
-  `assets-src/workstation/QA.png`):**
-  1. **Fingers submerge into the keyboard** — they animate (typing rig
-     works, keep it) but sit below the keycap tops, invisible. Reposition:
-     hands/fingers need to ride ~10–15 mm higher, or the keyboard slab
-     placed so keycap tops sit under the fingertips (`ARM_JOINTS.wrist` y
-     0.75 vs keycap tops ≈ 0.75 + tilt — currently interpenetrating).
-     Verify from the owner's QA angle (behind-right, orbit low).
-  2. **Boot white flicker far too bright** — the whole screen face +
-     bloom halo blows out (see QA.png). The cycle itself is approved
-     (owner read it as teal → amber → white flicker and is fine with the
-     pattern). Tame the peak: cap boot luminance (~0.7), lower the
-     emissive ceiling in `ScreenTestPattern` (currently 0.4 + lum·1.6 →
-     2.0), and/or raise the CAST_SCALE clamp in `Lighting.tsx`. A boot
-     flash should read as a flash, not a floodlight.
-  3. **Chest protrudes too much / too rounded**
-     (`assets-src/workstation/QA-chest-reshape.png` — owner drew the
-     desired front line in red: much flatter from collar to lap). The
-     torso is a LatheGeometry, so its cross-section is circular — depth
-     equals width, which is why the chest balloons in profile. Fix:
-     scale the torso/chest group z (front-back) to ~0.85, and/or trim
-     the chest-row radii in the lathe profile (`buildBody.ts` rows
-     y 0.34/0.42, radii 0.168/0.178). Match the red line in profile from
-     the owner's QA angle; keep the shoulder width.
-  4. **Gap between mustache and beard; mustache sticks out**
-     (`assets-src/workstation/QA-beard-moustache-gap.png`, red circle).
-     The beard's face-window tuck leaves bare skin between the mustache's
-     lower edge and the beard's visible front boundary, and the mustache
-     bar reads proud of the face. Owner accepts either fix — pull the
-     mustache in, or raise the beard's front coverage to meet it —
-     whichever looks right; likely both: in `buildBeard.ts` shift the
-     tuck's `high` ramp so beard shows up to just under the mustache
-     (`(dirY + 0.62)/0.18` → start nearer -0.5), and pull the mustache
-     back a touch (z -0.108 → ≈ -0.104, or reduce its depth). Verify in
-     profile AND three-quarter — the gap reads worst at the owner's
-     angle (left three-quarter, slightly below).
+- **GATE 2.3 DEFECTS — all four FIXED, owner-verified in the headed
+  browser (2026-07-18, session 4):**
+  1. Fingers/keyboard: `ARM_JOINTS.wrist` raised+retracted to
+     (0.12, 0.79, -0.365); palm hover + finger droop shortened so
+     fingertips rest ON the keycap tops (world y ≈ 0.753–0.756) and the
+     tap dip reads as a key press. Typing rig untouched.
+  2. Boot flicker: boot luminance capped at 0.7 (`0.15 + 0.55·flicker`),
+     emissive ceiling lowered to `0.35 + lum·1.2`, and `CAST_MAX 2.6`
+     clamp added in `Lighting.tsx`. Verified in `?scene=full` (high
+     tier, owner) and `?scene=room` (low tier, isolated headless
+     session). Teal/BSOD/amber kept their approved read.
+  3. Torso: `chest.scale.z = 0.7` (0.85 was still too round at owner
+     QA), chest rows trimmed to 0.162/0.168, shoulder→neck taper spread
+     over 6 rows (the old 3-row drop read as a phantom shirt collar),
+     and the lathe's +Z back vertices soft-clamped (`BACK_Z 0.09`,
+     factor 0.25) to kill the back hump. Owner approved in profile.
+  4. Mustache/beard: beard tuck `high` ramp starts at dirY -0.5 (was
+     -0.62) so the beard reaches the mustache; mustache pulled to
+     z -0.102, depth 0.044 (front face now at the nose tip). Owner:
+     "looks good".
 - Self-noted nits (owner has NOT flagged these — mention, don't gold-plate):
   shaft billboard reads as a pale streak edge-on against the window;
   chair backrest is plain boxes.
-- After defects fixed: owner completes the plan §2.3 checklist
+- NEXT: owner completes the plan §2.3 checklist
   (dusk mood, figure/room separation, idle+typing read) → then P3
   (screen content: 3.1 targets the `crtScreen` mesh + writes
   `screenLight` for real, replacing `ScreenTestPattern`).
@@ -108,19 +93,14 @@
 
 ## Recommended Next Steps
 
-- [ ] Fix gate-2.3 defect 1: finger/keyboard interpenetration (verify in
-      the headed browser from the owner's angle before committing).
-- [ ] Fix gate-2.3 defect 2: boot-flicker brightness (cap luminance +
-      emissive ceiling; check both `?scene=room` and `?scene=full`).
-- [ ] Fix gate-2.3 defect 3: flatten the torso front (match the red line
-      in QA-chest-reshape.png; z-scale and/or lathe profile).
-- [ ] Fix gate-2.3 defect 4: close the mustache↔beard gap (tuck ramp
-      and/or mustache pull-in; owner is flexible on which).
-- [ ] Lint + build → commit → hand back to the owner to finish the §2.3
-      checklist. **Do not pass the gate autonomously.**
+- [ ] Owner finishes the plan §2.3 checklist (dusk mood, figure/room
+      separation, idle+typing read). **Do not pass the gate
+      autonomously.**
 - [ ] After 2.3 passes: slice 3.1 (CRT screen content — targets the
       `crtScreen` material slot, writes `screenLight`, replaces
-      `ScreenTestPattern`).
+      `ScreenTestPattern`; `Lighting.tsx` CAST_MAX clamp + the
+      ScreenTestPattern emissive formula are the brightness contract to
+      preserve).
 
 ## Recommended Skills
 

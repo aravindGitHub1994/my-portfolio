@@ -61,11 +61,13 @@ function ScreenTestPattern({ root }: { root: Group }) {
   useFrame(({ clock }) => {
     const t = clock.elapsedTime % CYCLE;
     if (t < 2.5) {
-      // Boot: white with a deterministic fast flicker.
+      // Boot: white with a deterministic fast flicker. Peak luminance is
+      // capped at 0.7 — a full 1.0 white face + bloom halo floodlit the
+      // room (gate-2.3 defect 2); a boot flash should read as a flash.
       const flicker =
         0.55 + 0.45 * Math.abs(Math.sin(t * 23.7) * Math.sin(t * 7.3));
       screenLight.tint.copy(BOOT);
-      screenLight.luminance = 0.25 + 0.75 * flicker;
+      screenLight.luminance = 0.15 + 0.55 * flicker;
     } else if (t < 5.5) {
       screenLight.tint.copy(DESKTOP);
       screenLight.luminance = 0.55;
@@ -83,7 +85,9 @@ function ScreenTestPattern({ root }: { root: Group }) {
     if (mesh && !Array.isArray(mesh.material) && "emissive" in mesh.material) {
       const material = mesh.material as import("three").MeshStandardMaterial;
       material.emissive.copy(screenLight.tint);
-      material.emissiveIntensity = 0.4 + screenLight.luminance * 1.6;
+      // Ceiling lowered from 0.4 + lum·1.6 (→ 2.0): white at 2.0 blew the
+      // whole screen face past the 0.68 bloom threshold (gate-2.3 defect 2).
+      material.emissiveIntensity = 0.35 + screenLight.luminance * 1.2;
     }
   });
 

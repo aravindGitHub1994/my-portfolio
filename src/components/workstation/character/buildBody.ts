@@ -46,7 +46,7 @@ export const NECK_PIVOT = new Vector3(0, 1.15, -0.045);
 export const ARM_JOINTS = {
   shoulder: new Vector3(0.2, 1.02, -0.06),
   elbow: new Vector3(0.26, 0.8, -0.14),
-  wrist: new Vector3(0.12, 0.75, -0.4),
+  wrist: new Vector3(0.12, 0.79, -0.365),
 } as const;
 
 const UP = new Vector3(0, 1, 0);
@@ -102,14 +102,30 @@ export function buildBody({ detail, material, palette }: BuilderOptions): Group 
     new Vector2(0.155, 0.06),
     new Vector2(0.162, 0.14),
     new Vector2(0.152, 0.24),
-    new Vector2(0.168, 0.34),
-    new Vector2(0.178, 0.42),
-    new Vector2(0.155, 0.5),
-    new Vector2(0.095, 0.55),
-    new Vector2(0.048, 0.58),
+    new Vector2(0.162, 0.34),
+    new Vector2(0.168, 0.42),
+    // Shoulder→neck taper spread over many rows: the old 3-row drop
+    // (0.155→0.048 in 8 cm) left a shelf that read as a shirt collar in
+    // profile once the torso was flattened (gate-2.3 owner QA).
+    new Vector2(0.152, 0.48),
+    new Vector2(0.128, 0.52),
+    new Vector2(0.1, 0.55),
+    new Vector2(0.072, 0.58),
+    new Vector2(0.05, 0.61),
     new Vector2(0.04, 0.63),
   ];
-  const torso = new Mesh(new LatheGeometry(profile, lathe), tee);
+  const torsoGeometry = new LatheGeometry(profile, lathe);
+  // Back flattening: the lathe forces back depth = chest depth, but a back
+  // is near-planar — soft-clamp +Z (the figure faces -Z) so the hump goes
+  // while the silhouette keeps a hint of curve (gate-2.3 owner QA).
+  const torsoPos = torsoGeometry.attributes.position;
+  const BACK_Z = 0.09;
+  for (let i = 0; i < torsoPos.count; i++) {
+    const z = torsoPos.getZ(i);
+    if (z > BACK_Z) torsoPos.setZ(i, BACK_Z + (z - BACK_Z) * 0.25);
+  }
+  torsoGeometry.computeVertexNormals();
+  const torso = new Mesh(torsoGeometry, tee);
   chest.add(torso);
 
   // Hips filler under the lathe's open base.
@@ -132,6 +148,11 @@ export function buildBody({ detail, material, palette }: BuilderOptions): Group 
   }
 
   chest.position.set(0, 0.48, 0);
+  // The lathe is radially symmetric, so depth would equal width and the
+  // torso balloons in profile — chest AND back (gate-2.3 defect 3).
+  // Flatten front-back only; shoulder width is carried by the caps and
+  // stays untouched. 0.85 was still visibly rounded at owner QA.
+  chest.scale.z = 0.7;
   chest.rotation.x = -0.09; // lean toward the keyboard
   group.add(chest);
 
@@ -164,19 +185,22 @@ export function buildBody({ detail, material, palette }: BuilderOptions): Group 
     forearm.name = side === 1 ? "forearmR" : "forearmL";
     group.add(upper, forearm);
 
-    // Hand: palm + four curled fingers + thumb, resting at keyboard height.
+    // Hand: palm + four curled fingers + thumb. Palm hovers just above the
+    // keycap tops (world y ≈ 0.753–0.756 with the riser tilt) so resting
+    // fingertips kiss the caps and the 1.3 tap dip reads as a key press —
+    // gate-2.3 defect 1 was tips buried ~45 mm below the caps.
     // Fingers are named so the 1.3 typing rig can tap them individually.
     const hand = new Group();
     hand.name = side === 1 ? "handR" : "handL";
     const palm = new Mesh(new BoxGeometry(0.075, 0.028, 0.085), skin);
-    palm.position.copy(w).add(new Vector3(-0.015 * side, -0.012, -0.045));
+    palm.position.copy(w).add(new Vector3(-0.015 * side, -0.01, -0.04));
     palm.rotation.set(-0.25, 0, 0);
     hand.add(palm);
     for (let f = 0; f < 4; f++) {
       const root = palm.position
         .clone()
-        .add(new Vector3((f - 1.5) * 0.019 * side, -0.004, -0.045));
-      const tip = root.clone().add(new Vector3(0, -0.028, -0.03));
+        .add(new Vector3((f - 1.5) * 0.019 * side, -0.004, -0.042));
+      const tip = root.clone().add(new Vector3(0, -0.012, -0.02));
       const finger = capsuleBetween(root, tip, 0.0095, skin, detail);
       finger.name = `finger${side === 1 ? "R" : "L"}${f}`;
       hand.add(finger);
@@ -184,7 +208,7 @@ export function buildBody({ detail, material, palette }: BuilderOptions): Group 
     const thumbRoot = palm.position
       .clone()
       .add(new Vector3(0.042 * side, -0.006, -0.01));
-    const thumbTip = thumbRoot.clone().add(new Vector3(0.012 * side, -0.024, -0.03));
+    const thumbTip = thumbRoot.clone().add(new Vector3(0.012 * side, -0.012, -0.025));
     hand.add(capsuleBetween(thumbRoot, thumbTip, 0.011, skin, detail));
     group.add(hand);
   }

@@ -14,6 +14,9 @@ import { effectsState } from "./sheddable";
 /** Base + luminance-scaled intensity of the CRT cast. */
 const CAST_BASE = 0.5;
 const CAST_SCALE = 3.4;
+/** Hard ceiling on the cast — boot-flicker peaks floodlit the room
+ *  (gate-2.3 defect 2); brightest moods now share one tamed maximum. */
+const CAST_MAX = 2.6;
 /** Smoothing factor per second when castFlicker is shed. */
 const SMOOTH_RATE = 4;
 
@@ -27,7 +30,10 @@ export function Lighting({
   useFrame((_, delta) => {
     const light = cast.current;
     if (!light) return;
-    const target = CAST_BASE + screenLight.luminance * CAST_SCALE;
+    const target = Math.min(
+      CAST_BASE + screenLight.luminance * CAST_SCALE,
+      CAST_MAX,
+    );
     if (effectsState.castFlicker) {
       light.intensity = target;
       light.color.copy(screenLight.tint);
