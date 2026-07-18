@@ -12,6 +12,7 @@ import { resolveApp } from "../shell/appDefs";
 type Loader = () => Promise<unknown>;
 
 const load51: Loader = () => import("./register51");
+const load52: Loader = () => import("./register52");
 
 const LOADERS: Record<string, Loader> = {
   explorer: load51,
@@ -19,6 +20,9 @@ const LOADERS: Record<string, Loader> = {
   ...Object.fromEntries(
     PROJECTS.map((p) => [`project-${p.slug}`, load51] as const),
   ),
+  wordpad: load52,
+  notepad: load52,
+  "add-remove": load52,
 };
 
 export function hasAppLoader(appId: string): boolean {

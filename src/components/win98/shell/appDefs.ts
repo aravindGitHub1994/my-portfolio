@@ -45,6 +45,14 @@ export const APP_DEFS: Record<string, AppDef> = {
     width: 360,
     height: 280,
   },
+  // Start-menu only (no desktop icon) — the ADR-012 §6 skills surface.
+  "add-remove": {
+    appId: "add-remove",
+    title: "Add/Remove Programs",
+    glyph: "computer",
+    width: 430,
+    height: 330,
+  },
   outlook: {
     appId: "outlook",
     title: "New Message - Outlook Express",

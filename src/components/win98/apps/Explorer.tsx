@@ -9,6 +9,7 @@
 
 import { useState } from "react";
 import { PROJECTS } from "@/lib/projects";
+import { EXPERIENCE } from "@/lib/resume";
 import {
   openWindow,
   type IconGlyph,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/win98State";
 import { PixelIcon } from "../pixelIcons";
 import { launchApp } from "../shell/appDefs";
+import { CareerTree } from "./CareerTree";
 
 /** Window geometry for a project opened from the listing. */
 const PROJECT_WIN = { width: 500, height: 400 } as const;
@@ -44,7 +46,7 @@ interface ExplorerItem {
   status?: string;
 }
 
-type ViewId = "computer" | "c" | "projects";
+type ViewId = "computer" | "c" | "projects" | "career";
 
 interface View {
   /** Address-bar text. */
@@ -52,6 +54,8 @@ interface View {
   /** Parent view for the Up button (undefined at a root). */
   up?: ViewId;
   items: ExplorerItem[];
+  /** Replaces the item grid with a custom pane (5.2 career tree). */
+  pane?: "career";
 }
 
 const VIEWS: Record<ViewId, View> = {
@@ -78,12 +82,7 @@ const VIEWS: Record<ViewId, View> = {
     up: "computer",
     items: [
       { id: "projects", label: "My Projects", glyph: "folder", goto: "projects" },
-      {
-        id: "career",
-        label: "Career",
-        glyph: "folder",
-        status: "Access denied: this folder installs with Disk 2.",
-      },
+      { id: "career", label: "Career", glyph: "folder", goto: "career" },
       {
         id: "resume",
         label: "resume.doc",
@@ -97,6 +96,12 @@ const VIEWS: Record<ViewId, View> = {
         open: () => launchApp("about-me"),
       },
     ],
+  },
+  career: {
+    address: "C:\\Career",
+    up: "c",
+    items: [],
+    pane: "career",
   },
   projects: {
     address: "C:\\My Projects",
@@ -171,7 +176,12 @@ export function Explorer({ win }: { win: Win98Window }) {
         </span>
       </div>
 
-      {/* Item grid */}
+      {/* Career gets the 5.2 tree pane; every other view the item grid. */}
+      {current.pane === "career" ? (
+        <div className="min-h-0 flex-1">
+          <CareerTree />
+        </div>
+      ) : (
       <div className="w98-field min-h-0 flex-1 overflow-auto p-2">
         <div className="flex flex-wrap content-start gap-1">
           {current.items.map((item) => (
@@ -202,13 +212,16 @@ export function Explorer({ win }: { win: Win98Window }) {
           ))}
         </div>
       </div>
+      )}
 
       {/* Status bar */}
       <div className="w98-sunken mt-[2px] shrink-0 truncate px-1 py-0.5 font-w98 text-[8px] text-w98-ink">
         {status ??
-          `${current.items.length} object(s)${
-            view === "projects" ? " · double-click to open" : ""
-          }`}
+          (current.pane === "career"
+            ? `${EXPERIENCE.length} folder(s) · arrow keys navigate`
+            : `${current.items.length} object(s)${
+                view === "projects" ? " · double-click to open" : ""
+              }`)}
       </div>
     </div>
   );

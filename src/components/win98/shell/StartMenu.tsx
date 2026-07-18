@@ -6,12 +6,13 @@
 
 import { setBootPhase, setStartMenuOpen } from "@/lib/win98State";
 import { PixelIcon } from "../pixelIcons";
-import { launchApp } from "./appDefs";
+import { APP_DEFS, launchApp } from "./appDefs";
 
 const ENTRIES: { label: string; iconId: string }[] = [
   { label: "My Projects", iconId: "my-projects" },
   { label: "resume.doc", iconId: "resume-doc" },
   { label: "ABOUT_ME.txt", iconId: "about-me" },
+  { label: "Add/Remove Programs", iconId: "add-remove" },
   { label: "Outlook Express", iconId: "outlook" },
   { label: "Minesweeper", iconId: "minesweeper" },
 ];
@@ -41,20 +42,7 @@ export function StartMenu() {
                 setStartMenuOpen(false);
               }}
             >
-              <PixelIcon
-                glyph={
-                  entry.iconId === "outlook"
-                    ? "envelope"
-                    : entry.iconId === "minesweeper"
-                      ? "mine"
-                      : entry.iconId === "resume-doc"
-                        ? "document"
-                        : entry.iconId === "about-me"
-                          ? "notepad"
-                          : "folder"
-                }
-                size={16}
-              />
+              <PixelIcon glyph={APP_DEFS[entry.iconId].glyph} size={16} />
               {entry.label}
             </button>
           </li>
