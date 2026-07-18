@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
-import { Color, Group, InstancedMesh, Mesh } from "three";
+import { useEffect, useMemo } from "react";
+import { Group, InstancedMesh, Mesh } from "three";
 import { Lighting } from "../scene/Lighting";
 import { Atmosphere } from "../scene/Atmosphere";
 import { Postprocessing } from "../scene/postprocessing";
-import { screenLight } from "../scene/screenLight";
+import { CrtScreen } from "../crt/CrtScreen";
 import { createRoomMaterials, type RoomBuilderOptions } from "./materials";
 import { buildRoom } from "./room";
 import { buildDesk, DESK_TOP_Y } from "./desk";
@@ -37,62 +36,6 @@ export const ROOM_CAMERA = {
 };
 
 const TOWER_TOP = DESK_TOP_Y + TOWER_SIZE.height + 0.008;
-
-// Test-pattern palette (2.2 acceptance): boot white flicker → desktop
-// teal → BSOD blue → shutdown amber. Preallocated — the loop only copies.
-const BOOT = new Color("#e8f0ff");
-const DESKTOP = new Color("#3aa89b");
-const BSOD = new Color("#2a49c8");
-const SHUTDOWN = new Color("#ff9a3c");
-const CYCLE = 10; // seconds
-
-/**
- * Harness stand-in for 3.1's screen feed: cycles screenLight through the
- * four moods and mirrors it onto the crtScreen emissive so the glass and
- * the room cast stay coherent. Replaced by the real feed in 3.1.
- */
-function ScreenTestPattern({ root }: { root: Group }) {
-  const screen = useRef<Mesh | null>(null);
-
-  useEffect(() => {
-    screen.current = (root.getObjectByName("crtScreen") as Mesh) ?? null;
-  }, [root]);
-
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime % CYCLE;
-    if (t < 2.5) {
-      // Boot: white with a deterministic fast flicker. Peak luminance is
-      // capped at 0.7 — a full 1.0 white face + bloom halo floodlit the
-      // room (gate-2.3 defect 2); a boot flash should read as a flash.
-      const flicker =
-        0.55 + 0.45 * Math.abs(Math.sin(t * 23.7) * Math.sin(t * 7.3));
-      screenLight.tint.copy(BOOT);
-      screenLight.luminance = 0.15 + 0.55 * flicker;
-    } else if (t < 5.5) {
-      screenLight.tint.copy(DESKTOP);
-      screenLight.luminance = 0.55;
-    } else if (t < 7.5) {
-      screenLight.tint.copy(BSOD);
-      screenLight.luminance = 0.7;
-    } else {
-      // Shutdown: amber decaying to near-black.
-      const k = 1 - (t - 7.5) / (CYCLE - 7.5);
-      screenLight.tint.copy(SHUTDOWN);
-      screenLight.luminance = 0.05 + 0.6 * k * k;
-    }
-
-    const mesh = screen.current;
-    if (mesh && !Array.isArray(mesh.material) && "emissive" in mesh.material) {
-      const material = mesh.material as import("three").MeshStandardMaterial;
-      material.emissive.copy(screenLight.tint);
-      // Ceiling lowered from 0.4 + lum·1.6 (→ 2.0): white at 2.0 blew the
-      // whole screen face past the 0.68 bloom threshold (gate-2.3 defect 2).
-      material.emissiveIntensity = 0.35 + screenLight.luminance * 1.2;
-    }
-  });
-
-  return null;
-}
 
 export function RoomScene({
   seed = 1998,
@@ -163,7 +106,9 @@ export function RoomScene({
       <Lighting screenPosition={[-0.22, TOWER_TOP + 0.19, -0.5]} />
       <Atmosphere detail={detail} />
       <Postprocessing />
-      <ScreenTestPattern root={scene.root} />
+      {/* 3.1: real Win98 feed on the crtScreen mesh (painter + CRT
+          shader + screenLight); replaced the 2.2 ScreenTestPattern. */}
+      <CrtScreen root={scene.root} />
       <primitive object={scene.root} />
     </>
   );
