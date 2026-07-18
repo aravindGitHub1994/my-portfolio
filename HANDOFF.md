@@ -1,101 +1,108 @@
-# HANDOFF — Win98 Workstation redesign (2026-07-18, session 4)
+# HANDOFF — Win98 Workstation redesign (2026-07-18, session 5 wrap)
 
 > For the next agent session. **Gates 1.2 and 2.3 PASSED** (owner,
-> 2026-07-18). P3 is COMMITTED (3.1 `e7a106b`, 3.2 `89670dc`,
-> 3.3 `d816bda`) and 4.1 is COMMITTED (`ad493db`, ride-through verified
-> headlessly). **Next slice: 4.2 (dock swap — precision slice), then
-> HITL gate 4.3 (owner full ride-through on a production build). Do not
-> pass gates autonomously.** P5 (apps) can run in parallel now that 3.2
-> is in. Read the two Key References before writing anything.
+> 2026-07-18). P3 committed (3.1 `e7a106b` · 3.2 `89670dc` ·
+> 3.3 `d816bda`), 4.1 committed (`ad493db`), **4.2 (dock swap)
+> committed this session** — full dock/undock/re-dock cycle verified
+> in an isolated headless session, including a stuck-dock defect found
+> and fixed during QA (see Current Status). Next: **HITL gate 4.3**
+> (owner ride-through on a served production build) — never pass gates
+> autonomously. P5 apps are unblocked in parallel.
 
 ## Current Status
 
-- Branch **`redesign-attempt2`** (off `main` @ `7969e26`). Commit ledger:
-  - `9ea8f96` docs (ADR-012 + plan-0009) · `064a225` slice 0.1 (Lens
-    deleted, static floor) · `6d31dac` slice 0.2 (experience scaffold,
-    `experienceState`, lenis/snap choreography).
-  - `cc494e7`→`2d1293f` slice 1.1 + gate-1.2 iterations (procedural
-    character; final form: sculpted jaw-wrap beard, two-tone clay, no
-    cheek mounds). **Gate 1.2 PASSED** (owner, 2026-07-18).
-  - `f25e047` slice 2.1: `builders/` — 14 seeded prop modules +
-    canvas-baked `materials.ts` (≤1024², no Microsoft marks — poster/mug/
-    CD text is pastiche; CD spines pull resume `EDUCATION`) +
-    `RoomScene.tsx` (`?scene=room`; the prop layout constants live there;
-    cables are world-anchored to that layout).
-  - `6da2bca` slice 2.2: `scene/` — `Lighting.tsx` (CRT key light driven
-    per frame from the `screenLight` singleton — the **2.2⇄3.1 contract**),
-    `Atmosphere.tsx` (dust + shaft billboards), `postprocessing.tsx`
-    (bloom threshold 0.68 + vignette), `sheddable.ts` (SHED_ORDER for
-    7.2). RoomScene runs a `ScreenTestPattern` stand-in cycling
-    boot-white flicker → desktop teal → BSOD blue → shutdown amber (10 s).
-  - `8340430` slice 1.3: palette color zones (skin canvas albedo, tee,
-    jeans, sneakers), tattoo vector art on `forearmR` (koi verified red),
-    smartwatch, gold hoops, typing rig (`typingState` feeds 6.2).
-  - `81c52a2` gate-2.3 prep: `?scene=full` (RoomScene + Figure), chair
-    raised to the seated pose.
-- Conventions: figure faces **-Z**, desk/screen at negative Z, figure's
-  left = -X; desk surface `DESK_TOP_Y` 0.72; head pivots at `NECK_PIVOT`;
-  right-arm joints exported as `ARM_JOINTS` (buildBody).
-- `assets-src/` stays **untracked deliberately** (tattoo photos never
-  enter git or the bundle — ADR-012 §3).
-- Owner runs a **headed agent-browser session** on the harness and has
-  explicitly offered browser QA — drive verification through it. A reload
-  resets their orbit camera; warn them before reloading.
+- Branch **`redesign-attempt2`** (off `main` @ `7969e26`). Ledger since
+  session 3: `cafb98c` gate-2.3 defect fixes (owner-verified) ·
+  `e7a106b` 3.1 win98State + painter + CRT shader · `89670dc` 3.2 DOM
+  shell + pixel icons + OFL fonts · `d816bda` 3.3 boot/shutdown
+  sequences · `ad493db` 4.1 choreography + PowerOn entry · `bc1fa45`
+  handoff. Earlier ledger (P0–P2, gate-1.2 iterations) is in git log —
+  don't re-derive.
+- **4.2 committed (this session):** `dockAlignment.ts` (analytic dock
+  rect from `CRT_SCREEN_SIZE` + `DOCK_DISTANCE` + fov 50),
+  `DockSwap.tsx` (engage/hysteresis rAF watcher, ≤150 ms cross-fade,
+  CSS scanline/vignette CRT layer, "keep scrolling" hint),
+  `uCurvature` → 0 ease near the dock rest (`CrtScreen.tsx`,
+  `CRT_BASE_CURVATURE` export), dev-only `window.__experienceState`
+  QA handle. **QA found and fixed a stuck-dock defect:** the original
+  mount/fade design relied on a one-shot rAF to flip the fade in and a
+  safety timer that unmounted the overlay without releasing the dock —
+  a stalled rAF at the engage moment (throttled tab; also any slow
+  frame) left `docked=true` + Lenis stopped + no listeners, freezing
+  the journey permanently. Now a phase machine
+  (`idle → in → shown → out`) with a 100 ms timeout fallback on the
+  fade-in; `docked` is released on undock *intent* (entering "out"),
+  never by a timer, so no unmount path can strand scroll. Also added
+  **keyboard undock** (Choreography's stepping keys + Escape, idle-only,
+  ignored when the event target is inside the shell) — keyboard
+  visitors previously had no exit. Verified headless: dock at rest 4,
+  fade to opacity 1, wheel/key undock, hysteresis (no instant re-dock),
+  re-dock, windows-open wheel guard, minimized-window persistence
+  across dock cycles, a11y tree exposes real shell buttons while
+  docked, zero page errors.
+- Architecture contracts now live (all committed):
+  - `src/lib/win98State.ts` — ONE store for both renderers (painter +
+    DOM shell); version counter feeds `useWin98Version`
+    (useSyncExternalStore). Pure, no DOM/three imports.
+  - `win98/painter.ts` event-driven only; `crt/CrtScreen.tsx` owns
+    canvas→CanvasTexture→CRT shader on the `crtScreen` mesh, writes
+    `screenLight` per frame. **Brightness contract (gate 2.3): screen
+    luminance cap 0.7 in CrtScreen + `CAST_MAX 2.6` in Lighting —
+    preserve both in every future screen change.**
+  - Shell (`win98/shell/`) renders in a **640×480 virtual space**
+    (`DESKTOP_W/H`); `Window.tsx` drag/resize divides client px by a
+    `scale` prop. Taskbar must stay a `<div>` (globals.css hides all
+    `<footer>`s while the experience mounts). Apps register content via
+    `appDefs.ts` `registerApp(appId, C)`; unregistered → deadpan
+    "Insert Disk 2" placeholder. `?scene=shell` is the DOM harness.
+  - Boot: `bootScript.ts` (POST lines interpolate `stats.ts` — no
+    hardcoded figures) + `bootSequencer.ts` (`startBoot()` → controller
+    `{cancel, skip, done}`; per-line work promises are the
+    boot-as-loader hook for heavy bakes).
+  - 4.1: `choreography/cameraPath.ts` — keyframes with rest points ON
+    keys; ch2→3 arc key prevents hair clipping; dock key square-on at
+    `DOCK_DISTANCE 0.26`, fov 50. `PowerOn.tsx` (entry gesture, Lenis
+    parked till desktop, `w98-intro-seen` localStorage skip),
+    `TitleBeats.tsx` (rAF-driven opacity, no React state), keyboard
+    stepping + `duskDeepen` in `Choreography.tsx`, dusk damping in
+    `Lighting.tsx`.
+- Conventions: figure faces **-Z**; desk/screen at negative Z;
+  `DESK_TOP_Y` 0.72; `NECK_PIVOT`/`ARM_JOINTS` in buildBody;
+  `assets-src/` stays untracked (ADR-012 §3).
+- QA: isolated headless agent-browser sessions
+  (`--session <name>`) verify without touching the owner's headed tab;
+  owner sets angles on request in their session. HMR re-runs useMemo
+  (Fast Refresh) — confirm geometry reloads via the
+  `[character]/[room] ~N tris` console log. Dev server usually already
+  runs on port 3004 — reuse it.
 
 ## Unresolved Threads
 
-- **P3 + 4.1 state (all committed, lint+build green each):**
-  - `win98State` (src/lib) is the both-renderers store: boot machine
-    (off/post/splash/desktop/shutdown), postLines, icons, z-ordered
-    windows, focus, Start menu, version counter (useSyncExternalStore
-    key). Pure, no DOM/three imports.
-  - Painter (`win98/painter.ts`) is EVENT-DRIVEN only; CrtScreen owns
-    canvas→CanvasTexture→CRT shader on the `crtScreen` mesh, samples
-    average tone per repaint (8×6 downsample) and writes `screenLight`
-    per frame **capped at luminance 0.7** (gate-2.3 brightness
-    contract; `CAST_MAX 2.6` in Lighting is the second belt — preserve
-    both in all future screen work).
-  - Shell (`win98/shell/`): 640×480 virtual space; `Window.tsx` drag/
-    resize divides client px by `scale` — 4.2 must pass the CRT-quad
-    scale the same way. Taskbar is a div (a `<footer>` is hidden by the
-    floor-hiding CSS rule — don't regress). Apps register content
-    components via `appDefs.ts` registry (`registerApp`); unregistered
-    apps show a deadpan "Insert Disk 2" placeholder.
-  - Boot: `bootScript.ts` (stats.ts-interpolated POST lines, no
-    hardcoded numbers) + `bootSequencer.ts` (`startBoot()` → controller
-    with cancel/skip; per-line work promises = boot-as-loader hook).
-  - 4.1: `cameraPath.ts` keyframes (rest points ON keyframes; ch2→3 arc
-    key prevents hair clip; dock key = square-on, `DOCK_DISTANCE`
-    0.26). `PowerOn.tsx` (entry gesture, Lenis parked till desktop,
-    localStorage `w98-intro-seen` skip), `TitleBeats.tsx` (rAF opacity,
-    no React state), keyboard stepping + `duskDeepen` in Choreography,
-    dusk damping refs in Lighting.
-- Self-noted nits (owner has NOT flagged these — mention, don't
-  gold-plate): shaft billboard reads pale edge-on; chair backrest plain
-  boxes; ch2 rest framing may want owner calibration at 4.3; faint CRT
-  moiré rings at some distances (scanline×minification, already
-  softened once).
-- NEXT: slice 4.2 (dock swap: `DockSwap.tsx` + `dockAlignment.ts`,
-  matrix3d the 640×480 shell onto the screen quad, painter→DOM
-  cross-fade ≤150 ms, Lenis stop while docked, undock on scroll after
-  all windows idle — `allWindowsIdle()` exists) → **HITL gate 4.3**.
-  P5 apps (5.1/5.2/5.3) unblocked in parallel; 8.x eggs cuttable.
-- `src/lib/aboutMe.ts` copy (slice 5.2) needs owner review at gate 9.2.
+- **Gate 4.3 is next** (owner, production build: `npm run build`
+  then serve `out/`): seam invisibility, pacing, dock feel,
+  reverse-scrub. Pacing numbers are owner-calibrated — don't guess.
+  4.3 review notes from 4.2: the single-`scale` Window drag leaves a
+  ~5 % x-drag error (scaleY passed, screen ~5:4 vs desktop 4:3 —
+  accepted in design); undocking via key can leave progress a few
+  thousandths past the rest point (snap settles it; hysteresis holds).
+- Self-noted nits (owner has NOT flagged — mention, don't gold-plate):
+  shaft billboard pale edge-on; chair backrest plain boxes; ch2 rest
+  framing may want calibration; faint CRT moiré at some distances
+  (already softened once: mask contrast 0.92, scanline 0.22).
+- `src/lib/aboutMe.ts` (slice 5.2) copy needs owner review at 9.2.
+- P5/P8 apps all render through `<Win98Window>` content registry —
+  lazy-load each app chunk on first open (ADR-012 §8).
 
 ## Key References
 
 - **ADR:** `docs/decisions/ADR-012-win98-workstation-cinematic-redesign.md`
-  — all ten locked decisions; do not re-litigate.
-- **Plan:** `docs/plans/implementation-plan-0009.md` — 24 slices, HITL
-  gates 1.2 ✅ / 2.3 (in progress) / 4.3 / 9.2. AFK gate is always lint +
-  build green.
-- **Owner QA screenshots** (untracked — never commit assets-src):
-  `assets-src/workstation/QA.png` (flicker blow-out, fingers),
-  `QA-chest-reshape.png` (red line = target torso profile),
-  `QA-beard-moustache-gap.png` (red circle = mustache/beard gap).
-- **Reference assets:** `assets-src/workstation/` (3 concept sheets —
-  their "model stats" panels are fictional; `tattoo01–04.jpg` — never
-  ship; `prompt-redesign.txt`).
+  — ten locked decisions; do not re-litigate. §4 is the dock contract,
+  §10 the zero-Microsoft IP rule (fonts are OFL: `public/fonts/LICENSES.md`).
+- **Plan:** `docs/plans/implementation-plan-0009.md` — slice specs +
+  acceptance. Gates: 1.2 ✅ · 2.3 ✅ · 4.3 open · 9.2 open. AFK gate is
+  always lint + build green.
+- **Reference assets:** `assets-src/workstation/` (concept sheets,
+  tattoo photos — never ship, never commit).
 - **Standing rules:** root `CLAUDE.md` / `AGENTS.md` (confidentiality,
   static export, React-compiler purity, port 3004). Agent memory:
   `noise-signal-redesign-state.md`, `owner-motif-privacy.md`,
@@ -103,21 +110,18 @@
 
 ## Recommended Next Steps
 
-- [ ] Slice 4.2: dock swap (DockSwap.tsx + dockAlignment.ts; ≤1 px
-      alignment at 1×/1.5×/2× DPR, painter→DOM fade ≤150 ms, scroll
-      contract via Lenis stop/start + `allWindowsIdle()` hint).
-- [ ] **HITL gate 4.3:** owner full ride-through on a served
-      production build. Do not pass autonomously.
-- [ ] P5 (5.1 Explorer/projects/IE, 5.2 resume/career/skills/about,
-      5.3 Outlook/dial-up/sign-off) — register via `registerApp`,
-      lazy chunks.
-- [ ] Then P6 audio, P7 mobile/perf, P8 eggs (cuttable), 9.1 docs,
-      9.2 final gate.
+- [ ] **HITL gate 4.3** — hand to the owner with a served production
+      build. Do not pass autonomously.
+- [ ] P5 in parallel: 5.1 Explorer/project windows/IE frame ·
+      5.2 WordPad resume + C:\Career\ + Add/Remove + ABOUT_ME.txt ·
+      5.3 Outlook/dial-up/sign-off (all via `registerApp`, lazy chunks).
+- [ ] Then P6 audio (6.1 unlock rides the PowerOn press), P7
+      mobile/perf, P8 eggs (cuttable), 9.1 docs, 9.2 final gate.
 
 ## Recommended Skills
 
-- `agent-browser` — owner keeps a headed session open and has offered it;
-  use it for all visual verification.
+- `agent-browser` — isolated `--session` QA for everything visual; the
+  owner's headed session for owner-angle checks (ask before reloads).
 - None otherwise (plain implementation; the plan is the spec).
 - `/grill-with-docs` — only for a genuine decision gap not covered by
-  ADR-012 (expected: none before P4).
+  ADR-012.

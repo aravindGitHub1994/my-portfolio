@@ -19,3 +19,14 @@ export const experienceState = {
   /** Mirrored from WorkstationRoot's tier detection; "pending" pre-detect. */
   fidelityTier: "pending" as FidelityTier | "pending",
 };
+
+// Dev-only QA handle: headless agent sessions read scrub/dock state via
+// window.__experienceState (plan-0009 §4.2 verification). Never in prod.
+declare global {
+  interface Window {
+    __experienceState?: typeof experienceState;
+  }
+}
+if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
+  window.__experienceState = experienceState;
+}

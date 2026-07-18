@@ -26,14 +26,27 @@ import {
 } from "@/lib/win98State";
 import { startBoot, type BootController } from "@/lib/bootSequencer";
 import { paintScreen } from "@/components/win98/painter";
+import { experienceState } from "@/lib/experienceState";
+import { REST_POINTS } from "@/lib/chapters";
 import { screenLight } from "../scene/screenLight";
-import { createCrtMaterial, type CrtUniforms } from "./crtShader";
+import {
+  createCrtMaterial,
+  CRT_BASE_CURVATURE,
+  type CrtUniforms,
+} from "./crtShader";
 
 /** Luminance ceiling — the gate-2.3 boot-flash cap, now global law. */
 const LUMINANCE_CAP = 0.7;
 /** Downsample size for the average-tone read (event-driven, tiny). */
 const TONE_W = 8;
 const TONE_H = 6;
+
+/** Progress window around the dock rest point over which barrel curvature
+ *  eases to 0 (4.2): the glass flattens as the camera squares on, so the
+ *  flat DOM shell matches at the swap moment; restores on undock because
+ *  it's a pure function of progress. Harness scenes sit far from the rest
+ *  point and keep full curvature. */
+const DOCK_FLATTEN_WINDOW = 0.06;
 
 interface Tone {
   r: number;
@@ -127,6 +140,13 @@ export function CrtScreen({
     const uniforms = uniformsRef.current;
     if (!uniforms) return;
     uniforms.uTime.value += delta;
+
+    const dockDistance = Math.abs(
+      experienceState.scrollProgress - REST_POINTS[4],
+    );
+    const flat = Math.min(dockDistance / DOCK_FLATTEN_WINDOW, 1);
+    uniforms.uCurvature.value =
+      CRT_BASE_CURVATURE * flat * flat * (3 - 2 * flat);
 
     // Screen-light write: painter average tint, gently wobbled so the
     // room cast keeps the phosphor life the test pattern had.

@@ -8,6 +8,7 @@ import { Choreography } from "./choreography/Choreography";
 import { WorkstationCanvas } from "./WorkstationCanvas";
 import { PowerOn } from "./PowerOn";
 import { TitleBeats } from "./TitleBeats";
+import { DockSwap } from "./crt/DockSwap";
 import { ShellHarness } from "@/components/win98/shell/Desktop";
 
 /**
@@ -78,6 +79,8 @@ export default function WorkstationExperience() {
       {/* Ch. 0 entry gesture + ch. 1 title beats (4.1). */}
       <PowerOn />
       <TitleBeats />
+      {/* Ch. 4 painter→DOM swap at the dock rest point (4.2). */}
+      <DockSwap />
       {/* Scroll runway — invisible height the journey scrubs against. */}
       <div
         ref={runway}

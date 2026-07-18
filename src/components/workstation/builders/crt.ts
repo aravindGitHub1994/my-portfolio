@@ -6,6 +6,10 @@
 import { BoxGeometry, CylinderGeometry, Group, Mesh, PlaneGeometry } from "three";
 import type { RoomBuilderOptions } from "./materials";
 
+/** Screen mesh dimensions — 4.2's dock alignment maps the DOM shell
+ *  onto exactly this quad. */
+export const CRT_SCREEN_SIZE = { width: 0.305, height: 0.24 } as const;
+
 export function buildCrt({ detail, materials }: RoomBuilderOptions): Group {
   const group = new Group();
   group.name = "crt";
@@ -33,7 +37,10 @@ export function buildCrt({ detail, materials }: RoomBuilderOptions): Group {
   group.add(mid, tail);
 
   // Screen — distinct mesh and material slot for 3.1.
-  const screen = new Mesh(new PlaneGeometry(0.305, 0.24), materials.screen);
+  const screen = new Mesh(
+    new PlaneGeometry(CRT_SCREEN_SIZE.width, CRT_SCREEN_SIZE.height),
+    materials.screen,
+  );
   screen.name = "crtScreen";
   screen.position.set(0, bodyY + 0.012, 0.131);
   group.add(screen);

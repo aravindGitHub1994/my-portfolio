@@ -63,6 +63,10 @@ const fragmentShader = /* glsl */ `
   }
 `;
 
+/** Resting barrel curvature — CrtScreen eases this to 0 near the dock
+ *  pose (4.2) so the glass matches the flat DOM at the swap moment. */
+export const CRT_BASE_CURVATURE = 0.11;
+
 export interface CrtUniforms {
   [uniform: string]: IUniform;
   uMap: { value: Texture };
@@ -80,7 +84,7 @@ export function createCrtMaterial(map: Texture): {
     uMap: { value: map },
     uTime: { value: 0 },
     uBrightness: { value: 1.15 },
-    uCurvature: { value: 0.11 },
+    uCurvature: { value: CRT_BASE_CURVATURE },
     uScanline: { value: 0.22 },
   };
   const material = new ShaderMaterial({
