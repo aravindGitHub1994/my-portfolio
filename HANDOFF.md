@@ -51,10 +51,15 @@
 
 ## Unresolved Threads
 
-- **Gate 1.2 iteration 1 applied** (owner defect list 2026-07-18): earrings
-  now both ears, nose x-tilt flipped (+0.22, tip out), beard enlarged past
-  skull radius + dropped/pushed forward with doubled noise amp so it reads
-  as a volume. One iteration remains before the falsification clause.
+- **Gate 1.2 iteration 1** (owner defects 2026-07-18): earrings both ears,
+  nose x-tilt flipped (+0.22, tip out), beard enlarged past skull radius.
+- **Gate 1.2 iteration 2 — FINAL round** (owner: "face malformed, caved-in
+  sections; round face + heavy beard"): beard noise made outward-only with
+  a top-edge taper (signed noise was digging pits below the skull surface),
+  skull rounded 0.94/1.06 → 0.98/1.02 with ears/buds/stems/earrings shifted
+  +4 mm and hair-cap x widened to match. **If this round fails, the
+  falsification clause fires: reopen ADR-012 stylization alternatives —
+  do not keep polishing.**
 - **HITL gate 1.2 — do not pass autonomously.** Owner QA:
   `npm run dev` → `localhost:3004/?scene=character` (checklist in plan
   §1.2: silhouette, no uncanny read, curls at mid-shot, earring/earbuds in

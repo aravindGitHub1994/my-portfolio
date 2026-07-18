@@ -25,9 +25,9 @@ export function buildHead({ detail, material }: BuilderOptions): Group {
   const segs = detail === "high" ? 32 : 16;
   const cy = SKULL_CENTER.y;
 
-  // Skull — slightly tall, slightly deep.
+  // Skull — round face (gate-1.2 iteration 2; was narrow/tall 0.94/1.06).
   const skull = new Mesh(new SphereGeometry(SKULL_RADIUS, segs, segs), material);
-  skull.scale.set(0.94, 1.06, 1.0);
+  skull.scale.set(0.98, 1.02, 1.0);
   skull.position.copy(SKULL_CENTER);
   group.add(skull);
 
@@ -69,7 +69,7 @@ export function buildHead({ detail, material }: BuilderOptions): Group {
       material,
     );
     ear.scale.set(0.35, 1, 0.75);
-    ear.position.set(0.098 * side, cy - 0.004, 0.008);
+    ear.position.set(0.102 * side, cy - 0.004, 0.008);
     group.add(ear);
 
     // Earbuds — both ears, sitting just inside the ear's front edge.
@@ -77,7 +77,7 @@ export function buildHead({ detail, material }: BuilderOptions): Group {
       new SphereGeometry(0.0125, detail === "high" ? 10 : 6, 8),
       material,
     );
-    bud.position.set(0.094 * side, cy - 0.006, -0.014);
+    bud.position.set(0.098 * side, cy - 0.006, -0.014);
     group.add(bud);
   }
 
@@ -88,7 +88,7 @@ export function buildHead({ detail, material }: BuilderOptions): Group {
       material,
     );
     hoop.name = "earring";
-    hoop.position.set(0.102 * side, cy - 0.033, 0.008);
+    hoop.position.set(0.106 * side, cy - 0.033, 0.008);
     hoop.rotation.y = Math.PI / 2; // hang in the sagittal plane
     group.add(hoop);
   }
@@ -100,7 +100,7 @@ export function buildHead({ detail, material }: BuilderOptions): Group {
       material,
     );
     stem.rotation.z = Math.PI / 2;
-    stem.position.set(0.1 * side, cy - 0.006, -0.014);
+    stem.position.set(0.104 * side, cy - 0.006, -0.014);
     group.add(stem);
   }
 

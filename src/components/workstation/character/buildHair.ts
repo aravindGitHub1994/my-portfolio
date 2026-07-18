@@ -93,7 +93,8 @@ export function buildHair(options: BuilderOptions): Group {
     material,
   );
   cap.position.copy(SKULL_CENTER);
-  cap.scale.set(0.96, 1.06, 1.02);
+  // x kept above the skull's 0.98 x-scale so the dome never pokes through.
+  cap.scale.set(1.0, 1.06, 1.02);
   group.add(cap);
 
   // Curl instances — 3 archetypes, seeded scatter.
