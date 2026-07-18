@@ -44,19 +44,12 @@
 
   /* ---- Keyframes ---- */
   --animate-scroll-cue: scroll-cue 2.2s var(--ease-out-soft) infinite;
-  --animate-loader-sweep: loader-sweep 1.4s ease-in-out infinite;
 }
 
 /* Hero scroll indicator — a light pulse running down a hairline */
 @keyframes scroll-cue {
   0% { transform: translateY(-100%); }
   60%, 100% { transform: translateY(100%); }
-}
-
-/* Loader — a light sweep running along a hairline */
-@keyframes loader-sweep {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(300%); }
 }
 
 /* Custom cursor active: hide the native one (pointer-fine devices only) */
@@ -79,8 +72,7 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Faint cold wash behind everything — pre-canvas fallback so the page never
-   reads flat black before the WebGL scene mounts (canvas sits at -z-10). */
+/* Faint cold wash behind everything so the page never reads flat black. */
 body::before {
   content: "";
   position: fixed;

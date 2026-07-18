@@ -1,32 +1,34 @@
 # HANDOFF — Win98 Workstation redesign (2026-07-18)
 
-> For the next agent session. Documentation phase is **complete and
-> owner-approved**; zero implementation code exists yet. Read the two Key
-> References before writing anything.
+> For the next agent session. Documentation is committed and **slice 0.1 has
+> landed** — the Lens is deleted and the homepage is the static floor. Read
+> the two Key References before writing anything.
 
 ## Current Status
 
-- Branch **`redesign-attempt2`** (off `main` @ `7969e26`), clean tree except the
-  two new docs + this file. The prior `complete-redesign` branch (NOISE/SIGNAL)
+- Branch **`redesign-attempt2`** (off `main` @ `7969e26`). Docs committed at
+  `9ea8f96`; slice 0.1 committed on top with owner go-ahead (2026-07-18,
+  "start the first slice"). The prior `complete-redesign` branch (NOISE/SIGNAL)
   was **deleted local+remote** with 18 unpushed commits at the owner's request —
   its old ADR-012/plan-0009 numbers were reused cleanly here.
 - Full `/grill-with-docs` interview (10 questions) ran 2026-07-18; every
   decision is locked and recorded in ADR-012 — do **not** re-litigate them.
-- ADR-012 + implementation-plan-0009 written; the owner approved the slice
-  breakdown verbatim.
-- **The docs are not yet committed.** The owner was offered (a) commit the docs,
-  (b) start slice 0.1 — and instead requested this handoff. Get explicit
-  go-ahead before committing or coding.
+- **Slice 0.1 done:** `src/components/lens/` and the Lens-gated
+  `ui/Loader.tsx` deleted; the page is plain-DOM sections composed from
+  `src/lib` — hero, approach stats, pinned project cards (curtain reveal +
+  diagram draw-on kept; projection/shard tie-ins removed), a **new Skills
+  section** rendering `SKILL_TIERS` (previously unrendered anywhere),
+  trajectory, contact. Lint + build green; export carries zero `<canvas>`.
+- `assets-src/` is **untracked deliberately** — reference material only; the
+  tattoo photos must never be committed or shipped (ADR-012 §3).
 
 ## Unresolved Threads
 
-- **Commit of ADR-012 + plan-0009 + HANDOFF.md** — pending owner word.
-- **Slice 0.1 not started** (Lens removal + static floor; the site must never be
-  broken mid-build — 0.1 is deliberately first).
+- **Slice 0.2 not started** (experience scaffold: `ssr:false` canvas,
+  Lenis+GSAP scrub skeleton, `chapters.ts`, tier routing, `?scene=` harness) —
+  next up; the owner scoped this session to the first slice, so get go-ahead.
 - `src/lib/aboutMe.ts` copy (slice 5.2) needs owner review at gate 9.2 — flagged
   in the plan, nothing to do yet.
-- Old working-tree edits to `src/components/story/*` from the deleted branch are
-  gone (discarded with the checkout) — nothing to recover.
 
 ## Key References
 
@@ -51,10 +53,8 @@
 
 ## Recommended Next Steps
 
-- [ ] Confirm with owner, then commit ADR-012 + plan-0009 + HANDOFF.md on
-      `redesign-attempt2` (use `git commit -F <file>` per shell gotchas memory).
-- [ ] Slice 0.1 — delete `src/components/lens/`, homepage becomes the static
-      floor from `src/lib/*.ts` content (plan §0.1 acceptance criteria).
+- [x] Docs committed (`9ea8f96`); slice 0.1 landed — Lens gone, homepage is
+      the static floor (plan §0.1 acceptance verified).
 - [ ] Slice 0.2 — experience scaffold (`ssr:false` canvas, Lenis+GSAP scrub
       skeleton, `chapters.ts`, tier routing, `?scene=` harness).
 - [ ] Then P1: character prototype (1.1) → **stop at HITL gate 1.2** for owner

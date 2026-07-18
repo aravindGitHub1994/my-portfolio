@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LenisProvider } from "@/components/LenisProvider";
 import { Footer } from "@/components/Footer";
-import { Loader } from "@/components/ui/Loader";
 import { Cursor } from "@/components/ui/Cursor";
 import { SITE } from "@/lib/nav";
 
@@ -63,7 +62,6 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <Loader />
         <Cursor />
         <LenisProvider>
           <div className="flex flex-1 flex-col">{children}</div>
