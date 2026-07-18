@@ -111,7 +111,7 @@ export function Atmosphere({ detail = "high" }: { detail?: "low" | "high" }) {
       blending: AdditiveBlending,
       side: DoubleSide,
     });
-    const geometry = new PlaneGeometry(1.8, 0.55);
+    const geometry = new PlaneGeometry(1.4, 0.55);
     return { texture, material, geometry };
   }, []);
 
@@ -161,7 +161,7 @@ export function Atmosphere({ detail = "high" }: { detail?: "low" | "high" }) {
     <>
       <points ref={points} geometry={dust.geometry} material={dust.material} />
       {/* Two crossed billboards angling down-room from the window. */}
-      <group ref={shafts} position={[1.25, 1.15, -0.25]} rotation={[0, 0.25, -0.4]}>
+      <group ref={shafts} position={[1.5, 1.2, -0.25]} rotation={[0, 0.25, -0.4]}>
         <mesh geometry={shaftAssets.geometry} material={shaftAssets.material} />
         <mesh
           geometry={shaftAssets.geometry}

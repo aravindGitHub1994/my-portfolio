@@ -58,6 +58,18 @@
   world-anchored to the RoomScene layout. Browser-verified: dressed set +
   dusk window both read.
 
+- **Slice 2.2 (lighting/atmosphere/post) committed**: `workstation/scene/`
+  — Lighting (screen-driven CRT key via `screenLight` singleton, the
+  2.2⇄3.1 contract), Atmosphere (dust + shafts, sheddable), postprocessing
+  (bloom/vignette), `sheddable.ts` SHED_ORDER for 7.2. RoomScene mounts the
+  rig + a ScreenTestPattern stand-in (boot/desktop/BSOD/shutdown cycle).
+- **Slice 1.3 (color/wardrobe/tattoos/typing) committed**: palette zones,
+  canvas skin albedo + tattooed right forearm (koi verified red in key
+  light), smartwatch, gold hoops, typing rig (`typingState` for 6.2).
+- **`?scene=full` harness ready for HITL gate 2.3** — figure seated in the
+  dressed lit room, idle + typing + test pattern running; chair raised to
+  the seated pose. **STOP: owner QA against plan §2.3 checklist.**
+
 ## Unresolved Threads
 
 - **Gate 1.2 iteration 1** (owner defects 2026-07-18): earrings both ears,

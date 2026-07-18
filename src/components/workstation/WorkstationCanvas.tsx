@@ -12,6 +12,7 @@ import {
   CHARACTER_CAMERA,
 } from "./character/CharacterScene";
 import { RoomScene, ROOM_CAMERA } from "./builders/RoomScene";
+import { FullScene, FULL_CAMERA } from "./builders/FullScene";
 
 /**
  * The experience's single persistent canvas (plan-0009 §0.2). Two modes:
@@ -114,6 +115,11 @@ const HARNESS_SCENES: Record<string, HarnessSceneDef> = {
     Component: RoomScene,
     position: ROOM_CAMERA.position,
     target: ROOM_CAMERA.target,
+  },
+  full: {
+    Component: FullScene,
+    position: FULL_CAMERA.position,
+    target: FULL_CAMERA.target,
   },
 };
 

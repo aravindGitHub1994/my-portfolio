@@ -111,7 +111,7 @@ export function RoomScene({
       [buildCrt(opts), -0.22, TOWER_TOP, -0.7, 0],
       [buildKeyboard(opts), 0.03, DESK_TOP_Y, -0.42, 0],
       [buildMouse(opts), 0.42, DESK_TOP_Y, -0.46, 0],
-      [buildSpeaker(opts), 0.12, DESK_TOP_Y, -0.8, 0],
+      [buildSpeaker(opts), 0.28, DESK_TOP_Y, -0.8, 0],
       [buildCdStack(opts), 0.6, DESK_TOP_Y, -0.78, 0],
       [buildMug(opts), -0.62, DESK_TOP_Y, -0.46, -0.5],
       [buildNotebook(opts), -0.42, DESK_TOP_Y, -0.33, 0.18],
