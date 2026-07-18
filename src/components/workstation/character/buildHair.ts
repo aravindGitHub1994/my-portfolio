@@ -80,6 +80,9 @@ export function buildHair(options: BuilderOptions): Group {
   const rnd = mulberry32(seed ^ 0x48414952);
 
   // Scalp cap — a slightly inflated dome that closes gaps between curls.
+  // Ends above the brow line: at 0.52π it dipped below the head's equator
+  // and its proud rim ringed the face as a dark visor once the hair got
+  // its own material (gate 1.2). The fade zone shows skin by design.
   const cap = new Mesh(
     new SphereGeometry(
       SKULL_RADIUS * 1.015,
@@ -88,7 +91,7 @@ export function buildHair(options: BuilderOptions): Group {
       0,
       Math.PI * 2,
       0,
-      Math.PI * 0.52,
+      Math.PI * 0.38,
     ),
     material,
   );

@@ -32,7 +32,16 @@ export function Figure({
       roughness: 0.95,
       metalness: 0,
     });
+    // Darker clay for hair + beard: same matte family, value-separated so
+    // the beard reads against the skin (gate 1.2 — silhouette alone could
+    // not carry it in monochrome). Full color still lands in 1.3.
+    const hairMaterial = new MeshStandardMaterial({
+      color: "#5f5348",
+      roughness: 0.95,
+      metalness: 0,
+    });
     const opts = { seed, detail, material };
+    const hairOpts = { seed, detail, material: hairMaterial };
     const root = new Group();
     root.name = "figure";
 
@@ -43,14 +52,14 @@ export function Figure({
     headPivot.name = "headPivot";
     headPivot.position.copy(NECK_PIVOT);
     headPivot.rotation.x = -0.06; // slight tilt toward the screen
-    headPivot.add(buildHead(opts), buildHair(opts), buildBeard(opts));
+    headPivot.add(buildHead(opts), buildHair(hairOpts), buildBeard(hairOpts));
 
     root.add(body, headPivot);
-    return { root, material };
+    return { root, material, hairMaterial };
   }, [seed, detail]);
 
   useEffect(() => {
-    const { root, material } = figure;
+    const { root, material, hairMaterial } = figure;
     const chest = root.getObjectByName("chest");
     const head = root.getObjectByName("headPivot");
     const eyelids = root.getObjectByName("eyelids");
@@ -79,6 +88,7 @@ export function Figure({
         if (obj instanceof Mesh) obj.geometry.dispose();
       });
       material.dispose();
+      hairMaterial.dispose();
     };
   }, [figure, seed, detail]);
 

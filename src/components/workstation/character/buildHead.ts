@@ -44,14 +44,16 @@ export function buildHead({ detail, material }: BuilderOptions): Group {
   nose.rotation.x = 0.22;
   group.add(nose);
 
-  // Cheekbones — flattened spheres; enough form for the key light to catch.
+  // Cheekbones — subtle flattened mounds, low and wide so they read as
+  // cheek form, never as eyeballs (gate-1.2: at eye height + full size
+  // they bulged like eyes once the beard stopped covering them).
   for (const side of [1, -1]) {
     const cheek = new Mesh(
-      new SphereGeometry(0.03, detail === "high" ? 14 : 8, 10),
+      new SphereGeometry(0.022, detail === "high" ? 14 : 8, 10),
       material,
     );
-    cheek.scale.set(1, 0.85, 0.55);
-    cheek.position.set(0.055 * side, cy - 0.012, -0.075);
+    cheek.scale.set(1, 0.7, 0.5);
+    cheek.position.set(0.052 * side, cy - 0.022, -0.076);
     group.add(cheek);
   }
 

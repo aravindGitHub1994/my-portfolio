@@ -60,6 +60,16 @@
   +4 mm and hair-cap x widened to match. **If this round fails, the
   falsification clause fires: reopen ADR-012 stylization alternatives —
   do not keep polishing.**
+- **Iteration 2 follow-up, verified in-browser** (owner offered
+  `agent-browser`; QA screenshots in the session scratchpad): the beard
+  shell was a full-azimuth dome forming a second face that swallowed the
+  nose/mustache — now sculpted radially (face window tucks below the skin,
+  chin/jaw keep full radius + chin boost). Scalp cap shortened above the
+  brow (its sub-equator rim ringed the face as a dark visor). Cheek mounds
+  shrunk/lowered (read as eyeballs at full size). Hair + beard now use a
+  darker clay material (two-tone clay, still not the 1.3 color pass) —
+  monochrome could not carry the beard read. Chapter-2 frame verified:
+  curls/beard/earring/nose all read at mid-shot.
 - **HITL gate 1.2 — do not pass autonomously.** Owner QA:
   `npm run dev` → `localhost:3004/?scene=character` (checklist in plan
   §1.2: silhouette, no uncanny read, curls at mid-shot, earring/earbuds in

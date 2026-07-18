@@ -35,24 +35,38 @@ export function buildBeard({ seed, detail, material }: BuilderOptions): Group {
     Math.PI * 0.58,
   );
 
-  // Surface break-up: displace OUTWARD only — signed noise dug pits below
-  // the skull surface (gate-1.2 "caved-in" defect). Amplitude tapers to
-  // zero toward the top edge so side clumps never swallow ears/earrings;
-  // full clumping stays at the chin and jawline.
+  // Sculpt the shell radially. The raw cap is a full-azimuth dome — left
+  // as-is it forms a second face 24 mm in front of the skull, swallowing
+  // the nose and mustache (the gate-1.2 "malformed face"). So: full radius
+  // at chin/jaw/sides, but the FACE WINDOW (front-facing AND above the
+  // mouth line) tucks smoothly below the skull surface. Clump noise is
+  // outward-only (signed noise dug the "caved-in" pits), tapers off toward
+  // the top edge so side clumps never swallow ears/earrings, and is
+  // suppressed in the tucked zone so buried geometry stays smooth.
+  const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
   const pos = shell.attributes.position;
-  const nor = shell.attributes.normal;
-  const amp = 0.012;
+  const amp = 0.014;
   const topY = 0.112 * Math.cos(Math.PI * 0.42); // shell top-edge height
   for (let i = 0; i < pos.count; i++) {
-    const n = surfaceNoise(pos.getX(i), pos.getY(i), pos.getZ(i), seed % 97);
-    const taper = Math.min(1, Math.max(0, (topY - pos.getY(i)) / 0.08));
-    const d = (0.5 + 0.5 * n) * amp * taper;
-    pos.setXYZ(
-      i,
-      pos.getX(i) + nor.getX(i) * d,
-      pos.getY(i) + nor.getY(i) * d,
-      pos.getZ(i) + nor.getZ(i) * d,
-    );
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const z = pos.getZ(i);
+    const len = Math.hypot(x, y, z);
+    const dirY = y / len;
+    const dirZ = z / len;
+    // Face window: -Z is forward; "high" rises from the under-lip line up.
+    // Steep ramps + a deep pull: a soft ramp left a skin-tight dark film
+    // over the mid-face once the beard got its own material.
+    const front = clamp01((-dirZ - 0.1) / 0.25);
+    const high = clamp01((dirY + 0.62) / 0.18);
+    const tuck = front * high;
+    const n = surfaceNoise(x * 1.7, y * 1.7, z * 1.7, seed % 97);
+    const taper = clamp01((topY - y) / 0.08);
+    const clump = (0.5 + 0.5 * n) * amp * taper * (1 - tuck);
+    // Extra mass on the front-lower arc so the chin silhouette reads.
+    const chinBoost = front * clamp01((-dirY - 0.3) / 0.3) * 0.015;
+    const r = len * (1 - 0.4 * tuck) + clump + chinBoost;
+    pos.setXYZ(i, (x / len) * r, dirY * r, dirZ * r);
   }
   shell.computeVertexNormals();
 
@@ -64,10 +78,11 @@ export function buildBeard({ seed, detail, material }: BuilderOptions): Group {
   beard.scale.set(0.9, 0.9, 1.0);
   group.add(beard);
 
-  // Mustache — proud of the beard's front face, just behind the nose tip.
-  const mustache = new Mesh(new BoxGeometry(0.06, 0.02, 0.026), material);
-  mustache.position.set(0, cy - 0.048, -0.114);
-  mustache.rotation.x = 0.15;
+  // Mustache — proud of the tucked shell, just behind the nose tip; the
+  // stronger tilt kicks its lower edge out over the (absent) mouth.
+  const mustache = new Mesh(new BoxGeometry(0.058, 0.02, 0.03), material);
+  mustache.position.set(0, cy - 0.046, -0.118);
+  mustache.rotation.x = 0.28;
   group.add(mustache);
 
   return group;
