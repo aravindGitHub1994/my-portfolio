@@ -19,11 +19,13 @@ import type { BuilderOptions } from "./buildBody";
 export const SKULL_CENTER = new Vector3(0, 0.105, 0.005);
 export const SKULL_RADIUS = 0.105;
 
-export function buildHead({ detail, material }: BuilderOptions): Group {
+export function buildHead({ detail, material, palette }: BuilderOptions): Group {
   const group = new Group();
   group.name = "head";
   const segs = detail === "high" ? 32 : 16;
   const cy = SKULL_CENTER.y;
+  const earringMat = palette?.earring ?? material;
+  const earbudMat = palette?.earbud ?? material;
 
   // Skull — round face (gate-1.2 iteration 2; was narrow/tall 0.94/1.06).
   const skull = new Mesh(new SphereGeometry(SKULL_RADIUS, segs, segs), material);
@@ -67,7 +69,7 @@ export function buildHead({ detail, material }: BuilderOptions): Group {
     // Earbuds — both ears, sitting just inside the ear's front edge.
     const bud = new Mesh(
       new SphereGeometry(0.0125, detail === "high" ? 10 : 6, 8),
-      material,
+      earbudMat,
     );
     bud.position.set(0.098 * side, cy - 0.006, -0.014);
     group.add(bud);
@@ -77,7 +79,7 @@ export function buildHead({ detail, material }: BuilderOptions): Group {
   for (const side of [1, -1]) {
     const hoop = new Mesh(
       new TorusGeometry(0.016, 0.0032, 6, detail === "high" ? 20 : 10),
-      material,
+      earringMat,
     );
     hoop.name = "earring";
     hoop.position.set(0.106 * side, cy - 0.033, 0.008);
@@ -89,7 +91,7 @@ export function buildHead({ detail, material }: BuilderOptions): Group {
   for (const side of [1, -1]) {
     const stem = new Mesh(
       new CylinderGeometry(0.005, 0.005, 0.014, 6),
-      material,
+      earbudMat,
     );
     stem.rotation.z = Math.PI / 2;
     stem.position.set(0.104 * side, cy - 0.006, -0.014);

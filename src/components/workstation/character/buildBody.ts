@@ -17,14 +17,37 @@ import {
 
 export type DetailLevel = "low" | "high";
 
+/** Color zones (1.3). When absent, builders fall back to `material` —
+ *  the clay-preview path stays intact. */
+export interface CharacterPalette {
+  skin: Material;
+  /** Right forearm — carries the tattoo albedo. */
+  forearmR: Material;
+  tee: Material;
+  jeans: Material;
+  sneaker: Material;
+  watch: Material;
+  watchStrap: Material;
+  earring: Material;
+  earbud: Material;
+}
+
 export interface BuilderOptions {
   seed: number;
   detail: DetailLevel;
   material: Material;
+  palette?: CharacterPalette;
 }
 
 /** Figure-space anchor the head group attaches to (top of the neck). */
 export const NECK_PIVOT = new Vector3(0, 1.15, -0.045);
+
+/** Right-arm joints (mirror x for the left) — shared with buildWardrobe. */
+export const ARM_JOINTS = {
+  shoulder: new Vector3(0.2, 1.02, -0.06),
+  elbow: new Vector3(0.26, 0.8, -0.14),
+  wrist: new Vector3(0.12, 0.75, -0.4),
+} as const;
 
 const UP = new Vector3(0, 1, 0);
 
@@ -60,10 +83,14 @@ function mirror(v: Vector3): Vector3 {
  * the (absent) desk and screen sit in front of it at negative Z. Origin is
  * the floor under the stool's centre.
  */
-export function buildBody({ detail, material }: BuilderOptions): Group {
+export function buildBody({ detail, material, palette }: BuilderOptions): Group {
   const group = new Group();
   group.name = "body";
   const lathe = detail === "high" ? 40 : 20;
+  const skin = palette?.skin ?? material;
+  const tee = palette?.tee ?? material;
+  const jeans = palette?.jeans ?? material;
+  const sneakerMat = palette?.sneaker ?? material;
 
   // Torso — lathe profile hips→waist→chest→shoulders, leaned slightly
   // toward the keyboard. The chest node is the idle rig's breathing target.
@@ -82,13 +109,13 @@ export function buildBody({ detail, material }: BuilderOptions): Group {
     new Vector2(0.048, 0.58),
     new Vector2(0.04, 0.63),
   ];
-  const torso = new Mesh(new LatheGeometry(profile, lathe), material);
+  const torso = new Mesh(new LatheGeometry(profile, lathe), tee);
   chest.add(torso);
 
   // Hips filler under the lathe's open base.
   const hips = new Mesh(
     new SphereGeometry(0.13, lathe, detail === "high" ? 18 : 10),
-    material,
+    jeans,
   );
   hips.scale.set(1.25, 0.6, 1.05);
   hips.position.set(0, 0.02, 0);
@@ -98,7 +125,7 @@ export function buildBody({ detail, material }: BuilderOptions): Group {
   for (const side of [1, -1]) {
     const cap = new Mesh(
       new SphereGeometry(0.055, detail === "high" ? 18 : 10, 12),
-      material,
+      tee,
     );
     cap.position.set(0.185 * side, 0.51, 0);
     chest.add(cap);
@@ -114,31 +141,34 @@ export function buildBody({ detail, material }: BuilderOptions): Group {
       new Vector3(0, 1.05, -0.03),
       new Vector3(0, 1.17, -0.05),
       0.046,
-      material,
+      skin,
       detail,
     ),
   );
 
   // Arms — elbows ~90°, hands at keyboard height (concept sheets).
-  const joints = {
-    shoulder: new Vector3(0.2, 1.02, -0.06),
-    elbow: new Vector3(0.26, 0.8, -0.14),
-    wrist: new Vector3(0.12, 0.75, -0.4),
-  };
+  // Upper arm wears the tee (elbow-length sleeve); forearms are skin —
+  // the right one carries the tattoo albedo (palette.forearmR).
   for (const side of [1, -1]) {
-    const s = side === 1 ? joints.shoulder : mirror(joints.shoulder);
-    const e = side === 1 ? joints.elbow : mirror(joints.elbow);
-    const w = side === 1 ? joints.wrist : mirror(joints.wrist);
-    const upper = capsuleBetween(s, e, 0.047, material, detail);
-    const forearm = capsuleBetween(e, w, 0.04, material, detail);
-    // 1.3 paints the tattoo albedo onto this mesh; the typing rig moves it.
+    const s = side === 1 ? ARM_JOINTS.shoulder : mirror(ARM_JOINTS.shoulder);
+    const e = side === 1 ? ARM_JOINTS.elbow : mirror(ARM_JOINTS.elbow);
+    const w = side === 1 ? ARM_JOINTS.wrist : mirror(ARM_JOINTS.wrist);
+    const upper = capsuleBetween(s, e, 0.047, tee, detail);
+    const forearm = capsuleBetween(
+      e,
+      w,
+      0.04,
+      side === 1 ? (palette?.forearmR ?? skin) : skin,
+      detail,
+    );
     forearm.name = side === 1 ? "forearmR" : "forearmL";
     group.add(upper, forearm);
 
     // Hand: palm + four curled fingers + thumb, resting at keyboard height.
+    // Fingers are named so the 1.3 typing rig can tap them individually.
     const hand = new Group();
     hand.name = side === 1 ? "handR" : "handL";
-    const palm = new Mesh(new BoxGeometry(0.075, 0.028, 0.085), material);
+    const palm = new Mesh(new BoxGeometry(0.075, 0.028, 0.085), skin);
     palm.position.copy(w).add(new Vector3(-0.015 * side, -0.012, -0.045));
     palm.rotation.set(-0.25, 0, 0);
     hand.add(palm);
@@ -147,13 +177,15 @@ export function buildBody({ detail, material }: BuilderOptions): Group {
         .clone()
         .add(new Vector3((f - 1.5) * 0.019 * side, -0.004, -0.045));
       const tip = root.clone().add(new Vector3(0, -0.028, -0.03));
-      hand.add(capsuleBetween(root, tip, 0.0095, material, detail));
+      const finger = capsuleBetween(root, tip, 0.0095, skin, detail);
+      finger.name = `finger${side === 1 ? "R" : "L"}${f}`;
+      hand.add(finger);
     }
     const thumbRoot = palm.position
       .clone()
       .add(new Vector3(0.042 * side, -0.006, -0.01));
     const thumbTip = thumbRoot.clone().add(new Vector3(0.012 * side, -0.024, -0.03));
-    hand.add(capsuleBetween(thumbRoot, thumbTip, 0.011, material, detail));
+    hand.add(capsuleBetween(thumbRoot, thumbTip, 0.011, skin, detail));
     group.add(hand);
   }
 
@@ -165,11 +197,11 @@ export function buildBody({ detail, material }: BuilderOptions): Group {
     const h = side === 1 ? hipJ : mirror(hipJ);
     const k = side === 1 ? knee : mirror(knee);
     const a = side === 1 ? ankle : mirror(ankle);
-    group.add(capsuleBetween(h, k, 0.066, material, detail));
-    group.add(capsuleBetween(k, a, 0.047, material, detail));
+    group.add(capsuleBetween(h, k, 0.066, jeans, detail));
+    group.add(capsuleBetween(k, a, 0.047, jeans, detail));
     const sneaker = new Mesh(
       new BoxGeometry(0.085, 0.065, 0.21),
-      material,
+      sneakerMat,
     );
     sneaker.position.set(a.x, 0.038, a.z - 0.055);
     group.add(sneaker);
