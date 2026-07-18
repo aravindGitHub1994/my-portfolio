@@ -78,10 +78,11 @@ export function buildBeard({ seed, detail, material }: BuilderOptions): Group {
   beard.scale.set(0.9, 0.9, 1.0);
   group.add(beard);
 
-  // Mustache — proud of the tucked shell, just behind the nose tip; the
-  // stronger tilt kicks its lower edge out over the (absent) mouth.
-  const mustache = new Mesh(new BoxGeometry(0.058, 0.02, 0.03), material);
-  mustache.position.set(0, cy - 0.046, -0.118);
+  // Mustache — front face just behind the nose tip; deep enough to root
+  // into the skull (the tucked shell no longer backs it — a shallow box
+  // floated in mid-air at side angles, gate-1.2 follow-up).
+  const mustache = new Mesh(new BoxGeometry(0.058, 0.02, 0.052), material);
+  mustache.position.set(0, cy - 0.046, -0.108);
   mustache.rotation.x = 0.28;
   group.add(mustache);
 
