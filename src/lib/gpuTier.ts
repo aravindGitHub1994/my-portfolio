@@ -1,15 +1,15 @@
-// Fidelity tier selection (ADR-009 §3, superseding ADR-005 §3 / ADR-006 §8).
-// The tier is HIGH BY DEFAULT — the old device-class heuristic (mobile GPU,
-// coarse pointer, low deviceMemory, integrated Intel) guessed wrong on real
-// hardware, including the owner's. Only *correctness* gates stay pre-emptive;
-// *performance* is handled at runtime by an FPS watchdog (LensRoot) that
-// drops an auto-selected high to low and offers "Back to full":
-//   high   — full MeshTransmissionMaterial refraction (the default)
-//   low    — faux-glass (no per-frame transmission buffer, capped DPR);
-//            also the pre-emptive floor for software rasterizers
-//            (SwiftShader/llvmpipe), which render correctly but never fast
-//   static — no motion, render-on-demand (prefers-reduced-motion)
-//   none   — WebGL unavailable; no canvas at all
+// Fidelity tier selection (ADR-012 §8, carrying ADR-009 §3's high-by-default
+// principle forward from the retired Lens). The old device-class heuristic
+// (mobile GPU, coarse pointer, low deviceMemory, integrated Intel) guessed
+// wrong on real hardware, including the owner's. Only *correctness* gates
+// stay pre-emptive; *performance* is handled at runtime by an FPS watchdog
+// (slice 7.2 rewires it for the Workstation) that asks before downgrading:
+//   high   — full effect stack (the default)
+//   low    — reduced garnish, capped DPR; also the pre-emptive floor for
+//            software rasterizers (SwiftShader/llvmpipe), which render
+//            correctly but never fast
+//   static — no motion: the 2D floor (prefers-reduced-motion)
+//   none   — WebGL unavailable; no canvas at all (floor again)
 //
 // Deliberately dependency-free: detect-gpu et al. fetch benchmark data from a
 // CDN at runtime, which the CSP (connect-src 'self') forbids. Calibration

@@ -52,6 +52,16 @@
   60%, 100% { transform: translateY(100%); }
 }
 
+/* While the Workstation experience is mounted (WorkstationRoot stamps
+   data-experience on <html>), the static floor and footer leave the flow so
+   the runway owns the page's scroll height. The prerendered HTML always
+   ships the floor — only capable clients ever hide it (ADR-012 §9: the
+   floor is the fallback/SEO surface). */
+html[data-experience] [data-floor],
+html[data-experience] footer {
+  display: none;
+}
+
 /* Custom cursor active: hide the native one (pointer-fine devices only) */
 html.has-custom-cursor,
 html.has-custom-cursor * {
