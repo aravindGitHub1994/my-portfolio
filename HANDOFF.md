@@ -28,7 +28,7 @@
 - **Slice 1.1 committed** (same commit as this handoff update):
   `src/components/workstation/character/` — `buildBody.ts` (capsule/lathe
   seated pose, named `chest`/`forearmR` nodes), `buildHead.ts` (brow/nose/
-  cheek planes, eyelid blink plane, ears, earbuds, left hoop earring),
+  cheek planes, eyelid blink plane, ears, earbuds, hoop earrings both ears),
   `buildHair.ts` (scalp cap + 3 instanced tube-curl archetypes, seeded
   scatter, faded sides), `buildBeard.ts` (displaced lower-sphere shell +
   mustache), `idle.ts` (breathing/blink/sway driver, zero per-frame
@@ -39,8 +39,7 @@
 - AFK gate for 1.1 verified 2026-07-18: `npm run lint` clean,
   `npm run build` static export green.
 - Coordinate conventions (concept sheets, `assets-src/workstation/`): figure
-  faces **-Z** (screen/desk at negative Z), so the figure's left = **-X** —
-  earring sits at -X. Head group pivots at `NECK_PIVOT` (buildBody export);
+  faces **-Z** (screen/desk at negative Z), so the figure's left = **-X**. Head group pivots at `NECK_PIVOT` (buildBody export);
   skull local frame in `buildHead` (`SKULL_CENTER`/`SKULL_RADIUS`).
 - Poly budget: estimated ~51 k tris at high detail (target < 60 k, plan
   §1.1); `Figure.tsx` logs the actual count in the harness console — record
@@ -52,6 +51,10 @@
 
 ## Unresolved Threads
 
+- **Gate 1.2 iteration 1 applied** (owner defect list 2026-07-18): earrings
+  now both ears, nose x-tilt flipped (+0.22, tip out), beard enlarged past
+  skull radius + dropped/pushed forward with doubled noise amp so it reads
+  as a volume. One iteration remains before the falsification clause.
 - **HITL gate 1.2 — do not pass autonomously.** Owner QA:
   `npm run dev` → `localhost:3004/?scene=character` (checklist in plan
   §1.2: silhouette, no uncanny read, curls at mid-shot, earring/earbuds in

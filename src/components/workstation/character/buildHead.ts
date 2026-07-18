@@ -1,6 +1,6 @@
 // Head builder (plan-0009 §1.1): simplified planes — brow, nose, cheekbones,
 // no eyes/mouth detail (the face is never the hero, ADR-012 §2). Signature
-// features that must read at mid-shot: hoop earring (left), earbuds (both).
+// features that must read at mid-shot: hoop earrings (both), earbuds (both).
 // Built in head-local space around the neck pivot so the idle sway rotates
 // everything together. Pure seeded function; no canvas needed.
 
@@ -37,10 +37,11 @@ export function buildHead({ detail, material }: BuilderOptions): Group {
   brow.rotation.x = 0.25;
   group.add(brow);
 
-  // Nose — a simple wedge, read in profile.
+  // Nose — a simple wedge, read in profile. Positive x-tilt pushes the
+  // tip (bottom) outward toward -Z; negative reads as an upturned snout.
   const nose = new Mesh(new BoxGeometry(0.024, 0.055, 0.036), material);
   nose.position.set(0, cy - 0.008, -0.104);
-  nose.rotation.x = -0.22;
+  nose.rotation.x = 0.22;
   group.add(nose);
 
   // Cheekbones — flattened spheres; enough form for the key light to catch.
@@ -80,16 +81,17 @@ export function buildHead({ detail, material }: BuilderOptions): Group {
     group.add(bud);
   }
 
-  // Hoop earring — LEFT ear only. Facing -Z puts the figure's left at -X
-  // (forward × up = right = +X).
-  const hoop = new Mesh(
-    new TorusGeometry(0.016, 0.0032, 6, detail === "high" ? 20 : 10),
-    material,
-  );
-  hoop.name = "earring";
-  hoop.position.set(-0.102, cy - 0.033, 0.008);
-  hoop.rotation.y = Math.PI / 2; // hang in the sagittal plane
-  group.add(hoop);
+  // Hoop earrings — both ears (gate-1.2 note; -X is the figure's left).
+  for (const side of [1, -1]) {
+    const hoop = new Mesh(
+      new TorusGeometry(0.016, 0.0032, 6, detail === "high" ? 20 : 10),
+      material,
+    );
+    hoop.name = "earring";
+    hoop.position.set(0.102 * side, cy - 0.033, 0.008);
+    hoop.rotation.y = Math.PI / 2; // hang in the sagittal plane
+    group.add(hoop);
+  }
 
   // Ear-canal stems for the buds (tiny, but they read in profile).
   for (const side of [1, -1]) {

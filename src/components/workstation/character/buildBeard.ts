@@ -22,9 +22,11 @@ export function buildBeard({ seed, detail, material }: BuilderOptions): Group {
   const cy = SKULL_CENTER.y;
 
   // Jaw shell — lower part of a sphere, full-beard coverage ear to ear,
-  // rounded below the chin like the concept sheets.
+  // rounded below the chin like the concept sheets. Radius exceeds the
+  // skull's (0.105) so the beard reads as its own volume, not skin-tight;
+  // the x-scale below tucks the sides back in so ears/earrings stay clear.
   const shell = new SphereGeometry(
-    0.102,
+    0.112,
     detail === "high" ? 28 : 14,
     detail === "high" ? 20 : 10,
     0,
@@ -36,7 +38,7 @@ export function buildBeard({ seed, detail, material }: BuilderOptions): Group {
   // Surface break-up: displace along the vertex normal.
   const pos = shell.attributes.position;
   const nor = shell.attributes.normal;
-  const amp = 0.0075;
+  const amp = 0.013;
   for (let i = 0; i < pos.count; i++) {
     const n = surfaceNoise(pos.getX(i), pos.getY(i), pos.getZ(i), seed % 97);
     pos.setXYZ(
@@ -48,14 +50,17 @@ export function buildBeard({ seed, detail, material }: BuilderOptions): Group {
   }
   shell.computeVertexNormals();
 
+  // Dropped low and pushed forward: ~20 mm proud of the skull at the chin
+  // front and below the jaw, flush at the sides (x-extent 0.096 vs the
+  // earrings' inner edge at 0.099 — clearance survives the noise amp).
   const beard = new Mesh(shell, material);
-  beard.position.set(0, cy - 0.028, -0.012);
-  beard.scale.set(0.92, 0.95, 0.98);
+  beard.position.set(0, cy - 0.03, -0.01);
+  beard.scale.set(0.86, 0.9, 0.98);
   group.add(beard);
 
-  // Mustache — small bar above the beard line; no mouth detail beneath.
-  const mustache = new Mesh(new BoxGeometry(0.052, 0.016, 0.022), material);
-  mustache.position.set(0, cy - 0.045, -0.098);
+  // Mustache — sits proud of the beard's front face, tucked under the nose.
+  const mustache = new Mesh(new BoxGeometry(0.058, 0.018, 0.024), material);
+  mustache.position.set(0, cy - 0.048, -0.11);
   mustache.rotation.x = 0.15;
   group.add(mustache);
 
