@@ -39,11 +39,47 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.875rem;
 
+  /* ---- Win98 shell chrome (ADR-012 §10 pastiche, plan-0009 §3.2).
+     Effect palette for the diegetic shell only — the site's own UI keeps
+     the Electric Dark tokens above. ---- */
+  --color-w98-desktop: #2f7f78;
+  --color-w98-chrome: #c0c0c0;
+  --color-w98-chrome-light: #e8e8e8;
+  --color-w98-chrome-dark: #7a7a7a;
+  --color-w98-chrome-darker: #3c3c3c;
+  --color-w98-title-a: #1a2e6e;
+  --color-w98-title-b: #3a6ea5;
+  --color-w98-title-inactive-a: #6e6e6e;
+  --color-w98-title-inactive-b: #9a9a9a;
+  --color-w98-ink: #111111;
+  --color-w98-ink-invert: #f4f4f4;
+  --color-w98-field: #ffffff;
+  --color-w98-select: #1a2e6e;
+  --color-w98-amber: #ffb347;
+
+  /* Openly-licensed period faces (public/fonts/, OFL — see LICENSES.md). */
+  --font-w98: "Silkscreen", Verdana, Geneva, sans-serif;
+  --font-w98-mono: "VT323", "Courier New", monospace;
+
   /* ---- Motion ---- */
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* ---- Keyframes ---- */
   --animate-scroll-cue: scroll-cue 2.2s var(--ease-out-soft) infinite;
+}
+
+/* Win98 shell faces — period-style open fonts (ADR-012 §10). */
+@font-face {
+  font-family: "Silkscreen";
+  src: url("/fonts/Silkscreen-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "VT323";
+  src: url("/fonts/VT323-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
 }
 
 /* Hero scroll indicator — a light pulse running down a hairline */

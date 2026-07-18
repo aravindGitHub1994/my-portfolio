@@ -1,0 +1,99 @@
+/* Win98 shell chrome (plan-0009 §3.2). Bevels, title bars, fields — all
+   from the w98 tokens in globals.css (no raw hex here). The shell is the
+   diegetic OS surface; the site's own UI never uses these classes. */
+
+.w98-raised {
+  background: var(--color-w98-chrome);
+  box-shadow:
+    inset 1px 1px 0 var(--color-w98-chrome-light),
+    inset -1px -1px 0 var(--color-w98-chrome-darker),
+    inset 2px 2px 0 var(--color-w98-chrome),
+    inset -2px -2px 0 var(--color-w98-chrome-dark);
+}
+
+.w98-sunken {
+  background: var(--color-w98-chrome);
+  box-shadow:
+    inset 1px 1px 0 var(--color-w98-chrome-darker),
+    inset -1px -1px 0 var(--color-w98-chrome-light),
+    inset 2px 2px 0 var(--color-w98-chrome-dark),
+    inset -2px -2px 0 var(--color-w98-chrome);
+}
+
+.w98-field {
+  background: var(--color-w98-field);
+  box-shadow:
+    inset 1px 1px 0 var(--color-w98-chrome-dark),
+    inset -1px -1px 0 var(--color-w98-chrome-light),
+    inset 2px 2px 0 var(--color-w98-chrome-darker);
+}
+
+.w98-titlebar {
+  background: linear-gradient(
+    90deg,
+    var(--color-w98-title-a),
+    var(--color-w98-title-b)
+  );
+  color: var(--color-w98-ink-invert);
+}
+
+.w98-titlebar-inactive {
+  background: linear-gradient(
+    90deg,
+    var(--color-w98-title-inactive-a),
+    var(--color-w98-title-inactive-b)
+  );
+  color: var(--color-w98-chrome-light);
+}
+
+.w98-btn {
+  background: var(--color-w98-chrome);
+  color: var(--color-w98-ink);
+  box-shadow:
+    inset 1px 1px 0 var(--color-w98-chrome-light),
+    inset -1px -1px 0 var(--color-w98-chrome-darker),
+    inset -2px -2px 0 var(--color-w98-chrome-dark);
+  user-select: none;
+}
+
+.w98-btn:active,
+.w98-btn[data-pressed="true"] {
+  box-shadow:
+    inset 1px 1px 0 var(--color-w98-chrome-darker),
+    inset -1px -1px 0 var(--color-w98-chrome-light),
+    inset 2px 2px 0 var(--color-w98-chrome-dark);
+}
+
+.w98-btn:focus-visible,
+.w98-icon:focus-visible {
+  outline: 1px dotted var(--color-w98-ink);
+  outline-offset: -4px;
+}
+
+.w98-icon {
+  color: var(--color-w98-ink-invert);
+  user-select: none;
+}
+
+.w98-icon[data-selected="true"] .w98-icon-label {
+  background: var(--color-w98-select);
+}
+
+.w98-menu-item:hover,
+.w98-menu-item:focus-visible {
+  background: var(--color-w98-select);
+  color: var(--color-w98-ink-invert);
+  outline: none;
+}
+
+/* SE resize grip — three diagonal steps. */
+.w98-grip {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--color-w98-chrome-light) 0 1px,
+    var(--color-w98-chrome-dark) 1px 2px,
+    transparent 2px 4px
+  );
+  cursor: nwse-resize;
+  touch-action: none;
+}

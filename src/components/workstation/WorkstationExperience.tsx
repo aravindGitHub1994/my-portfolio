@@ -6,6 +6,7 @@ import { experienceState } from "@/lib/experienceState";
 import { RUNWAY_LENGTH_VH } from "@/lib/chapters";
 import { Choreography } from "./choreography/Choreography";
 import { WorkstationCanvas } from "./WorkstationCanvas";
+import { ShellHarness } from "@/components/win98/shell/Desktop";
 
 /**
  * Tier router for the Workstation experience (plan-0009 §0.2). Reached only
@@ -54,7 +55,13 @@ export default function WorkstationExperience() {
   if (scene !== null) {
     return (
       <>
-        <WorkstationCanvas tier={detection.tier} scene={scene} />
+        {/* "shell" is the 3.2 DOM harness (no canvas, real semantics);
+            every other name mounts an isolated canvas scene. */}
+        {scene === "shell" ? (
+          <ShellHarness />
+        ) : (
+          <WorkstationCanvas tier={detection.tier} scene={scene} />
+        )}
         <p className="pointer-events-none fixed top-4 left-4 z-50 font-mono text-xs tracking-wide text-ink-subtle">
           harness · scene: {scene} · tier: {detection.tier}
         </p>

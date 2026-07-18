@@ -200,6 +200,18 @@ export function moveWindow(id: string, x: number, y: number): void {
   notify();
 }
 
+/** Smallest usable window (title bar + a sliver of content). */
+export const WINDOW_MIN_W = 160;
+export const WINDOW_MIN_H = 110;
+
+export function resizeWindow(id: string, width: number, height: number): void {
+  const win = win98State.windows.find((w) => w.id === id);
+  if (!win) return;
+  win.width = Math.min(Math.max(width, WINDOW_MIN_W), DESKTOP_W);
+  win.height = Math.min(Math.max(height, WINDOW_MIN_H), DESKTOP_H);
+  notify();
+}
+
 export function setStartMenuOpen(open: boolean): void {
   if (win98State.startMenuOpen === open) return;
   win98State.startMenuOpen = open;
