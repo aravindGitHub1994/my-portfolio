@@ -49,6 +49,15 @@
 - Session style note: owner enabled `/caveman` (terse chat) mid-session —
   conversation-scoped, not a repo convention.
 
+- **GATE 1.2 PASSED** (owner, 2026-07-18) after: mustache rooted into the
+  skull (`615a54c`), cheek mounds removed (`2d1293f`).
+- **Slice 2.1 (props + room) built**: `src/components/workstation/builders/`
+  — materials.ts (canvas-baked, seeded, ≤1024², no Microsoft marks) + 14
+  prop builders + `RoomScene.tsx` (`?scene=room` harness; layout constants
+  live there). CD spines pull resume EDUCATION credentials. Cables are
+  world-anchored to the RoomScene layout. Browser-verified: dressed set +
+  dusk window both read.
+
 ## Unresolved Threads
 
 - **Gate 1.2 iteration 1** (owner defects 2026-07-18): earrings both ears,
