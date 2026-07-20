@@ -13,6 +13,7 @@ import { CAPABILITIES } from "@/lib/capabilities";
 import { PROJECTS } from "@/lib/projects";
 import { closeWindow, type Win98Window } from "@/lib/win98State";
 import { buildDrawTimeline, spawnPackets } from "@/lib/diagramAnimation";
+import { playErrorDing } from "@/lib/audio";
 import { InlineDiagram } from "@/components/InlineDiagram";
 import { IEFrame } from "./IEFrame";
 
@@ -91,6 +92,15 @@ export function ProjectWindow({ win }: { win: Win98Window }) {
     },
     [],
   );
+
+  // Error ding (6.1) on the "unfinished copy" dialog — the shell's one
+  // modal, and the only place the era's warning bell belongs. Effect, not
+  // a render-time call: the dialog is a conditional return below.
+  const draftDialogOpen =
+    project?.status === "in-progress" && !draftAcknowledged;
+  useEffect(() => {
+    if (draftDialogOpen) playErrorDing();
+  }, [draftDialogOpen]);
 
   if (!project) {
     return (

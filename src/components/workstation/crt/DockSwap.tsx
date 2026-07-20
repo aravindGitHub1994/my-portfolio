@@ -20,6 +20,7 @@ import { useLenisRef } from "@/components/LenisProvider";
 import { experienceState } from "@/lib/experienceState";
 import { REST_POINTS } from "@/lib/chapters";
 import { allWindowsIdle, DESKTOP_H, DESKTOP_W } from "@/lib/win98State";
+import { setHumDucked } from "@/lib/audio";
 import { useWin98Version } from "@/components/win98/shell/useWin98";
 import { Desktop } from "@/components/win98/shell/Desktop";
 import { computeDockRect, type DockRect } from "./dockAlignment";
@@ -80,6 +81,9 @@ export function DockSwap() {
         else if (armed && away < ENGAGE_EPS) {
           armed = false;
           experienceState.docked = true;
+          // Room bed ducks while docked (§6.1): reading, not cinema. Rides
+          // the docked flag itself so it can never desync from the dock.
+          setHumDucked(true);
           lenis?.stop();
           setRect(computeDockRect(window.innerWidth, window.innerHeight));
           setPhase("in");
@@ -92,6 +96,7 @@ export function DockSwap() {
       cancelAnimationFrame(raf);
       if (experienceState.docked) {
         experienceState.docked = false;
+        setHumDucked(false);
         lenis?.start();
       }
     };
@@ -130,6 +135,7 @@ export function DockSwap() {
     const undock = () => {
       if (!experienceState.docked || !allWindowsIdle()) return;
       experienceState.docked = false;
+      setHumDucked(false);
       lenisRef?.current?.start();
       setPhase("out");
     };

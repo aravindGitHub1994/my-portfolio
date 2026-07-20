@@ -2,7 +2,7 @@
 
 // Chapter 0 entry overlay (plan-0009 §4.1, ADR-012 §5): the site opens
 // dark; pressing the glowing power button is the visitor's one deliberate
-// gesture — it will unlock audio (6.1 hooks here) and starts the boot
+// gesture — it unlocks audio (6.1) and starts the boot
 // sequencer. Scroll stays parked (Lenis stopped) until the desktop
 // settles; ch. 0 auto-plays and never scrubs. Returning visitors
 // (localStorage) get a skip affordance.
@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLenisRef } from "@/components/LenisProvider";
 import { startBoot, type BootController } from "@/lib/bootSequencer";
+import { unlockAudio } from "@/lib/audio";
 
 const SEEN_KEY = "w98-intro-seen";
 
@@ -41,6 +42,12 @@ export function PowerOn() {
   const press = () => {
     if (stage !== "idle") return;
     window.localStorage.setItem(SEEN_KEY, "1");
+    // Unlock BEFORE startBoot: the sequencer synchronously sets phase
+    // "post", which is what fires the degauss/beep cues — with no context
+    // yet they would land silently. Must also stay synchronous in the
+    // handler (no await ahead of it) or the gesture goes stale and the
+    // autoplay policy refuses the context.
+    unlockAudio();
     setStage("booting");
     boot.current = startBoot();
     void boot.current.done.then(finish);
@@ -48,6 +55,9 @@ export function PowerOn() {
 
   const skip = () => {
     window.localStorage.setItem(SEEN_KEY, "1");
+    // Its own gesture (returning visitors can click skip without ever
+    // pressing power) — the shell still needs audio. Idempotent.
+    unlockAudio();
     if (boot.current) boot.current.skip();
     else startBoot().skip();
     finish();

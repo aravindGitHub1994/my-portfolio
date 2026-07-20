@@ -15,6 +15,7 @@ import {
   setStartMenuOpen,
   win98State,
 } from "@/lib/win98State";
+import { playClick } from "@/lib/audio";
 import { useWin98Version } from "./useWin98";
 import { Boot } from "../apps/Boot";
 import { Icon } from "./Icon";
@@ -47,6 +48,12 @@ export function Desktop({ scale = 1 }: { scale?: number }) {
       className="relative overflow-hidden bg-w98-desktop"
       style={{ width: DESKTOP_W, height: DESKTOP_H }}
       onPointerDown={(e) => {
+        // Delegated UI click (6.1) — one listener for the whole shell
+        // beats an onClick audio call in every button. Pointerdown, not
+        // click, so the tick lands with the press like the era's did.
+        if (e.target instanceof Element && e.target.closest("button")) {
+          playClick();
+        }
         if (e.target === stage.current) {
           setSelectedIcon(null);
           setMenu(null);

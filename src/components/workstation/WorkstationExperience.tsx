@@ -10,6 +10,8 @@ import { PowerOn } from "./PowerOn";
 import { TitleBeats } from "./TitleBeats";
 import { SignOff } from "./SignOff";
 import { DockSwap } from "./crt/DockSwap";
+import { MuteToggle } from "./MuteToggle";
+import { attachShellCues, disposeAudio, loadMutePreference } from "@/lib/audio";
 import { ShellHarness } from "@/components/win98/shell/Desktop";
 
 /**
@@ -43,6 +45,21 @@ export default function WorkstationExperience() {
   useEffect(() => {
     experienceState.fidelityTier = detection.tier;
   }, [detection]);
+
+  // Audio (6.1). Living here — inside the tier gate — is what gives the
+  // spec's "static-floor visitors get no engine at all" for free: this
+  // component returns null for tier "static"/"none", so nothing below ever
+  // mounts and no AudioContext is ever constructed. The cues only observe
+  // win98State; the context itself waits for PowerOn's gesture.
+  useEffect(() => {
+    if (!mounts) return;
+    loadMutePreference();
+    const detach = attachShellCues();
+    return () => {
+      detach();
+      disposeAudio();
+    };
+  }, [mounts]);
 
   // While the experience is mounted the floor + footer leave the flow; the
   // attribute (not unmounting) keeps the prerendered floor markup intact.
@@ -84,6 +101,8 @@ export default function WorkstationExperience() {
       <DockSwap />
       {/* Ch. 5 contact layer — the journey's final rest point (5.3). */}
       <SignOff />
+      {/* Master mute (6.1) — always reachable, including during boot. */}
+      <MuteToggle />
       {/* Scroll runway — invisible height the journey scrubs against. */}
       <div
         ref={runway}
