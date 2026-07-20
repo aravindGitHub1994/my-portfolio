@@ -8,6 +8,7 @@ import { Choreography } from "./choreography/Choreography";
 import { WorkstationCanvas } from "./WorkstationCanvas";
 import { PowerOn } from "./PowerOn";
 import { TitleBeats } from "./TitleBeats";
+import { SignOff } from "./SignOff";
 import { DockSwap } from "./crt/DockSwap";
 import { ShellHarness } from "@/components/win98/shell/Desktop";
 
@@ -81,6 +82,8 @@ export default function WorkstationExperience() {
       <TitleBeats />
       {/* Ch. 4 painter→DOM swap at the dock rest point (4.2). */}
       <DockSwap />
+      {/* Ch. 5 contact layer — the journey's final rest point (5.3). */}
+      <SignOff />
       {/* Scroll runway — invisible height the journey scrubs against. */}
       <div
         ref={runway}

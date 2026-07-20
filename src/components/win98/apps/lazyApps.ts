@@ -13,6 +13,7 @@ type Loader = () => Promise<unknown>;
 
 const load51: Loader = () => import("./register51");
 const load52: Loader = () => import("./register52");
+const load53: Loader = () => import("./register53");
 
 const LOADERS: Record<string, Loader> = {
   explorer: load51,
@@ -23,6 +24,9 @@ const LOADERS: Record<string, Loader> = {
   wordpad: load52,
   notepad: load52,
   "add-remove": load52,
+  outlook: load53,
+  "dialup-linkedin": load53,
+  "dialup-github": load53,
 };
 
 export function hasAppLoader(appId: string): boolean {
