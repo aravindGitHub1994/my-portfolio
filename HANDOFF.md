@@ -1,9 +1,10 @@
-# HANDOFF — Win98 Workstation redesign (2026-07-20, session 9 wrap)
+# HANDOFF — Win98 Workstation redesign (2026-07-20, session 10 wrap)
 
 > For the next agent session. **Gates 1.2, 2.3 and 4.3 PASSED** (owner).
 > P3 + P4 complete and owner-verified. **P5 CLOSED** at 5.3 (`2f22f6e`).
-> **P6 CLOSED this session**: 6.1 (`2cb71f8`) audio engine, 6.2
-> (`8aed018`) tier-2/3 texture. Next: **P7 mobile/perf** (7.1 → 7.2) /
+> **P6 CLOSED**: 6.1 (`2cb71f8`), 6.2 (`8aed018`).
+> **7.1 CLOSED this session**: `f7aead3` (touch shell) + `0085af6`
+> (dock/DRS/fallback). Next: **7.2 watchdog + shed ladder** /
 > P8 eggs (cuttable) / 9.1 docs → final HITL gate 9.2.
 > Never pass gates autonomously.
 
@@ -15,8 +16,37 @@
   (dock swap; stuck-dock defect + phase-machine fix and keyboard undock
   documented in that commit message) · **gate 4.3 PASSED** on a served
   production build of `e66cd75` · 5.1 `95bbf76` · 5.2 `493d4ea` ·
-  5.3 `2f22f6e` · 6.1 `2cb71f8` · **6.2 `8aed018`**.
-- **Session 9 (this one) was a recovery**, not a fresh slice: session 8
+  5.3 `2f22f6e` · 6.1 `2cb71f8` · 6.2 `8aed018` · 7.1a `f7aead3` ·
+  **7.1b `0085af6`**.
+- **Session 10 (this one) was interrupted three times mid-slice** and
+  recovered each time by the recipe below. It holds: the working tree
+  survives session death, so the cut point is always "what is on disk vs
+  what the last message claimed". Twice the narration was ahead of the
+  disk. **Typecheck first, then diff the claim against `git status`.**
+  Committing verified halves (7.1a) rather than carrying one large
+  uncommitted tree is what made the third interruption cost nothing.
+- **P7 (7.1 closed, 7.2 open):**
+  - **7.1a `f7aead3`** — `shellLayout.ts` is the ONE answer to "is this a
+    thumb-driven shell, and what virtual space does it get?", pure so the
+    DOM shell and the dock aligner cannot disagree. On touch the shell
+    does **not** shrink the 640×480 space to fit (scale 0.56 renders 8px
+    chrome type at ~4.5 css px — illegible); it holds the scale near 1
+    and makes the VIRTUAL SPACE portrait (~340 units wide). `DESKTOP_W/H`
+    are untouched — they are the painter's CRT texture size and mean
+    something different. Layout travels by **context** (a view fact);
+    **solo** lives in the store (so every open path obeys it).
+  - **7.1b `0085af6`** — dock touch branch (touch never docks to the CRT
+    quad; `DockRect` carries `virtualW/H`), DRS, and the in-app-browser
+    fallback. See both commit messages for the reasoning; they are long
+    on purpose.
+- **Two 7.1 details that will look wrong and are not:**
+  - Touch controls are the **full** `touchUnit` and the *bar grows* to
+    hold one — not controls inset inside an era-sized bar. That inset is
+    exactly what measured 38.1 px against a 44 px requirement mid-session.
+  - DRS seeds its EMA from the frame **budget**, not the first delta.
+    The first frame carries shader compilation; seeding from it starts
+    the average ~10× high and spends a visible dip-and-recover.
+- **Session 9 was also a recovery**, not a fresh slice: session 8
   died mid-6.2 with the work ~95 % written. Sole damage was one
   unresolved identifier — `AudioTextures.tsx` called `NECK_PIVOT` where
   the `HEAD_FOCUS` export added in the same diff was meant. Intent was
@@ -117,6 +147,18 @@
 
 ## Unresolved Threads
 
+- **The mobile shell has never been touched by a human**, and never run
+  on a real phone — only headless Chromium at 360×640 / 390×844 with a
+  *fine* pointer (`NARROW_MAX_W` is what makes that reachable). Untested
+  by construction: real touch-drag on the swipe-to-close, iOS Safari's
+  dynamic viewport (`innerHeight` changes as the URL bar hides — the
+  resize listener will re-layout, but whether that reads as jarring is an
+  eyes question), and the LinkedIn webview itself. Carry into 9.2.
+- **7.1 items deliberately not done** (plan §7.1 lists them; they are
+  app-internal, not shell): Explorer/tree panes collapsing to stacked
+  lists, touch scrub through Lenis, and app-internal type still at the
+  desktop's 9px. Doing these blind would be guessing at content that has
+  never been seen on a phone — better bundled with 9.2's owner pass.
 - **P6 audio has never been heard by a human.** Everything shipped is
   verified structurally (typecheck/lint/build, event wiring) — no
   headless check can confirm the palette actually *sounds* right.
@@ -136,7 +178,7 @@
   email; owner has been told twice how to fix it
   (`git config user.email`) and has not acted — **leave it**, and keep
   it consistent with the rest of the branch rather than amending.
-- **P7 pointers:** `scene/sheddable.ts`'s `SHED_ORDER` already lists
+- **P7.2 pointers:** `scene/sheddable.ts`'s `SHED_ORDER` already lists
   `audioMusic` / `audioTexture` (audio garnish sheds *before* the
   visual tiers it pairs with — silence costs the visitor less than a
   dimmer room), but **7.2's `workstation/fidelity.ts` ladder does not
@@ -163,13 +205,17 @@
 
 ## Recommended Next Steps
 
-- [ ] **7.1 mobile adaptation** — maximized single-window mode, touch
-      targets ≥ 44 px, DRS (`src/lib/dynamicResolution.ts`, new),
-      `dockAlignment.ts` touch branch, LinkedIn in-app browser smoke
-      path. Acceptance names 360×640 and 390×844 viewports explicitly.
+- [x] ~~**7.1 mobile adaptation**~~ — done (`f7aead3` + `0085af6`);
+      both acceptance viewports measured, desktop unregressed. The three
+      app-internal leftovers are listed under Unresolved Threads.
 - [ ] **7.2 watchdog + shed ladder + perf sweep** — build
       `workstation/fidelity.ts` and make it the consumer of the
       existing `SHED_ORDER`; instancing/texture/draw-call audit.
+      **DRS is already built and is the ladder's last rung before the
+      static floor** (`dynamicResolution.ts`, mounted journey-only in
+      `WorkstationCanvas`): 7.2 wires the ladder *to* it rather than
+      inventing its own render-scale knob. Its `DRS_MIN` is the "DRS
+      floor" rung named in the plan.
 - [ ] P8 eggs (cuttable — `playEggStinger` is waiting), then 9.1 docs
       reconcile.
 - [ ] **HITL gate 9.2** — owner final QA, all tiers + mobile → merge.
