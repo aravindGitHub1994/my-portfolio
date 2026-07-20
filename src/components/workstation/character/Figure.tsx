@@ -21,6 +21,7 @@ import { buildBeard } from "./buildBeard";
 import { buildWardrobe } from "./buildWardrobe";
 import { createSkinMaterial, createForearmMaterial } from "./skinTexture";
 import { createIdle, type IdleUpdate } from "./idle";
+import { effectsState } from "../scene/sheddable";
 import { createTyping, type TypingUpdate } from "./typing";
 
 /**
@@ -146,8 +147,18 @@ export function Figure({
     };
   }, [figure, seed, detail]);
 
+  // Half-rate idle when the ladder has shed `idleDensity` (§7.2). The
+  // driver is still fed the true elapsed time, so breath and sway stay on
+  // their real periods and simply update in coarser steps — skipping the
+  // *call* rather than slowing the *clock* is what keeps a shed figure
+  // from drifting out of phase with the typing rig beside it.
+  const oddFrame = useRef(false);
+
   useFrame(({ clock }, delta) => {
-    idle.current?.(clock.elapsedTime, delta);
+    oddFrame.current = !oddFrame.current;
+    if (effectsState.idleDensity || oddFrame.current) {
+      idle.current?.(clock.elapsedTime, delta);
+    }
     typing.current?.(clock.elapsedTime);
   });
 

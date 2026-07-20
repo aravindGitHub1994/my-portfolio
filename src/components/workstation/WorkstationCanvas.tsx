@@ -15,6 +15,7 @@ import {
 import { RoomScene, ROOM_CAMERA } from "./builders/RoomScene";
 import { AudioTextures } from "./AudioTextures";
 import { DynamicResolution } from "./DynamicResolution";
+import { FidelityWatchdog } from "./FidelityWatchdog";
 import { FullScene, FULL_CAMERA } from "./builders/FullScene";
 
 /**
@@ -134,10 +135,15 @@ const HARNESS_SCENES: Record<string, HarnessSceneDef> = {
 
 export function WorkstationCanvas({
   tier,
+  auto = true,
   scene,
   onContextLost,
 }: {
   tier: FidelityTier;
+  /** False when `?tier=` forced the choice — suppresses the §7.2 watchdog.
+   *  Someone who pinned a tier is measuring it, and a ladder stripping the
+   *  scene underneath them would make every reading they take a lie. */
+  auto?: boolean;
   scene: string | null;
   /** Fired when the GL context dies (§7.1 in-app-browser path) so the host
    *  can hand the visitor back the static floor instead of a blank page. */
@@ -181,7 +187,10 @@ export function WorkstationCanvas({
           dpr={tier === "low" ? 1 : [1, 2]}
           onCreated={watchContext}
         >
-          <FullScene autoBoot={false} />
+          {/* §7.2's low-tier pass: the builders have taken a `detail`
+              param since P1, but nothing was threading the actual tier
+              into it — the "low" geometry existed and never shipped. */}
+          <FullScene autoBoot={false} detail={tier === "low" ? "low" : "high"} />
           <JourneyCamera />
           {/* Tier-2/3 texture audio (6.2) — frame reader only, no scene
               contribution; silent until the power press builds a context. */}
@@ -190,6 +199,10 @@ export function WorkstationCanvas({
               inspecting geometry, where a shifting render scale would
               just make them lie about what they are showing. */}
           <DynamicResolution maxDpr={tier === "low" ? 1 : 2} />
+          {/* Shed ladder (7.2) — journey only, auto-tier only. Mounted
+              after DRS so the resolution lever has already reacted by the
+              time the ladder's slower average has anything to say. */}
+          {auto && <FidelityWatchdog />}
         </Canvas>
       )}
     </div>

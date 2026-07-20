@@ -16,10 +16,17 @@ export const effectsState = {
   /** 6.2 tier-2 texture sounds — clacks, drive chatter, fan bed
    *  (audio "texture" bus). Tier-1 cues are never sheddable. */
   audioTexture: true,
+  /** Full-rate idle animation (off = the figure's breath/sway/blink driver
+   *  runs at half rate). Last visual rung before the resolution knobs —
+   *  a stiller figure is the first thing that reads as "the scene broke",
+   *  so it sheds after every atmosphere tier. */
+  idleDensity: true,
 };
 
 // Cheapest-first. The audio garnish sheds before the visual tiers it is
 // paired with: silence costs the visitor less than a dimmer room does.
+// `fidelity.ts` is the consumer — it walks this array and then continues
+// past it to the two rungs that are not flags (DRS floor, static offer).
 export const SHED_ORDER = [
   "audioMusic",
   "dust",
@@ -27,4 +34,7 @@ export const SHED_ORDER = [
   "audioTexture",
   "castFlicker",
   "bloomRich",
+  "idleDensity",
 ] as const;
+
+export type SheddableEffect = (typeof SHED_ORDER)[number];

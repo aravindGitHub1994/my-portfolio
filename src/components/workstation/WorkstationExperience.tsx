@@ -12,6 +12,7 @@ import { TitleBeats } from "./TitleBeats";
 import { SignOff } from "./SignOff";
 import { DockSwap } from "./crt/DockSwap";
 import { MuteToggle } from "./MuteToggle";
+import { FidelityPrompt } from "./FidelityPrompt";
 import { attachShellCues, disposeAudio, loadMutePreference } from "@/lib/audio";
 import { ShellHarness } from "@/components/win98/shell/Desktop";
 
@@ -41,6 +42,11 @@ export default function WorkstationExperience() {
   // the visitor to the static floor. Folded into `mounts` so the
   // data-experience effect below runs its cleanup and puts the floor back
   // in the flow — the failure and the recovery are the same switch.
+  //
+  // §7.2 reuses it for the watchdog's ACCEPTED offer. Not a failure, but
+  // mechanically identical — unmount the canvas, return the floor to the
+  // flow — and one switch with two callers cannot drift the way two
+  // parallel demotion paths would.
   const [failed, setFailed] = useState(false);
   const runway = useRef<HTMLDivElement>(null);
 
@@ -101,6 +107,7 @@ export default function WorkstationExperience() {
     <ExperienceBoundary onFail={() => setFailed(true)}>
       <WorkstationCanvas
         tier={detection.tier}
+        auto={detection.auto}
         scene={null}
         onContextLost={() => setFailed(true)}
       />
@@ -114,6 +121,9 @@ export default function WorkstationExperience() {
       <SignOff />
       {/* Master mute (6.1) — always reachable, including during boot. */}
       <MuteToggle />
+      {/* The ladder's terminal rung (7.2): renders only once the watchdog
+          has exhausted every silent shed and still cannot hold the floor. */}
+      <FidelityPrompt onAccept={() => setFailed(true)} />
       {/* Scroll runway — invisible height the journey scrubs against. */}
       <div
         ref={runway}

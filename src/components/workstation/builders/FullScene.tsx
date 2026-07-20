@@ -1,6 +1,7 @@
 "use client";
 
 import { Figure } from "../character/Figure";
+import type { DetailLevel } from "../character/buildBody";
 import { RoomScene } from "./RoomScene";
 
 /**
@@ -15,11 +16,19 @@ export const FULL_CAMERA = {
   target: [-0.05, 0.9, -0.5] as [number, number, number],
 };
 
-export function FullScene({ autoBoot = true }: { autoBoot?: boolean }) {
+export function FullScene({
+  autoBoot = true,
+  detail = "high",
+}: {
+  autoBoot?: boolean;
+  /** Threaded to both builders together (§7.2): a low-detail room around
+   *  a high-detail figure reads as a bug, not as a budget. */
+  detail?: DetailLevel;
+}) {
   return (
     <>
-      <RoomScene autoBoot={autoBoot} />
-      <Figure />
+      <RoomScene autoBoot={autoBoot} detail={detail} />
+      <Figure detail={detail} />
     </>
   );
 }
