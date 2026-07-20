@@ -5,9 +5,17 @@
 // so redraws are event-driven, never per-frame. No three.js/DOM imports —
 // transitions stay pure and unit-testable without a canvas.
 
-export type BootPhase = "off" | "post" | "splash" | "desktop" | "shutdown";
+export type BootPhase =
+  | "off"
+  | "post"
+  | "splash"
+  | "desktop"
+  | "shutdown"
+  | "bsod";
 
-/** Legal forward order of the boot machine (shutdown is a jump, not a step). */
+/** Legal forward order of the boot machine (shutdown and bsod are jumps,
+ *  not steps — neither appears here, so nextBootPhase refuses to walk into
+ *  or out of them and the 8.1 gag can only be entered/left deliberately). */
 export const BOOT_ORDER: readonly BootPhase[] = [
   "off",
   "post",
@@ -83,6 +91,9 @@ export interface Win98State {
   /** Focused window id (normally the topmost non-minimized one). */
   focusId: string | null;
   startMenuOpen: boolean;
+  /** What the visitor did to earn the 8.1 crash — the BSOD's opening line.
+   *  Null whenever the phase isn't "bsod". */
+  bsodReason: string | null;
   /** Touch shells run ONE window at a time, maximized (ADR-012 §9). Lives
    *  in the store, not the view, so opening from anywhere (icon, Start
    *  menu, an app's own link) obeys it without each call site knowing. */
@@ -98,6 +109,7 @@ export const win98State: Win98State = {
   windows: [],
   focusId: null,
   startMenuOpen: false,
+  bsodReason: null,
   solo: false,
   version: 0,
 };
@@ -133,6 +145,29 @@ export function setBootPhase(phase: BootPhase): void {
     win98State.startMenuOpen = false;
   }
   notify();
+}
+
+/**
+ * Crash into the 8.1 BSOD gag. `reason` is the deadpan line naming what the
+ * visitor just did; the screen reads it rather than each trigger owning its
+ * own copy of the crash chrome.
+ *
+ * The open windows are deliberately LEFT in the store — the gag's whole joke
+ * is that nothing was actually lost, and rebootFromCrash returns to the exact
+ * desktop the visitor crashed. Re-crashing while already crashed is a no-op,
+ * so a held key can't stack reasons.
+ */
+export function crashWorkstation(reason: string): void {
+  if (win98State.phase === "bsod") return;
+  win98State.bsodReason = reason;
+  setBootPhase("bsod");
+}
+
+/** Leave the BSOD, restoring the desktop exactly as it was. */
+export function rebootFromCrash(): void {
+  if (win98State.phase !== "bsod") return;
+  win98State.bsodReason = null;
+  setBootPhase("desktop");
 }
 
 export function pushPostLine(line: string): void {

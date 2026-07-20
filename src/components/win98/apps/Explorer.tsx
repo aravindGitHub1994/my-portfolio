@@ -11,6 +11,7 @@ import { useState } from "react";
 import { PROJECTS } from "@/lib/projects";
 import { EXPERIENCE } from "@/lib/resume";
 import {
+  crashWorkstation,
   openWindow,
   type IconGlyph,
   type Win98Window,
@@ -44,6 +45,10 @@ interface ExplorerItem {
   open?: () => void;
   /** Or just deadpan-refuse in the status bar. */
   status?: string;
+  /** 8.1 gag: the second activation crashes, with this as the BSOD's
+   *  opening line. The first only warns (via `status`) — one stray
+   *  double-click should not blue-screen a visitor who was just browsing. */
+  danger?: string;
 }
 
 type ViewId = "computer" | "c" | "projects" | "career";
@@ -95,6 +100,14 @@ const VIEWS: Record<ViewId, View> = {
         glyph: "notepad",
         open: () => launchApp("about-me"),
       },
+      {
+        id: "system32",
+        label: "System32",
+        glyph: "folder",
+        status:
+          "This folder is required. Open it again if you disagree.",
+        danger: "You opened System32 after being asked not to.",
+      },
     ],
   },
   career: {
@@ -122,6 +135,8 @@ export function Explorer({ win }: { win: Win98Window }) {
   const [trail, setTrail] = useState<ViewId[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  /** Item id whose warning has already been read once (8.1 two-strike). */
+  const [armed, setArmed] = useState<string | null>(null);
 
   const current = VIEWS[view];
 
@@ -143,6 +158,14 @@ export function Explorer({ win }: { win: Win98Window }) {
   };
 
   const activate = (item: ExplorerItem) => {
+    if (item.danger) {
+      if (armed === item.id) crashWorkstation(item.danger);
+      else {
+        setArmed(item.id);
+        setStatus(item.status ?? null);
+      }
+      return;
+    }
     if (item.goto) navigate(item.goto);
     else if (item.open) item.open();
     else if (item.status) setStatus(item.status);

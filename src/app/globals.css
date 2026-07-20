@@ -56,6 +56,7 @@
   --color-w98-field: #ffffff;
   --color-w98-select: #1a2e6e;
   --color-w98-amber: #ffb347;
+  --color-w98-crash: #0000aa;
 
   /* Openly-licensed period faces (public/fonts/, OFL — see LICENSES.md). */
   --font-w98: "Silkscreen", Verdana, Geneva, sans-serif;

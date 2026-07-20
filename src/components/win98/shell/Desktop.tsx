@@ -25,6 +25,7 @@ import { playClick } from "@/lib/audio";
 import { ShellLayoutProvider } from "./layoutContext";
 import { useWin98Version } from "./useWin98";
 import { Boot } from "../apps/Boot";
+import { Bsod } from "../apps/Bsod";
 import { Icon } from "./Icon";
 import { Window } from "./Window";
 import { Taskbar } from "./Taskbar";
@@ -77,6 +78,18 @@ export function Desktop({ scale = 1 }: { scale?: number }) {
   }, [layout.touch]);
 
   const { phase, icons, windows, focusId, startMenuOpen } = win98State;
+
+  // The 8.1 crash takes the whole screen and keeps the windows in the store
+  // untouched — rebootFromCrash lands back on exactly this desktop.
+  if (phase === "bsod") {
+    return (
+      <Bsod
+        width={layout.width}
+        height={layout.height}
+        touch={layout.touch}
+      />
+    );
+  }
 
   if (phase !== "desktop") {
     // 3.3 boot/shutdown parity screens (painter equivalents in DOM).

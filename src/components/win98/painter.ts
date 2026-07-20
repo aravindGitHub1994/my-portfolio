@@ -13,6 +13,7 @@ import {
   type Win98State,
   type Win98Window,
 } from "@/lib/win98State";
+import { BSOD_PROMPT, BSOD_TITLE, bsodLines } from "@/lib/bsodScript";
 
 // Era palette (pastiche, sRGB).
 const TEAL = "#2f7f78";
@@ -27,6 +28,7 @@ const TITLE_INACTIVE_B = "#9a9a9a";
 const TEXT_DARK = "#111111";
 const TEXT_LIGHT = "#f4f4f4";
 const AMBER = "#ffb347";
+const CRASH_BLUE = "#0000aa";
 
 const TASKBAR_H = 28;
 const FONT = "11px Verdana, Geneva, sans-serif";
@@ -224,6 +226,38 @@ function paintShutdown(ctx: CanvasRenderingContext2D) {
   ctx.fillText("your computer.", DESKTOP_W / 2, DESKTOP_H / 2 + 18);
 }
 
+/**
+ * The 8.1 crash screen (undocked parity for Bsod.tsx — same copy module, so
+ * the gag cannot read differently on the two renderers). The wide flat blue
+ * is also what drives the CRT cast cool for the beat it's up: CrtScreen
+ * downsamples whatever is painted here, so no separate lighting hook is
+ * needed and the gate-2.3 luminance cap still governs.
+ */
+function paintBsod(ctx: CanvasRenderingContext2D, state: Win98State) {
+  ctx.fillStyle = CRASH_BLUE;
+  ctx.fillRect(0, 0, DESKTOP_W, DESKTOP_H);
+
+  const lines = bsodLines(state.bsodReason ?? "");
+  const font = "15px 'Courier New', monospace";
+
+  // Inverted title band, centred like the era's.
+  ctx.font = font;
+  const titleW = ctx.measureText(BSOD_TITLE).width + 16;
+  const titleX = (DESKTOP_W - titleW) / 2;
+  ctx.fillStyle = CHROME;
+  ctx.fillRect(titleX, 84, titleW, 20);
+  ctx.fillStyle = CRASH_BLUE;
+  ctx.textAlign = "center";
+  ctx.fillText(BSOD_TITLE, DESKTOP_W / 2, 99);
+
+  ctx.fillStyle = TEXT_LIGHT;
+  ctx.textAlign = "left";
+  lines.forEach((line, i) => ctx.fillText(line, 64, 146 + i * 22));
+
+  ctx.textAlign = "center";
+  ctx.fillText(BSOD_PROMPT, DESKTOP_W / 2, 400);
+}
+
 function paintWindow(
   ctx: CanvasRenderingContext2D,
   win: Win98Window,
@@ -376,6 +410,9 @@ export function paintScreen(
       break;
     case "shutdown":
       paintShutdown(ctx);
+      break;
+    case "bsod":
+      paintBsod(ctx, state);
       break;
   }
 }
