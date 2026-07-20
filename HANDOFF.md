@@ -1,11 +1,11 @@
-# HANDOFF — Win98 Workstation redesign (2026-07-20, session 10 wrap)
+# HANDOFF — Win98 Workstation redesign (2026-07-20, session 11 wrap)
 
 > For the next agent session. **Gates 1.2, 2.3 and 4.3 PASSED** (owner).
 > P3 + P4 complete and owner-verified. **P5 CLOSED** at 5.3 (`2f22f6e`).
 > **P6 CLOSED**: 6.1 (`2cb71f8`), 6.2 (`8aed018`).
-> **7.1 CLOSED this session**: `f7aead3` (touch shell) + `0085af6`
-> (dock/DRS/fallback). Next: **7.2 watchdog + shed ladder** /
-> P8 eggs (cuttable) / 9.1 docs → final HITL gate 9.2.
+> **P7 CLOSED**: 7.1 (`f7aead3` + `0085af6`), **7.2 this session**
+> (`a126b9f` ladder/watchdog + `e7ae176` perf sweep).
+> Next: **P8 eggs (cuttable)** / 9.1 docs → final HITL gate 9.2.
 > Never pass gates autonomously.
 
 ## Current Status
@@ -17,7 +17,7 @@
   documented in that commit message) · **gate 4.3 PASSED** on a served
   production build of `e66cd75` · 5.1 `95bbf76` · 5.2 `493d4ea` ·
   5.3 `2f22f6e` · 6.1 `2cb71f8` · 6.2 `8aed018` · 7.1a `f7aead3` ·
-  **7.1b `0085af6`**.
+  7.1b `0085af6` · 7.2a `a126b9f` · **7.2b `e7ae176`**.
 - **Session 10 (this one) was interrupted three times mid-slice** and
   recovered each time by the recipe below. It holds: the working tree
   survives session death, so the cut point is always "what is on disk vs
@@ -25,7 +25,37 @@
   disk. **Typecheck first, then diff the claim against `git status`.**
   Committing verified halves (7.1a) rather than carrying one large
   uncommitted tree is what made the third interruption cost nothing.
-- **P7 (7.1 closed, 7.2 open):**
+- **P7 (CLOSED):**
+  - **7.2a `a126b9f`** — `workstation/fidelity.ts` is the consumer
+    `SHED_ORDER` never had. The load-bearing decision: **DRS chases the
+    60 fps aspiration, the ladder defends the 30 fps floor.** Two knobs
+    aimed at two different targets cannot oscillate against each other;
+    aiming both at 60 would guarantee they did. The ladder is a **one-way
+    ratchet** within a session (DRS is the reversible knob by design), and
+    **only the last rung speaks** — seven silent garnish rungs, then an
+    offer. Declining ends it for the session; accepting persists to
+    `localStorage`, and `?tier=` still overrides that so nobody is locked
+    out. Also threads the tier into the builders' `detail` param, which
+    had existed since P1 with nothing ever selecting it.
+  - **7.2b `e7ae176`** — dev-only `PerfCounter` + recorded budgets, and a
+    dev-only `window.__fidelity` handle for driving rungs headlessly.
+    All budgets PASS; numbers are in the commit message.
+- **Two 7.2 details that will look wrong and are not:**
+  - `sampleFidelity`'s grace window **discards samples and reseeds the
+    average**; it does not merely suppress action. Both halves matter, and
+    a simulation is what caught it: folding mount-time compile frames into
+    the average leaves it at ~200 ms when grace expires, so the ladder
+    sheds four rungs off a machine that was never slow. Same failure as
+    7.1's DRS "seed from the budget" lesson, one level up.
+  - The `SLOW_RATIO` dead band (1.1) is not belt-and-braces. Without it a
+    device sitting at 29 fps — a hair under target, visually fine — walks
+    the entire ladder and gets offered the 2D page.
+- **Verification split worth reusing:** `fidelity.ts` is pure precisely so
+  its logic can be checked by compiling it standalone (`npx tsc` to a
+  scratch dir) and simulating 20k frames per case — healthy/50fps/exactly-
+  30/20fps/stalls/boot-spike/decline. That is stronger than a throttle
+  test and needs no browser. The browser was then used only for what a
+  simulation cannot see: that each rung actually changes the scene.
   - **7.1a `f7aead3`** — `shellLayout.ts` is the ONE answer to "is this a
     thumb-driven shell, and what virtual space does it get?", pure so the
     DOM shell and the dock aligner cannot disagree. On touch the shell
@@ -164,6 +194,18 @@
   headless check can confirm the palette actually *sounds* right.
   Levels, the clack gap, and the leak falloff are the obvious
   candidates for owner adjustment at 9.2.
+- **The low tier optimizes the wrong axis** (found measuring 7.2b, not
+  fixed): triangles drop 77 % between tiers, but textures, geometries and
+  texture bytes are *identical* (24 / 21 / 11.4 MB) because the bakes are
+  not detail-dependent. On a phone, texture upload is often the tighter
+  constraint — so the tier that exists for phones currently saves nothing
+  on it. Halving bake sizes at low detail changes how the room *looks*,
+  which makes it an owner call at 9.2, not a perf-slice edit.
+- **The ladder has never been paced by a human.** A device pinned at
+  20 fps walks all nine rungs in ~64 s (measured). Deliberate at the top,
+  but whether the static-floor offer arrives too late is an eyes question.
+  `GRACE_FRAMES` and `EMA_ALPHA` in `fidelity.ts` are the two knobs; both
+  are documented in-file. Carry into 9.2 with the audio levels.
 - `src/lib/aboutMe.ts` copy — **owner review at gate 9.2** (draft is
   interview-approved facts only; motif stays subtext per memory).
 - Accepted behaviors (documented, don't "fix" without owner ask):
@@ -208,16 +250,14 @@
 - [x] ~~**7.1 mobile adaptation**~~ — done (`f7aead3` + `0085af6`);
       both acceptance viewports measured, desktop unregressed. The three
       app-internal leftovers are listed under Unresolved Threads.
-- [ ] **7.2 watchdog + shed ladder + perf sweep** — build
-      `workstation/fidelity.ts` and make it the consumer of the
-      existing `SHED_ORDER`; instancing/texture/draw-call audit.
-      **DRS is already built and is the ladder's last rung before the
-      static floor** (`dynamicResolution.ts`, mounted journey-only in
-      `WorkstationCanvas`): 7.2 wires the ladder *to* it rather than
-      inventing its own render-scale knob. Its `DRS_MIN` is the "DRS
-      floor" rung named in the plan.
-- [ ] P8 eggs (cuttable — `playEggStinger` is waiting), then 9.1 docs
-      reconcile.
+- [x] ~~**7.2 watchdog + shed ladder + perf sweep**~~ — done
+      (`a126b9f` + `e7ae176`); budgets recorded in the 7.2b message, the
+      two carried findings are under Unresolved Threads.
+- [ ] **P8 eggs (cuttable — `playEggStinger` is waiting)**, then 9.1 docs
+      reconcile. Note 9.1 now also owes the **fidelity-ladder table** to
+      `docs/design-system.md` (plan §9.1 asks for it explicitly) and a
+      CLAUDE.md/AGENTS.md line on the ladder, since both still describe
+      the retired Lens watchdog.
 - [ ] **HITL gate 9.2** — owner final QA, all tiers + mobile → merge.
       Never pass autonomously. Carry the audio-never-heard thread into
       it.
