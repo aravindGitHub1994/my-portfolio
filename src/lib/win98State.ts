@@ -83,6 +83,10 @@ export interface Win98State {
   /** Focused window id (normally the topmost non-minimized one). */
   focusId: string | null;
   startMenuOpen: boolean;
+  /** Touch shells run ONE window at a time, maximized (ADR-012 §9). Lives
+   *  in the store, not the view, so opening from anywhere (icon, Start
+   *  menu, an app's own link) obeys it without each call site knowing. */
+  solo: boolean;
   /** Bumped on every mutation — 3.2's useSyncExternalStore snapshot key. */
   version: number;
 }
@@ -94,6 +98,7 @@ export const win98State: Win98State = {
   windows: [],
   focusId: null,
   startMenuOpen: false,
+  solo: false,
   version: 0,
 };
 
@@ -143,6 +148,38 @@ export function clearPostLines(): void {
 
 const CASCADE_STEP = 26;
 
+/**
+ * Solo enforcement (7.1): the newly-raised window is maximized and every
+ * other one is minimized. Minimized rather than closed, so the taskbar
+ * still lists them and nothing a visitor opened is silently destroyed.
+ * Mutates without notifying — callers already do.
+ */
+function applySolo(keepId: string): void {
+  for (const win of win98State.windows) {
+    if (win.id === keepId) {
+      win.minimized = false;
+      win.maximized = true;
+    } else {
+      win.minimized = true;
+    }
+  }
+}
+
+/**
+ * Enter/leave one-window-at-a-time mode. Leaving does NOT restore the
+ * windows it minimized — the taskbar is the way back, exactly as it is
+ * after a manual minimize.
+ */
+export function setSoloWindows(solo: boolean): void {
+  if (win98State.solo === solo) return;
+  win98State.solo = solo;
+  if (solo) {
+    const top = topVisibleWindow();
+    if (top) applySolo(top.id);
+  }
+  notify();
+}
+
 export function openWindow(
   spec: Omit<Win98Window, "x" | "y" | "minimized" | "maximized"> &
     Partial<Pick<Win98Window, "x" | "y">>,
@@ -156,11 +193,12 @@ export function openWindow(
   const n = win98State.windows.length;
   win98State.windows.push({
     minimized: false,
-    maximized: false,
+    maximized: win98State.solo,
     x: spec.x ?? 56 + ((n * CASCADE_STEP) % 140),
     y: spec.y ?? 40 + ((n * CASCADE_STEP) % 110),
     ...spec,
   });
+  if (win98State.solo) applySolo(spec.id);
   win98State.focusId = spec.id;
   win98State.startMenuOpen = false;
   notify();
@@ -184,6 +222,7 @@ export function focusWindow(id: string): void {
   const [win] = win98State.windows.splice(index, 1);
   win.minimized = false;
   win98State.windows.push(win);
+  if (win98State.solo) applySolo(id);
   win98State.focusId = id;
   notify();
 }
@@ -200,6 +239,10 @@ export function minimizeWindow(id: string): void {
 }
 
 export function toggleMaximizeWindow(id: string): void {
+  // Solo windows are maximized by definition — the title-bar double-click
+  // must not be able to un-maximize one into a floating window a thumb
+  // then has to drag.
+  if (win98State.solo) return;
   const win = win98State.windows.find((w) => w.id === id);
   if (!win) return;
   win.maximized = !win.maximized;

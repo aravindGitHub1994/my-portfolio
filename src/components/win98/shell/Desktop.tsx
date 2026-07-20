@@ -12,10 +12,17 @@ import "./chrome.css";
 import {
   DESKTOP_H,
   DESKTOP_W,
+  setSoloWindows,
   setStartMenuOpen,
   win98State,
 } from "@/lib/win98State";
+import {
+  computeShellLayout,
+  coarsePointer,
+  desktopLayout,
+} from "@/lib/shellLayout";
 import { playClick } from "@/lib/audio";
+import { ShellLayoutProvider } from "./layoutContext";
 import { useWin98Version } from "./useWin98";
 import { Boot } from "../apps/Boot";
 import { Icon } from "./Icon";
@@ -29,11 +36,45 @@ interface MenuPoint {
   y: number;
 }
 
+/** Viewport facts, read in an effect only — prerender must stay DOM-free. */
+interface Viewport {
+  w: number;
+  h: number;
+  coarse: boolean;
+}
+
 export function Desktop({ scale = 1 }: { scale?: number }) {
   useWin98Version();
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const [menu, setMenu] = useState<MenuPoint | null>(null);
+  const [viewport, setViewport] = useState<Viewport | null>(null);
   const stage = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const read = () =>
+      setViewport({
+        w: window.innerWidth,
+        h: window.innerHeight,
+        coarse: coarsePointer(),
+      });
+    read();
+    // orientationchange lands before innerWidth settles on some phones;
+    // resize always follows it, so resize alone is the honest signal.
+    window.addEventListener("resize", read);
+    return () => window.removeEventListener("resize", read);
+  }, []);
+
+  // Before the first effect the shell is the desktop — the server-rendered
+  // markup and the painter-parity harness both want exactly that.
+  const layout = viewport
+    ? computeShellLayout(viewport.w, viewport.h, viewport.coarse, scale)
+    : desktopLayout(scale);
+
+  // Solo mode is a store fact so every open path obeys it (win98State
+  // §7.1); the shell only decides *when* it applies.
+  useEffect(() => {
+    setSoloWindows(layout.touch);
+  }, [layout.touch]);
 
   const { phase, icons, windows, focusId, startMenuOpen } = win98State;
 
@@ -43,77 +84,74 @@ export function Desktop({ scale = 1 }: { scale?: number }) {
   }
 
   return (
-    <div
-      ref={stage}
-      className="relative overflow-hidden bg-w98-desktop"
-      style={{ width: DESKTOP_W, height: DESKTOP_H }}
-      onPointerDown={(e) => {
-        // Delegated UI click (6.1) — one listener for the whole shell
-        // beats an onClick audio call in every button. Pointerdown, not
-        // click, so the tick lands with the press like the era's did.
-        if (e.target instanceof Element && e.target.closest("button")) {
-          playClick();
-        }
-        if (e.target === stage.current) {
-          setSelectedIcon(null);
-          setMenu(null);
-          setStartMenuOpen(false);
-        }
-      }}
-      onContextMenu={(e) => {
-        if (e.target !== stage.current) return;
-        e.preventDefault();
-        const rect = stage.current.getBoundingClientRect();
-        setMenu({
-          x: (e.clientX - rect.left) / scale,
-          y: (e.clientY - rect.top) / scale,
-        });
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Escape") {
-          setMenu(null);
-          setStartMenuOpen(false);
-        }
-      }}
-    >
-      {icons.map((icon) => (
-        <Icon
-          key={icon.id}
-          icon={icon}
-          selected={selectedIcon === icon.id}
-          onSelect={setSelectedIcon}
-        />
-      ))}
+    <ShellLayoutProvider value={layout}>
+      <div
+        ref={stage}
+        className="relative overflow-hidden bg-w98-desktop"
+        style={{ width: layout.width, height: layout.height }}
+        onPointerDown={(e) => {
+          // Delegated UI click (6.1) — one listener for the whole shell
+          // beats an onClick audio call in every button. Pointerdown, not
+          // click, so the tick lands with the press like the era's did.
+          if (e.target instanceof Element && e.target.closest("button")) {
+            playClick();
+          }
+          if (e.target === stage.current) {
+            setSelectedIcon(null);
+            setMenu(null);
+            setStartMenuOpen(false);
+          }
+        }}
+        onContextMenu={(e) => {
+          if (e.target !== stage.current) return;
+          e.preventDefault();
+          const rect = stage.current.getBoundingClientRect();
+          setMenu({
+            x: (e.clientX - rect.left) / layout.scale,
+            y: (e.clientY - rect.top) / layout.scale,
+          });
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            setMenu(null);
+            setStartMenuOpen(false);
+          }
+        }}
+      >
+        {icons.map((icon) => (
+          <Icon
+            key={icon.id}
+            icon={icon}
+            selected={selectedIcon === icon.id}
+            onSelect={setSelectedIcon}
+          />
+        ))}
 
-      {windows.map(
-        (win) =>
-          !win.minimized && (
-            <Window
-              key={win.id}
-              win={win}
-              focused={focusId === win.id}
-              scale={scale}
-            />
-          ),
-      )}
+        {windows.map(
+          (win) =>
+            !win.minimized && (
+              <Window key={win.id} win={win} focused={focusId === win.id} />
+            ),
+        )}
 
-      {startMenuOpen && <StartMenu />}
+        {startMenuOpen && <StartMenu />}
 
-      {menu && (
-        <ContextMenu
-          x={menu.x}
-          y={menu.y}
-          items={[
-            { label: "Arrange Icons", action: () => setSelectedIcon(null) },
-            { label: "Refresh" },
-            { label: "Properties", disabled: true },
-          ]}
-          onClose={() => setMenu(null)}
-        />
-      )}
+        {menu && (
+          <ContextMenu
+            x={menu.x}
+            y={menu.y}
+            items={[
+              { label: "Arrange Icons", action: () => setSelectedIcon(null) },
+              { label: "Refresh" },
+              { label: "Properties", disabled: true },
+            ]}
+            onClose={() => setMenu(null)}
+          />
+        )}
 
-      <Taskbar />
-    </div>
+        <Taskbar />
+      </div>
+    </ShellLayoutProvider>
   );
 }
 
