@@ -194,6 +194,30 @@ export function sampleFidelity(
   return rung;
 }
 
+// Dev-only QA handle, the `__experienceState` pattern. Exposed from here
+// rather than added to `experienceState` because that module is pure lib
+// and this one lives under components — the dependency only points one
+// way. Lets a headless session drive rungs directly: the ladder's *logic*
+// is verified offline by simulating frame deltas (it is pure for that
+// reason), so what a browser is needed for is the WIRING — that each rung
+// actually changes the scene, and that the offer's two answers work.
+declare global {
+  interface Window {
+    __fidelity?: {
+      state: FidelityState;
+      shed: (rung: Rung) => void;
+      ladder: readonly Rung[];
+    };
+  }
+}
+if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
+  window.__fidelity = {
+    state: fidelityState,
+    shed: (rung) => shedRung(fidelityState, rung),
+    ladder: LADDER,
+  };
+}
+
 /** Visitor refused the static floor: stop the ladder for the session.
  *  Everything already shed stays shed — they declined the *floor*, not
  *  the garnish, and putting it back is what the ratchet rule forbids. */

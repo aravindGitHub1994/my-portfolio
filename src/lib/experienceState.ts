@@ -18,6 +18,26 @@ export const experienceState = {
   duskDeepen: 0,
   /** Mirrored from WorkstationRoot's tier detection; "pending" pre-detect. */
   fidelityTier: "pending" as FidelityTier | "pending",
+  /** Dev-only perf readout (§7.2's recorded budgets). Written by
+   *  `PerfCounter` each second in development and left at zero in
+   *  production, where that component never mounts. */
+  perf: {
+    fps: 0,
+    /** renderer.info.render.calls — the draw-call budget. */
+    drawCalls: 0,
+    triangles: 0,
+    /** renderer.info.memory.* — live GPU object counts. */
+    textures: 0,
+    geometries: 0,
+    programs: 0,
+    /** Estimated texture bytes resident on the GPU, mipmaps included. */
+    textureBytes: 0,
+    /** JS heap growth over the last sampling second, bytes. The
+     *  per-frame-allocation check: a frame loop that allocates shows up
+     *  here as a sawtooth that never settles near zero between GCs.
+     *  Chromium-only (performance.memory); -1 elsewhere. */
+    heapDeltaPerSec: -1,
+  },
 };
 
 // Dev-only QA handle: headless agent sessions read scrub/dock state via

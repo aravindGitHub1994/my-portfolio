@@ -16,6 +16,7 @@ import { RoomScene, ROOM_CAMERA } from "./builders/RoomScene";
 import { AudioTextures } from "./AudioTextures";
 import { DynamicResolution } from "./DynamicResolution";
 import { FidelityWatchdog } from "./FidelityWatchdog";
+import { PerfCounter } from "./PerfCounter";
 import { FullScene, FULL_CAMERA } from "./builders/FullScene";
 
 /**
@@ -203,6 +204,8 @@ export function WorkstationCanvas({
               after DRS so the resolution lever has already reacted by the
               time the ladder's slower average has anything to say. */}
           {auto && <FidelityWatchdog />}
+          {/* Dev-only perf readout (7.2) — tree-shaken from production. */}
+          {process.env.NODE_ENV !== "production" && <PerfCounter />}
         </Canvas>
       )}
     </div>
