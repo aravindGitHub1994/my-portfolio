@@ -1,5 +1,16 @@
 # ADR-006: "The Lens" — a Refractive, Data→Insight WebGL Portfolio
 
+> [!NOTE]
+> **Superseded as the site's experience layer by
+> [ADR-012](ADR-012-win98-workstation-cinematic-redesign.md)** (The Workstation);
+> `src/components/lens/` is retired and deleted — git history is its archive.
+> What survives is **§7/§7a's content rules**, which were never Lens rules:
+> imagery under `public/screens/` must be fabricated dummy-data recreations, and
+> client names and client financial figures appear nowhere in the repo. Both are
+> restated in ADR-012 §10 and in `CLAUDE.md`, **which is authoritative** — §7a's
+> account of which files leaked is inaccurate and its remediation is not being
+> pursued. This file is an immutable record: not renamed, not rewritten.
+
 ## Status
 Accepted — **partially superseded by ADR-008** (§1's "cube returns as the payoff"
 and the Work-act recede choreography are reversed: the prism is now the constant

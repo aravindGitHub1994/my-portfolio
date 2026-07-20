@@ -1,5 +1,15 @@
 # ADR-010: Universal display-text refraction, opt-in fidelity downgrade, projector-assembled windows, and a tool-icon inflow
 
+> [!NOTE]
+> **Superseded as the site's experience layer by
+> [ADR-012](ADR-012-win98-workstation-cinematic-redesign.md)** (The Workstation).
+> The Lens-specific decisions are retired. What survives, and is still binding, is
+> **§2's opt-in downgrade rule**: the FPS watchdog **asks before** dropping
+> fidelity and never swaps silently. The Workstation's shed ladder obeys the same
+> principle — seven garnish rungs shed silently, but the one rung that changes
+> what the visitor came for *asks*. See `docs/design-system.md`. This file is an
+> immutable record: not renamed, not rewritten.
+
 > **Status pointer (2026-07-11):** §4 (tool-icon inflow) was **retracted** by
 > [ADR-011](ADR-011-lens-legibility-and-inflow-simplification.md); the filename is
 > retained because ADRs are immutable records. §1/§2/§3/§5 stand.
