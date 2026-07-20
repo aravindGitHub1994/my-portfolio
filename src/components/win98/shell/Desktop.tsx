@@ -158,29 +158,57 @@ export function Desktop({ scale = 1 }: { scale?: number }) {
 /**
  * `?scene=shell` harness: the shell alone, scaled to fit the viewport,
  * auto-booted to the desktop. Real DOM — deliberately NOT aria-hidden.
+ *
+ * The harness must apply the layout's scale itself, exactly as DockSwap
+ * does — `Desktop` reports its space in virtual units and never transforms
+ * itself. On touch that scale is the layout's own (the shell is
+ * full-viewport by then); only the desktop branch gets the fit-to-viewport
+ * shrink, whose 0.94 leaves the harness a visible margin.
  */
 export function ShellHarness() {
   const [scale, setScale] = useState(1);
+  const [touch, setTouch] = useState(false);
 
   useEffect(() => {
     // Harness jumps straight to the desktop (boot beats are 3.3's).
     win98State.phase = "desktop";
     win98State.version++;
-    const fit = () =>
-      setScale(
+    const fit = () => {
+      const fitScale =
         Math.min(
           window.innerWidth / DESKTOP_W,
           window.innerHeight / DESKTOP_H,
-        ) * 0.94,
+        ) * 0.94;
+      const layout = computeShellLayout(
+        window.innerWidth,
+        window.innerHeight,
+        coarsePointer(),
+        fitScale,
       );
+      setScale(layout.scale);
+      setTouch(layout.touch);
+    };
     fit();
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
   }, []);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black">
-      <div style={{ transform: `scale(${scale})` }}>
+    <div
+      className={`fixed inset-0 z-40 flex bg-black ${
+        touch ? "items-start justify-start" : "items-center justify-center"
+      }`}
+    >
+      {/* Origin follows the anchor: the desktop box is flex-centered at its
+          UNSCALED size (transforms don't affect layout), so it must scale
+          from its centre to stay centred; the touch shell fills from the
+          top-left corner. */}
+      <div
+        style={{
+          transform: `scale(${scale})`,
+          transformOrigin: touch ? "top left" : "center",
+        }}
+      >
         <Desktop scale={scale} />
       </div>
     </div>

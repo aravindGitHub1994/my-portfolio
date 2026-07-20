@@ -6,6 +6,7 @@ import { experienceState } from "@/lib/experienceState";
 import { RUNWAY_LENGTH_VH } from "@/lib/chapters";
 import { Choreography } from "./choreography/Choreography";
 import { WorkstationCanvas } from "./WorkstationCanvas";
+import { ExperienceBoundary } from "./ExperienceBoundary";
 import { PowerOn } from "./PowerOn";
 import { TitleBeats } from "./TitleBeats";
 import { SignOff } from "./SignOff";
@@ -36,9 +37,15 @@ export default function WorkstationExperience() {
   const [scene] = useState(
     () => new URLSearchParams(window.location.search).get("scene"),
   );
+  // §7.1 in-app-browser path: a scene throw or a lost GL context demotes
+  // the visitor to the static floor. Folded into `mounts` so the
+  // data-experience effect below runs its cleanup and puts the floor back
+  // in the flow — the failure and the recovery are the same switch.
+  const [failed, setFailed] = useState(false);
   const runway = useRef<HTMLDivElement>(null);
 
-  const mounts = detection.tier === "high" || detection.tier === "low";
+  const mounts =
+    (detection.tier === "high" || detection.tier === "low") && !failed;
 
   // Mirror the tier for frame-side readers (frame loops read the mutable
   // singleton, never React state).
@@ -91,8 +98,12 @@ export default function WorkstationExperience() {
   }
 
   return (
-    <>
-      <WorkstationCanvas tier={detection.tier} scene={null} />
+    <ExperienceBoundary onFail={() => setFailed(true)}>
+      <WorkstationCanvas
+        tier={detection.tier}
+        scene={null}
+        onContextLost={() => setFailed(true)}
+      />
       <Choreography runway={runway} />
       {/* Ch. 0 entry gesture + ch. 1 title beats (4.1). */}
       <PowerOn />
@@ -109,6 +120,6 @@ export default function WorkstationExperience() {
         aria-hidden="true"
         style={{ height: `${RUNWAY_LENGTH_VH}vh` }}
       />
-    </>
+    </ExperienceBoundary>
   );
 }

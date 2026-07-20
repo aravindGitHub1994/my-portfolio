@@ -14,6 +14,7 @@ import {
 } from "./character/CharacterScene";
 import { RoomScene, ROOM_CAMERA } from "./builders/RoomScene";
 import { AudioTextures } from "./AudioTextures";
+import { DynamicResolution } from "./DynamicResolution";
 import { FullScene, FULL_CAMERA } from "./builders/FullScene";
 
 /**
@@ -134,12 +135,32 @@ const HARNESS_SCENES: Record<string, HarnessSceneDef> = {
 export function WorkstationCanvas({
   tier,
   scene,
+  onContextLost,
 }: {
   tier: FidelityTier;
   scene: string | null;
+  /** Fired when the GL context dies (§7.1 in-app-browser path) so the host
+   *  can hand the visitor back the static floor instead of a blank page. */
+  onContextLost?: () => void;
 }) {
   const harness =
     scene !== null ? (HARNESS_SCENES[scene] ?? HARNESS_SCENES.stub) : null;
+
+  // Attached in onCreated rather than an effect: the canvas element does
+  // not exist until R3F builds the renderer, and a context can be lost
+  // before the first commit on a memory-starved webview.
+  const watchContext = ({ gl }: { gl: { domElement: HTMLCanvasElement } }) => {
+    gl.domElement.addEventListener(
+      "webglcontextlost",
+      (e) => {
+        // Default-prevented would mean "we intend to restore"; the scene
+        // has no restore path, so let it stand and fall back instead.
+        console.warn("[experience] WebGL context lost", e);
+        onContextLost?.();
+      },
+      { once: true },
+    );
+  };
 
   return (
     <div aria-hidden="true" className="fixed inset-0 -z-10">
@@ -155,12 +176,20 @@ export function WorkstationCanvas({
         // The journey (4.1): the full dressed scene; boot waits for the
         // PowerOn press (WorkstationExperience layer), camera rides the
         // chapter path.
-        <Canvas camera={{ fov: 50 }} dpr={tier === "low" ? 1 : [1, 2]}>
+        <Canvas
+          camera={{ fov: 50 }}
+          dpr={tier === "low" ? 1 : [1, 2]}
+          onCreated={watchContext}
+        >
           <FullScene autoBoot={false} />
           <JourneyCamera />
           {/* Tier-2/3 texture audio (6.2) — frame reader only, no scene
               contribution; silent until the power press builds a context. */}
           <AudioTextures />
+          {/* DRS (7.1) — journey only. The harnesses are orbit rigs for
+              inspecting geometry, where a shifting render scale would
+              just make them lie about what they are showing. */}
+          <DynamicResolution maxDpr={tier === "low" ? 1 : 2} />
         </Canvas>
       )}
     </div>

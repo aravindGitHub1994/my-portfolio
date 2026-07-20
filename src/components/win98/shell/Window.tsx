@@ -118,9 +118,12 @@ export function Window({
   // Touch chrome: one WCAG target per control, and type scaled with it —
   // 8px era type inside a 44px button reads as a mistake, not a period
   // detail. Desktop keeps the pixel-exact 3.2 values untouched.
-  const barH = touch ? touchUnit : 18;
+  // The buttons are the full touch target and the bar is sized to hold
+  // one — not the reverse. Shrinking controls to fit an era-sized bar is
+  // how a 44px requirement quietly becomes 36px.
+  const barH = touch ? touchUnit + 4 : 18;
   const btn = touch
-    ? { height: touchUnit - 8, width: touchUnit - 8, fontSize: 13 }
+    ? { height: touchUnit, width: touchUnit, fontSize: 13 }
     : { height: 13, width: 14, fontSize: 7 };
 
   return (

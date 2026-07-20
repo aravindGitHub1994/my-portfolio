@@ -28,8 +28,10 @@ export function Taskbar() {
   const { windows, focusId, startMenuOpen } = win98State;
   const { touch, touchUnit, taskbarH } = useShellLayout();
   // One control height for the whole bar, so Start, task buttons and the
-  // clock stay on a single baseline at either size.
-  const ctrlH = touch ? touchUnit - 6 : 20;
+  // clock stay on a single baseline at either size. On touch it is the
+  // FULL target — insetting it inside the bar is what silently drops a
+  // control under the 44px floor, so the bar grows instead (taskbarH).
+  const ctrlH = touch ? touchUnit : 20;
   return (
     // div, not <footer>: globals.css hides ALL footers while the
     // experience is mounted (the floor-hiding rule) — a footer taskbar

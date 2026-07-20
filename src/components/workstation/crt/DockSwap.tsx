@@ -19,10 +19,11 @@ import { useEffect, useRef, useState } from "react";
 import { useLenisRef } from "@/components/LenisProvider";
 import { experienceState } from "@/lib/experienceState";
 import { REST_POINTS } from "@/lib/chapters";
-import { allWindowsIdle, DESKTOP_H, DESKTOP_W } from "@/lib/win98State";
+import { allWindowsIdle, DESKTOP_H } from "@/lib/win98State";
 import { setHumDucked } from "@/lib/audio";
 import { useWin98Version } from "@/components/win98/shell/useWin98";
 import { Desktop } from "@/components/win98/shell/Desktop";
+import { coarsePointer } from "@/lib/shellLayout";
 import { computeDockRect, type DockRect } from "./dockAlignment";
 
 /** Engage when |progress − rest| falls inside this... */
@@ -85,7 +86,9 @@ export function DockSwap() {
           // the docked flag itself so it can never desync from the dock.
           setHumDucked(true);
           lenis?.stop();
-          setRect(computeDockRect(window.innerWidth, window.innerHeight));
+          setRect(
+      computeDockRect(window.innerWidth, window.innerHeight, coarsePointer()),
+    );
           setPhase("in");
         }
       }
@@ -164,7 +167,9 @@ export function DockSwap() {
   useEffect(() => {
     if (phase === "idle") return;
     const onResize = () =>
-      setRect(computeDockRect(window.innerWidth, window.innerHeight));
+      setRect(
+      computeDockRect(window.innerWidth, window.innerHeight, coarsePointer()),
+    );
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [phase]);
@@ -195,14 +200,15 @@ export function DockSwap() {
           height: rect.height,
         }}
       >
-        {/* The live shell in 640×480 virtual units, stretched to the
-            screen quad exactly as the painter texture is. Window drag
-            divides by a single scale — scaleY, per the 4.2 note (~5% x
-            drag error, accepted until 4.3). */}
+        {/* The live shell in its virtual units, stretched to the screen
+            quad exactly as the painter texture is. Window drag divides by
+            a single scale — scaleY, per the 4.2 note (~5% x drag error,
+            accepted until 4.3). On touch the space is portrait and the
+            two scales are equal, so that error is desktop-only. */}
         <div
           style={{
-            width: DESKTOP_W,
-            height: DESKTOP_H,
+            width: rect.virtualW,
+            height: rect.virtualH,
             transform: `scale(${rect.scaleX}, ${rect.scaleY})`,
             transformOrigin: "top left",
           }}
