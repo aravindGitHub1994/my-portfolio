@@ -13,6 +13,7 @@ import {
   CHARACTER_CAMERA,
 } from "./character/CharacterScene";
 import { RoomScene, ROOM_CAMERA } from "./builders/RoomScene";
+import { AudioTextures } from "./AudioTextures";
 import { FullScene, FULL_CAMERA } from "./builders/FullScene";
 
 /**
@@ -157,6 +158,9 @@ export function WorkstationCanvas({
         <Canvas camera={{ fov: 50 }} dpr={tier === "low" ? 1 : [1, 2]}>
           <FullScene autoBoot={false} />
           <JourneyCamera />
+          {/* Tier-2/3 texture audio (6.2) — frame reader only, no scene
+              contribution; silent until the power press builds a context. */}
+          <AudioTextures />
         </Canvas>
       )}
     </div>

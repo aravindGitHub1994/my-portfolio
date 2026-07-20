@@ -25,7 +25,11 @@ interface CameraKey {
   target: Vector3;
 }
 
-const head = new Vector3(0, 1.22, -0.06);
+/** The figure's head centre — ch. 2's framing target, and the point 6.2
+ *  measures camera distance to for the earbud leak. Shared so the shot and
+ *  the sound can never disagree about where the head is. */
+export const HEAD_FOCUS = new Vector3(0, 1.22, -0.06);
+const head = HEAD_FOCUS;
 
 /** Chapter beats (ADR-012 §5 table). REST_POINTS index: 1 glow, 2 man,
  *  3 room, 4 dock, 5 sign-off. */

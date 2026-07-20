@@ -11,6 +11,20 @@ export const effectsState = {
   /** Full-richness bloom (off = cheaper, dimmer bloom). Mount-time read —
    *  7.2 remounts postprocessing when it sheds this tier. */
   bloomRich: true,
+  /** 6.2 tier-3 earbud music leak (audio "music" bus). */
+  audioMusic: true,
+  /** 6.2 tier-2 texture sounds — clacks, drive chatter, fan bed
+   *  (audio "texture" bus). Tier-1 cues are never sheddable. */
+  audioTexture: true,
 };
 
-export const SHED_ORDER = ["dust", "shafts", "castFlicker", "bloomRich"] as const;
+// Cheapest-first. The audio garnish sheds before the visual tiers it is
+// paired with: silence costs the visitor less than a dimmer room does.
+export const SHED_ORDER = [
+  "audioMusic",
+  "dust",
+  "shafts",
+  "audioTexture",
+  "castFlicker",
+  "bloomRich",
+] as const;

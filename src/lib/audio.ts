@@ -27,8 +27,19 @@ import { subscribeWin98, win98State, type BootPhase } from "./win98State";
 const MUTE_KEY = "w98-muted";
 
 /** Bus trims — the room bed sits far under the UI so it never masks speech-
- *  adjacent cues, and machine noise sits between them. */
-const BUS_GAIN = { ui: 0.5, machine: 0.42, room: 0.16 } as const;
+ *  adjacent cues, and machine noise sits between them.
+ *
+ *  `texture` (6.2 tier-2: key clacks, drive chatter, fan bed) and `music`
+ *  (6.2 tier-3: the earbud leak) are the SHEDDABLE pair — 7.2's watchdog
+ *  drops them via `setBusShed` before anything touches the tier-1 cues,
+ *  mirroring how effectsState sheds visual garnish first. */
+const BUS_GAIN = {
+  ui: 0.5,
+  machine: 0.42,
+  room: 0.16,
+  texture: 0.34,
+  music: 0.22,
+} as const;
 
 /** Hum level while docked vs. free. Docked is reading, not cinema (§6.1). */
 const HUM_FREE = 1;
@@ -36,13 +47,22 @@ const HUM_DUCKED = 0.35;
 const HUM_DUCK_RAMP = 0.5;
 
 type Bus = keyof typeof BUS_GAIN;
+/** Only these may be shed by 7.2 — tier-1 cues are never optional. */
+export type SheddableBus = "texture" | "music";
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let buses: Record<Bus, GainNode> | null = null;
 let humGain: GainNode | null = null;
+let humTone: BiquadFilterNode | null = null;
+let fanGain: GainNode | null = null;
+let leakGain: GainNode | null = null;
 let noiseBuffer: AudioBuffer | null = null;
 let detachCues: (() => void) | null = null;
+
+/** Next earbud note time, in ctx time. The frame reader schedules ahead. */
+let leakNextAt = 0;
+let leakStep = 0;
 
 let muted = false;
 const muteListeners = new Set<() => void>();
@@ -118,18 +138,19 @@ export function unlockAudio(): void {
   master.gain.value = muted ? 0 : 1;
   master.connect(ctx.destination);
 
-  buses = {
-    ui: ctx.createGain(),
-    machine: ctx.createGain(),
-    room: ctx.createGain(),
-  };
-  for (const name of Object.keys(buses) as Bus[]) {
-    buses[name].gain.value = BUS_GAIN[name];
-    buses[name].connect(master);
+  // Built from BUS_GAIN's keys rather than listed twice — adding a bus is
+  // then a one-line change and cannot leave a node uncreated.
+  buses = {} as Record<Bus, GainNode>;
+  for (const name of Object.keys(BUS_GAIN) as Bus[]) {
+    const gain = ctx.createGain();
+    gain.gain.value = BUS_GAIN[name];
+    gain.connect(master);
+    buses[name] = gain;
   }
 
   noiseBuffer = makeNoiseBuffer(ctx);
   startHum();
+  startTextureBeds();
   // Context can start "suspended" even from a gesture on some browsers.
   void ctx.resume();
 }
@@ -139,6 +160,11 @@ export function disposeAudio(): void {
   detachCues?.();
   detachCues = null;
   humGain = null;
+  humTone = null;
+  fanGain = null;
+  leakGain = null;
+  leakNextAt = 0;
+  leakStep = 0;
   buses = null;
   master = null;
   noiseBuffer = null;
@@ -346,17 +372,50 @@ function startHum(): void {
   }
 
   if (noiseBuffer) {
+    // Room hiss routed through the tone filter the screen brightness
+    // modulates (6.2) — a brighter raster reads as a slightly brighter
+    // bed. The sines above stay unfiltered so the 60 Hz floor is constant.
+    humTone = ctx.createBiquadFilter();
+    humTone.type = "lowpass";
+    humTone.frequency.value = 420;
     const src = ctx.createBufferSource();
     src.buffer = noiseBuffer;
     src.loop = true;
-    const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.value = 420;
     const gain = ctx.createGain();
     gain.gain.value = 0.12;
-    src.connect(lp).connect(gain).connect(humGain);
+    src.connect(humTone).connect(gain).connect(humGain);
     src.start();
   }
+}
+
+/** Tier-2/3 continuous beds (6.2). Both live on sheddable buses. */
+function startTextureBeds(): void {
+  if (!ctx || !buses || !noiseBuffer) return;
+
+  // Dusk fan bed — low, slow, felt more than heard; level rides duskDeepen.
+  fanGain = ctx.createGain();
+  fanGain.gain.value = 0.25;
+  fanGain.connect(buses.texture);
+  const fan = ctx.createBufferSource();
+  fan.buffer = noiseBuffer;
+  fan.loop = true;
+  const fanFilter = ctx.createBiquadFilter();
+  fanFilter.type = "lowpass";
+  fanFilter.frequency.value = 190;
+  const fanTrim = ctx.createGain();
+  fanTrim.gain.value = 0.35;
+  fan.connect(fanFilter).connect(fanTrim).connect(fanGain);
+  fan.start();
+
+  // Earbud leak — everything the scheduler plays goes through a hard
+  // lowpass, which is what makes it read as sound escaping someone else's
+  // earbuds rather than music in the room.
+  leakGain = ctx.createGain();
+  leakGain.gain.value = 0;
+  const leakFilter = ctx.createBiquadFilter();
+  leakFilter.type = "lowpass";
+  leakFilter.frequency.value = 900;
+  leakGain.connect(leakFilter).connect(buses.music);
 }
 
 /** Duck the room bed while docked (§6.1) — reading music, not cinema. */
@@ -367,6 +426,153 @@ export function setHumDucked(ducked: boolean): void {
     ctx.currentTime,
     HUM_DUCK_RAMP,
   );
+}
+
+// -------------------------------------------------- tier-2/3 texture (6.2)
+
+/**
+ * Shed or restore a garnish bus (7.2's watchdog). Tier-1 cues have no
+ * equivalent — they are never optional, which is why only `texture` and
+ * `music` are typed as sheddable.
+ */
+export function setBusShed(bus: SheddableBus, shed: boolean): void {
+  if (!ctx || !buses) return;
+  buses[bus].gain.setTargetAtTime(
+    shed ? 0 : BUS_GAIN[bus],
+    ctx.currentTime,
+    0.25,
+  );
+}
+
+/** Seeded variation so repeated cues aren't machine-identical. */
+const textureRand = mulberry32(0x6c1a);
+
+/**
+ * One key clack. Called on the typing rig's tap events (never a parallel
+ * timer — 6.2 acceptance): the caller watches `typingState.taps` and fires
+ * once per increment, so the sound cannot drift from the finger motion.
+ */
+export function playClack(): void {
+  const r = textureRand();
+  // Two layers: the keycap's plastic knock and the switch's click.
+  tone({
+    bus: "texture",
+    freq: 150 + r * 60,
+    toFreq: 70,
+    type: "triangle",
+    peak: 0.3,
+    attack: 0.001,
+    decay: 0.035,
+  });
+  noise({
+    bus: "texture",
+    peak: 0.16,
+    attack: 0.001,
+    decay: 0.018,
+    filter: "bandpass",
+    freq: 1900 + r * 900,
+    q: 1.4,
+  });
+}
+
+/**
+ * Hard-drive seek chatter — paced by the 3.3 boot lines (one burst per
+ * POST line), not by a timer of its own, so the drive "works" exactly when
+ * the sequencer says the machine is working.
+ */
+export function playHddSeek(): void {
+  const bursts = 2 + Math.floor(textureRand() * 3);
+  for (let i = 0; i < bursts; i++) {
+    noise({
+      bus: "texture",
+      peak: 0.12,
+      attack: 0.001,
+      decay: 0.02 + textureRand() * 0.03,
+      delay: i * (0.045 + textureRand() * 0.05),
+      filter: "bandpass",
+      freq: 700 + textureRand() * 1500,
+      q: 2.5,
+    });
+  }
+}
+
+/**
+ * Egg stinger for the 8.x easter eggs — a short bright arpeggio. Provided
+ * now so P8 has the cue ready; nothing calls it yet.
+ */
+export function playEggStinger(): void {
+  bell(1174.66, 0, 0.3, 0.4);
+  bell(1567.98, 0.07, 0.28, 0.5);
+  bell(2093.0, 0.14, 0.24, 0.7);
+}
+
+/**
+ * Hum shifts with screen brightness (6.2): a brighter raster draws more
+ * beam current, so the flyback sings a little louder and brighter. Driven
+ * per frame from `screenLight.luminance`.
+ */
+export function setHumBrightness(luminance: number): void {
+  if (!ctx || !humTone) return;
+  const k = Math.min(Math.max(luminance, 0), 1);
+  // Gentle range — this is a bed, not an effect the visitor should notice
+  // as "reacting". setTargetAtTime smooths the per-frame writes.
+  humTone.frequency.setTargetAtTime(300 + k * 520, ctx.currentTime, 0.3);
+}
+
+/** Dusk room tone + fan bed, driven by `experienceState.duskDeepen`. */
+export function setDuskTone(deepen: number): void {
+  if (!ctx || !fanGain) return;
+  const k = Math.min(Math.max(deepen, 0), 1);
+  fanGain.gain.setTargetAtTime(0.25 + k * 0.55, ctx.currentTime, 0.6);
+}
+
+/** The earbud leak's carrier level — 0 silences it (and stops scheduling). */
+export function setEarbudLeak(level: number): void {
+  if (!ctx || !leakGain) return;
+  leakGain.gain.setTargetAtTime(
+    Math.min(Math.max(level, 0), 1),
+    ctx.currentTime,
+    0.4,
+  );
+}
+
+/** An original minor figure — what leaks out of someone else's earbuds is
+ *  a contour, not a tune, so this is deliberately sparse and heavily
+ *  filtered by the graph it plays into. */
+const LEAK_NOTES = [220, 261.63, 329.63, 261.63, 246.94, 329.63, 392, 329.63];
+const LEAK_STEP_S = 0.42;
+
+/**
+ * Lookahead scheduler for the leak, ticked from the scene frame loop. Rides
+ * the frame clock rather than a `setInterval` so it cannot run on while the
+ * tab is throttled and the visuals are frozen.
+ */
+export function tickEarbudMusic(audible: boolean): void {
+  if (!ctx || !leakGain) return;
+  const now = ctx.currentTime;
+  if (!audible) {
+    // Re-anchor so an inaudible stretch doesn't burst-schedule on return.
+    leakNextAt = now;
+    return;
+  }
+  if (leakNextAt < now) leakNextAt = now;
+  // Schedule at most ~1 s ahead.
+  while (leakNextAt < now + 1) {
+    const freq = LEAK_NOTES[leakStep % LEAK_NOTES.length];
+    const start = leakNextAt;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.linearRampToValueAtTime(0.5, start + 0.02);
+    gain.gain.setTargetAtTime(0.0001, start + 0.02, 0.09);
+    const osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.value = freq;
+    osc.connect(gain).connect(leakGain);
+    osc.start(start);
+    osc.stop(start + 0.6);
+    leakStep++;
+    leakNextAt += LEAK_STEP_S;
+  }
 }
 
 // ------------------------------------------------------------- shell cues
@@ -380,9 +586,10 @@ export function attachShellCues(): () => void {
   let lastPhase: BootPhase = win98State.phase;
   let lastWindowIds = win98State.windows.map((w) => w.id).join("|");
   let lastWindowCount = win98State.windows.length;
+  let lastPostCount = win98State.postLines.length;
 
   const unsubscribe = subscribeWin98(() => {
-    const { phase, windows } = win98State;
+    const { phase, windows, postLines } = win98State;
 
     if (phase !== lastPhase) {
       // POST begins with the tube waking: thunk, then the BIOS beep on the
@@ -396,6 +603,14 @@ export function attachShellCues(): () => void {
         playShutdown();
       }
       lastPhase = phase;
+    }
+
+    // Drive chatter (6.2) paced by the POST lines themselves — one burst
+    // per line the sequencer pushes, so the drive works when the machine
+    // says it is working. clearPostLines() resets rather than fires.
+    if (postLines.length !== lastPostCount) {
+      if (postLines.length > lastPostCount) playHddSeek();
+      lastPostCount = postLines.length;
     }
 
     // Compare identity, not just length: close-then-open inside one
