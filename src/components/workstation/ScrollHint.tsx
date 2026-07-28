@@ -12,6 +12,13 @@
 // display:none while the experience is mounted, so the journey needs its
 // own instance; sharing the mark is the point.
 //
+// It is the same mark, but not the same *values* (ADR-013 §10). The floor's
+// tokens were chosen against its flat --color-bg; here the camera opens
+// inside the CRT's glow, where a 12 %-alpha hairline over blooming phosphor
+// is simply not there. This instance adds a scrim, brightens the rail and
+// label, and runs its own pulse timing — see the journey cue block in
+// globals.css. The floor keeps its own values untouched.
+//
 // Frame path follows TitleBeats: one rAF writes opacity straight to the
 // element from experienceState. No React state per frame, so nothing here
 // re-renders during the ride.
@@ -66,8 +73,17 @@ export function ScrollHint() {
         now - stillSince >
           (progress < 0.002 ? START_STALL_MS : STALL_MS);
 
+      // Linear ramp, not an exponential ease. `opacity += (target - opacity)
+      // * k` asymptotes toward its target and never arrives, so the cue
+      // spent its first seconds faint by construction — one of the three
+      // reasons it read as invisible (ADR-013 §10). This reaches full in
+      // exactly FADE_MS and then stops.
       const target = wanted ? 1 : 0;
-      opacity += (target - opacity) * Math.min(1, delta / FADE_MS);
+      const step = delta / FADE_MS;
+      opacity =
+        target > opacity
+          ? Math.min(target, opacity + step)
+          : Math.max(target, opacity - step);
       if (node) node.style.opacity = opacity.toFixed(3);
 
       raf = requestAnimationFrame(tick);
@@ -83,11 +99,13 @@ export function ScrollHint() {
       className="pointer-events-none fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-3"
       style={{ opacity: 0 }}
     >
-      <span className="font-mono text-[10px] tracking-[0.3em] text-ink-subtle uppercase">
+      {/* Scrim first, so it sits behind the mark it protects. */}
+      <span className="scroll-cue-scrim" />
+      <span className="scroll-cue-label font-mono text-[10px] tracking-[0.3em] uppercase">
         {coarse ? "Swipe" : "Scroll"}
       </span>
-      <span className="relative block h-12 w-px overflow-hidden bg-line">
-        <span className="animate-scroll-cue absolute inset-x-0 top-0 h-full bg-gradient-to-b from-transparent via-accent to-transparent" />
+      <span className="scroll-cue-rail relative block h-12 w-px overflow-hidden">
+        <span className="animate-scroll-cue-journey absolute inset-x-0 top-0 h-full bg-gradient-to-b from-transparent via-accent-bright to-transparent" />
       </span>
     </div>
   );
