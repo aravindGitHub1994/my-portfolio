@@ -51,6 +51,10 @@ export const ARM_JOINTS = {
 
 const UP = new Vector3(0, 1, 0);
 
+/** Shared local origin for pivot-local geometry. `capsuleBetween` only ever
+ *  clones its endpoints, so one instance can be reused safely. */
+export const ORIGIN = new Vector3(0, 0, 0);
+
 /** Capsule limb between two joints — the workhorse of the whole figure. */
 export function capsuleBetween(
   a: Vector3,
@@ -170,30 +174,62 @@ export function buildBody({ detail, material, palette }: BuilderOptions): Group 
   // Arms — elbows ~90°, hands at keyboard height (concept sheets).
   // Upper arm wears the tee (elbow-length sleeve); forearms are skin —
   // the right one carries the tattoo albedo (palette.forearmR).
+  //
+  // Rigged as a two-bone rotational chain (ADR-013 §1) rather than baked
+  // into body space: shoulderPivot → upper arm → elbowPivot → forearm +
+  // hand. Bone LENGTHS are fixed here from ARM_JOINTS and never change;
+  // only the two pivots' rotations animate, which is what lets the power
+  // press, the mouse reach and the mug sip run without an IK solver or a
+  // per-frame geometry rebuild.
+  //
+  // The geometry is authored in pivot-local space, so at rest rotations
+  // (both pivots at identity) every vertex lands exactly where the old
+  // body-space construction put it — the typing pose is unchanged by the
+  // rig, which is the property that makes it safe to land on its own.
   for (const side of [1, -1]) {
+    const suffix = side === 1 ? "R" : "L";
     const s = side === 1 ? ARM_JOINTS.shoulder : mirror(ARM_JOINTS.shoulder);
     const e = side === 1 ? ARM_JOINTS.elbow : mirror(ARM_JOINTS.elbow);
     const w = side === 1 ? ARM_JOINTS.wrist : mirror(ARM_JOINTS.wrist);
-    const upper = capsuleBetween(s, e, 0.047, tee, detail);
+    // Joint offsets, each relative to its own parent pivot.
+    const elbowLocal = e.clone().sub(s);
+    const wristLocal = w.clone().sub(e);
+
+    const shoulderPivot = new Group();
+    shoulderPivot.name = `shoulderPivot${suffix}`;
+    shoulderPivot.position.copy(s);
+
+    const elbowPivot = new Group();
+    elbowPivot.name = `elbowPivot${suffix}`;
+    elbowPivot.position.copy(elbowLocal);
+
+    shoulderPivot.add(
+      capsuleBetween(ORIGIN, elbowLocal, 0.047, tee, detail),
+      elbowPivot,
+    );
+
     const forearm = capsuleBetween(
-      e,
-      w,
+      ORIGIN,
+      wristLocal,
       0.04,
       side === 1 ? (palette?.forearmR ?? skin) : skin,
       detail,
     );
-    forearm.name = side === 1 ? "forearmR" : "forearmL";
-    group.add(upper, forearm);
+    forearm.name = `forearm${suffix}`;
+    elbowPivot.add(forearm);
 
     // Hand: palm + four curled fingers + thumb. Palm hovers just above the
     // keycap tops (world y ≈ 0.753–0.756 with the riser tilt) so resting
     // fingertips kiss the caps and the 1.3 tap dip reads as a key press —
     // gate-2.3 defect 1 was tips buried ~45 mm below the caps.
     // Fingers are named so the 1.3 typing rig can tap them individually.
+    //
+    // The hand group stays at local origin so typing.ts's wrist bob keeps
+    // writing a delta to `.position.y` and not an absolute placement.
     const hand = new Group();
-    hand.name = side === 1 ? "handR" : "handL";
+    hand.name = `hand${suffix}`;
     const palm = new Mesh(new BoxGeometry(0.075, 0.028, 0.085), skin);
-    palm.position.copy(w).add(new Vector3(-0.015 * side, -0.01, -0.04));
+    palm.position.copy(wristLocal).add(new Vector3(-0.015 * side, -0.01, -0.04));
     palm.rotation.set(-0.25, 0, 0);
     hand.add(palm);
     for (let f = 0; f < 4; f++) {
@@ -202,7 +238,7 @@ export function buildBody({ detail, material, palette }: BuilderOptions): Group 
         .add(new Vector3((f - 1.5) * 0.019 * side, -0.004, -0.042));
       const tip = root.clone().add(new Vector3(0, -0.012, -0.02));
       const finger = capsuleBetween(root, tip, 0.0095, skin, detail);
-      finger.name = `finger${side === 1 ? "R" : "L"}${f}`;
+      finger.name = `finger${suffix}${f}`;
       hand.add(finger);
     }
     const thumbRoot = palm.position
@@ -210,7 +246,9 @@ export function buildBody({ detail, material, palette }: BuilderOptions): Group 
       .add(new Vector3(0.042 * side, -0.006, -0.01));
     const thumbTip = thumbRoot.clone().add(new Vector3(0.012 * side, -0.012, -0.025));
     hand.add(capsuleBetween(thumbRoot, thumbTip, 0.011, skin, detail));
-    group.add(hand);
+    elbowPivot.add(hand);
+
+    group.add(shoulderPivot);
   }
 
   // Legs — thighs forward under the (absent) desk, shins down, sneakers.

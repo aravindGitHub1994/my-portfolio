@@ -85,7 +85,16 @@ export function Figure({
     headPivot.rotation.x = -0.06; // slight tilt toward the screen
     headPivot.add(buildHead(opts), buildHair(hairOpts), buildBeard(hairOpts));
 
-    root.add(body, headPivot, buildWardrobe(opts));
+    // The smartwatch hangs off the left elbow pivot (ADR-013 §1) so it
+    // rides the forearm through every pose. `buildWardrobe` returns
+    // elbow-local geometry; falling back to `root` would place it in body
+    // space, which is only correct at the rest pose — so make the missing
+    // pivot loud rather than silently wrong.
+    const elbowL = body.getObjectByName("elbowPivotL");
+    if (!elbowL) throw new Error("[character] elbowPivotL missing from body rig");
+    elbowL.add(buildWardrobe(opts));
+
+    root.add(body, headPivot);
     return { root, material, hairMaterial, palette };
   }, [seed, detail]);
 

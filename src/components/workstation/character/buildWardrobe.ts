@@ -1,6 +1,13 @@
 // Wardrobe extras (plan-0009 §1.3): the smartwatch on the LEFT wrist
 // (concept sheets). Strap wraps the forearm just above the wrist joint,
 // face sits on the outer (upper) side in the typing pose.
+//
+// Since the arm rig (ADR-013 §1) the watch is authored in **left-elbow-local
+// space** and parented onto `elbowPivotL` by `Figure.tsx`, so it rides the
+// forearm through every pose instead of floating where the typing pose used
+// to put it. At rest the pivots are at identity, so elbow-local coordinates
+// equal the old body-space ones minus the elbow joint — the placement the
+// owner signed off is unchanged.
 
 import {
   BoxGeometry,
@@ -20,20 +27,17 @@ export function buildWardrobe({ detail, material, palette }: BuilderOptions): Gr
   const watchMat = palette?.watch ?? material;
   const strapMat = palette?.watchStrap ?? material;
 
-  // Left-arm frame: mirror the right-arm joints.
-  const elbow = new Vector3(
-    -ARM_JOINTS.elbow.x,
-    ARM_JOINTS.elbow.y,
-    ARM_JOINTS.elbow.z,
+  // Left forearm in elbow-local space: mirror the right-arm joints in x,
+  // then measure from the elbow. This is the same `wristLocal` the forearm
+  // capsule is built from in `buildBody`.
+  const wristLocal = new Vector3(
+    -(ARM_JOINTS.wrist.x - ARM_JOINTS.elbow.x),
+    ARM_JOINTS.wrist.y - ARM_JOINTS.elbow.y,
+    ARM_JOINTS.wrist.z - ARM_JOINTS.elbow.z,
   );
-  const wrist = new Vector3(
-    -ARM_JOINTS.wrist.x,
-    ARM_JOINTS.wrist.y,
-    ARM_JOINTS.wrist.z,
-  );
-  const dir = wrist.clone().sub(elbow).normalize();
+  const dir = wristLocal.clone().normalize();
   // Strap centre a touch up-arm from the wrist joint.
-  const center = wrist.clone().addScaledVector(dir, -0.035);
+  const center = wristLocal.clone().addScaledVector(dir, -0.035);
   const quat = new Quaternion().setFromUnitVectors(UP, dir);
 
   const strap = new Mesh(
@@ -47,7 +51,8 @@ export function buildWardrobe({ detail, material, palette }: BuilderOptions): Gr
   strap.rotateX(Math.PI / 2);
   group.add(strap);
 
-  // Face: on the outer/upper side of the forearm.
+  // Face: on the outer/upper side of the forearm. The offset is along the
+  // pivot's +Y, which at rest is world up — as before the rig.
   const face = new Mesh(new BoxGeometry(0.03, 0.01, 0.026), watchMat);
   face.position.copy(center).add(new Vector3(0, 0.043, 0));
   face.quaternion.copy(quat);
