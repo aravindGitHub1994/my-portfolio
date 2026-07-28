@@ -1,240 +1,207 @@
-# HANDOFF — Win98 Workstation redesign (2026-07-28, session 13 wrap)
+# HANDOFF — `scene-refinement` (2026-07-28, session 14 wrap)
 
-> For the next agent session. **Every gate is PASSED (owner): 1.2, 2.3,
-> 4.3 and — this session — 9.2.** Every build slice is complete (P3–P8,
-> 9.1 docs). **`redesign-attempt2` is merged to `main`.**
+> For the next agent session. **ADR-012's plan is finished and merged.**
+> `redesign-attempt2` → `main` @ `dac6de4`; every gate (1.2, 2.3, 4.3, 9.2)
+> is owner-PASSED. The 9.2 record is `docs/qa/9.2-desktop-checklist.md`.
 >
-> Gate 9.2 came back PASS WITH FIXES; the two blocking items were closed
-> this session and the owner re-QA'd and authorized the merge. The full
-> record, including what was *not* verifiable headless, is in
-> `docs/qa/9.2-desktop-checklist.md` §17.
->
-> **The plan is done. What is left is the open-threads list below — none
-> of it is blocking, all of it needs owner senses or an owner call.**
-
-## 9.2 fixes (closed this session)
-
-- **The dock could be scrolled past.** Proximity-only engagement
-  (`|progress − rest| < 0.004`, ~25 px of a 5040 px runway, sampled per
-  rAF) was jumped over by any wheel flick. Now it also tests for
-  *crossing* the rest point either way, band widened to 0.012 / re-arm
-  0.05, and on latch Lenis glides to the exact square-on pose (0.3 s,
-  `force: true` — Lenis' raf advances even while stopped) before the
-  cross-fade. `DOCK_REST_INDEX` in `chapters.ts` now names that rest
-  point for the three modules that measure against it.
-- **Chapter 4 is no longer a Lenis snap point** (`Choreography.tsx`).
-  The snap and the dock were competing for one landing; the dock owns it
-  now. **Do not put it back** without removing the dock's own latch.
-- **Momentum was ejecting the dock.** The subtler half: with the above
-  fixed the dock latched correctly and the *tail of the same flick*
-  undocked it ~1.7 s later, which reads exactly like "docking was
-  skipped". Undock now requires the 800 ms grace **and** a 350 ms pause
-  in scrolling; `e.repeat` keydowns are ignored. Reproduced and confirmed
-  before and after — see §17 of the checklist.
-- **Scroll cue** (`workstation/ScrollHint.tsx`) — the static floor's own
-  cue markup from `acts/Hero.tsx`, shown wherever the journey has stood
-  still. **Untested claim to re-check:** the 350 ms pause threshold has
-  only ~6× margin over real momentum gaps, and headless renders this
-  scene at 2–6 fps, so it was confirmed on owner hardware, not by an
-  agent.
-- **`DockHint.tsx`** — the docked desktop's "Getting Started" dialog.
-  DOM-only and outside `win98State` on purpose: it exists only in the
-  docked view, so it never reaches the painter and §4 parity is intact.
-  Same precedent as the "keep scrolling" hint.
+> **This session opened a new branch and did design work only.** No slice
+> is complete. See "Current Status" for the one thing that will bite you
+> in the first thirty seconds.
 
 ## Current Status
 
-- Branch **`redesign-attempt2`** (off `main` @ `7969e26`). Ledger:
-  P0–P2 + gate-1.2/2.3 iterations in git log (don't re-derive) ·
-  P3 `e7a106b`/`89670dc`/`d816bda` · 4.1 `ad493db` · 4.2 `e66cd75` ·
-  **gate 4.3 PASSED** on a served production build of `e66cd75` ·
-  5.1 `95bbf76` · 5.2 `493d4ea` · 5.3 `2f22f6e` · 6.1 `2cb71f8` ·
-  6.2 `8aed018` · 7.1a `f7aead3` · 7.1b `0085af6` · 7.2a `a126b9f` ·
-  7.2b `e7ae176` · **8.1 `13086ab`** · **8.2 `3cec489`** · **9.1 `bbf85c7`**.
-- Per-slice reasoning lives in the commit messages; they are long on
-  purpose. What follows is only what a future session would otherwise
-  get wrong.
+- Branch **`scene-refinement`**, cut from `main` @ `dac6de4`. Working tree
+  is dirty and **the branch does not compile**.
+- Produced this session, both committed to disk, neither committed to git:
+  - `docs/decisions/ADR-013-scene-refinement-rigged-arms-and-the-power-press-opening.md`
+  - `docs/plans/implementation-plan-0010.md`
+- **Slice 1.1 is half-written and broken.** `character/buildBody.ts` has
+  been converted to the two-bone pivot hierarchy, but:
+  - it references an **`ORIGIN` constant that was never defined** — add
+    `const ORIGIN = new Vector3(0, 0, 0)` near `UP`;
+  - `character/buildWardrobe.ts` still derives the smartwatch from
+    `ARM_JOINTS` in body space and has **not** been reparented onto
+    `elbowPivotL`, so the watch will float where the forearm used to be;
+  - `character/Figure.tsx` has not been updated to parent the wardrobe
+    into the left elbow pivot.
+  Finish those three or `git checkout -- src/components/workstation/character/`
+  and restart 1.1 clean. Either is fine; do not leave it half-done.
+- **The breakdown in plan-0010 has not been approved by the owner.** It was
+  presented at the end of this session and the reply had not landed. Confirm
+  before building past 1.1.
 
-## P8 (closed this session)
+## What this branch is for
 
-- **8.1 `13086ab` — Recycle Bin + BSOD.** The bin holds the redesigns
-  this repo really shipped and replaced (`lens.exe`, `glass_cube.scn`,
-  `noise_signal.tmp`); the list is honest, which is why the joke works.
-  Restore is always refused.
-  - **BSOD is a boot PHASE, not an overlay.** `"bsod"` is in `BootPhase`
-    but deliberately **not** in `BOOT_ORDER` — `nextBootPhase` therefore
-    refuses to walk into or out of it, exactly as with `"shutdown"`. The
-    phase choice pays for itself three times: the painter gets a case and
-    cinematic parity is free; `CrtScreen` already downsamples whatever is
-    painted, so the crash cools the room light with no lighting hook and
-    the gate-2.3 cap still governs; and the open windows are simply left
-    in the store, so `rebootFromCrash` lands on the exact desktop the
-    visitor crashed — which is what the screen claims.
-  - Copy is in `src/lib/bsodScript.ts` because **both** renderers draw
-    it. A gag that reads differently docked vs. undocked is the drift the
-    ADR-012 §4 parity rule exists to prevent.
-  - **Both triggers warn first and crash on the repeat** (empty the bin;
-    open `System32` after being asked not to). One-click crashing would
-    fire on a stray double-click, and the warning line is half the joke.
-  - Recovery is over-served on purpose: window-level `keydown` (any key)
-    **and** `pointerdown`, because touch has no key to press.
-  - `playEggStinger` fires on **recovery, never the crash** — it is a
-    bright ascending bell, a reward figure; on the way in it would read
-    as celebrating the visitor's misfortune.
-- **8.2 `3cec489` — Minesweeper.** Rules live in pure
-  `src/lib/minesweeper.ts`; the component holds none.
-  - **Two era details that look like bugs:** first-click safety excludes
-    **only the clicked cell** (clearing its neighbours too is a later
-    convention and gives away more of the board); and **winning needs no
-    flags**, so a won board can still show a hidden square and a non-zero
-    counter — the counter tracks the visitor's reckoning, not the truth.
-  - Board is **9×9 with 16 mines per plan §8.2**. The era's beginner
-    board is **ten**. 16 is a materially harder game (20 % density);
-    `MINE_COUNT` is one constant. **Raise this at 9.2** — it is a
-    playability call, not an implementation one.
-  - The grid is **one tab stop**; 81 tabbable cells would bury the rest
-    of the shell for a keyboard visitor.
-  - Touch: 30-unit cells and long-press to flag; press/release are
-    tracked so a long press that already flagged does not also reveal.
+The owner's gate-9.2 §15 answer — deferred out of that gate and named in
+the previous handoff as "the largest outstanding piece of work" — plus six
+requests raised alongside it. All of it is specified in **ADR-013**; the
+slice breakdown, acceptance criteria and dependency graph are in
+**plan-0010**. Not repeated here.
 
-## 9.1 (closed this session, `bbf85c7`)
+The one structural fact worth carrying in your head: **three of the seven
+requests are one missing capability.** `buildBody.ts` bakes the typing pose
+into static capsule geometry — `capsuleBetween` derives length, orientation
+and midpoint from two joint coordinates and returns a finished `Mesh`. There
+is no shoulder pivot and no elbow pivot. Pressing the power button, using the
+mouse and lifting the mug all need the same rig, which is why P1 gates
+everything and why the acceptance criterion for 1.1 is *visually identical
+to `main`*.
 
-- CLAUDE.md / AGENTS.md / README rewritten around ADR-012. The
-  **confidentiality block in CLAUDE.md is verbatim and untouched.**
-- `docs/design-system.md` restructured around **two token sets kept
-  deliberately separate** — Electric Dark (the site's own UI) and the
-  Win98 chrome (a *diegetic effect* palette). It now carries the full
-  **nine-rung ladder table** the plan asked for, the chapter table, the
-  dock and brightness contracts, and the two period faces.
-- ADR-005…011 each gained a **superseded pointer naming what
-  specifically survives** in that ADR. **Files not renamed, content not
-  rewritten** — they are immutable records.
-- Note for future doc edits: the painter mirrors the Win98 CSS tokens as
-  canvas constants. **Change one, change both**, or the renderers drift.
+## Decisions already made — do not re-litigate
+
+Resolved with the owner this session (ADR-013 records the reasoning):
+
+- **The face is revealed by lighting, not geometry.** `buildHead.ts` has no
+  eyes and no mouth by design (ADR-012 §2; gate 1.2 cut cheek mounds because
+  they "read as eyeballs"). Chapter 2 orbits to a three-quarter rim-lit angle
+  with the eye zone in shadow. **No head geometry is added.**
+- **The mug is lifted and sipped**, not merely touched — the owner chose the
+  more expensive option knowingly. That is what forces the prop-handle
+  singleton across the `RoomScene` → `Figure` boundary.
+- **The opening frame is a macro on the tower's power button with no person
+  in it.** The forearm enters on click. Chapter 2 keeps its reveal.
+- **All 29 photographs ship** — cats, rides/hikes, workspace, guitar, and the
+  two existing portraits.
+- **The entry gesture stays a DOM button**, pinned over the projected 3D
+  button. `unlockAudio()` must run synchronously in a real user gesture, and
+  the canvas is `fixed inset-0 -z-10` so clicks never reach it.
+
+## Unresolved Threads
+
+**New, from this branch:**
+
+- Plan-0010's breakdown awaits owner approval (above).
+- Two HITL gates should be pulled forward because they are cheap and they
+  gate expensive work: **1.3** (one look at the rig before four behaviours
+  are built on it) and **6.2** (the 29 photos, before they enter `public/`).
+- **The dock is this branch's biggest regression risk.** Giving chapter 0
+  scroll span moves `RUNWAY_LENGTH_VH` 660 → 750, which changes what
+  `DockSwap`'s `ENGAGE_EPS` of 0.012 means in pixels — and the dock is
+  precisely what the owner signed off in session 13. Slice 8.1 re-runs
+  checklist §4/§17a in full.
+- Steam adds a **tenth rung** to the fidelity ladder, pushing the
+  static-floor offer from ~64 s to roughly ~69 s at a pinned 20 fps. Slice
+  4.3 measures the real number. Folding steam into the existing `dust` flag
+  was considered and rejected — `dust` sheds at rung 2.
+
+**Carried forward from 9.2, still open, none blocking:**
+
+- **P6 audio has never been heard by a human.** Levels, `MIN_CLACK_GAP_S`,
+  leak falloff are the owner-adjustment candidates.
+- **The mobile shell has never run on a real phone** — only headless
+  Chromium at 360×640 / 390×844. Untested by construction: real touch-drag
+  swipe-to-close, iOS Safari dynamic viewport, the LinkedIn in-app webview.
+- **The ladder has never been paced by a human** (`GRACE_FRAMES`,
+  `EMA_ALPHA`). This branch makes the question sharper, not softer.
+- **The low tier optimizes the wrong axis** — triangles −77 %, but textures /
+  geometries / texture bytes identical, because the bakes aren't
+  detail-dependent. Owner call; halving bake sizes changes how the room looks.
+- `src/lib/aboutMe.ts` copy — owner review.
+- **7.1 items deliberately not done** (app-internal, not shell): Explorer/tree
+  panes → stacked lists, touch scrub through Lenis, app-internal 9 px type.
+- Minesweeper mine count — **owner answered at 9.2: keep 16.** Closed.
+- Accepted behaviours, don't "fix" without an ask: single-`scale` Window drag
+  ~5 % x error; keyboard undock can leave progress a few thousandths past the
+  rest point.
+- Self-noted nits the owner has *not* flagged — mention, don't gold-plate:
+  shaft billboard pale edge-on; chair backrest plain boxes; faint CRT moiré.
+  (Chapter-2 rest framing is no longer a nit — slice 3.1 recomposes it.)
+- Committer identity resolves to the owner's work email. Told twice, not
+  acted on — **leave it.**
+
+## Architecture contracts (all still binding)
+
+Unchanged from session 13 except where ADR-013 amends them.
+
+- `src/lib/win98State.ts` — ONE store, both renderers; pure, no DOM/three.
+- `win98/painter.ts` **event-driven only**; `crt/CrtScreen.tsx` owns
+  canvas→CanvasTexture→CRT shader. **Brightness contract (gate 2.3):
+  luminance cap 0.7 + `CAST_MAX 2.6` in `Lighting` — preserve in every
+  screen change.**
+- Shell renders in **640×480 virtual space**; `Window.tsx` divides client px
+  by `scale`. Taskbar stays a `<div>`.
+- `?scene=shell` is the DOM harness; `?scene=full|room|character` are orbit
+  harnesses with **no choreography by design** (owner asked once).
+- Journey: `choreography/` is the sole owner of scroll; frame loops read
+  mutable module state, never React state. `HEAD_FOCUS` is the single head
+  point the ch-2 shot and the 6.2 earbud leak both measure against.
+  `DockSwap`'s `docked` is released on undock intent, **never by a timer**.
+  Chapter 4 is **not** a Lenis snap point — do not put it back.
+- Lazy apps: `lazyApps.ts` → `registerNN.ts` chunks, each **verified split
+  out of the initial bundle in `out/`**. The Gallery must clear the same bar.
+- Conventions: figure faces **-Z**; `DESK_TOP_Y` 0.72; tower power button at
+  world `(-0.05, 0.777, -0.518)`; `assets-src/` stays untracked and unshipped.
+- The painter mirrors the Win98 CSS tokens as canvas constants. **Change one,
+  change both.**
 
 ## Verification patterns worth reusing
 
-- **Pure-module + simulation** (used for `fidelity.ts` in 7.2 and
-  `minesweeper.ts` here): compile the module standalone with `npx tsc`
-  to a scratch dir and play thousands of cases in node. It caught
-  nothing this time *because* the rules were written against it — which
-  is the point. Far stronger than clicking squares.
-- **When a state is unreachable by scripted clicks, drive a solver.**
-  Minesweeper's win could not be reached by random clicking, so a
-  constraint solver was run through the real DOM (deduce, guess when
-  stuck, reset on loss) until it won legitimately on game 27 —
-  exercising reveal, flood, right-click flagging, reset and the win
-  presentation end to end.
-- **React updates are NOT synchronous here.** A programmatic `.click()`
-  does not flush before the next statement, so multi-step DOM assertions
-  in one `eval` silently read stale state. Either wait between steps, or
-  run the whole interaction as an in-page async IIFE that writes its
-  result to `window.__something` and poll it.
+- **Pure-module + simulation** (`fidelity.ts`, `minesweeper.ts`): compile
+  standalone with `npx tsc` to a scratch dir, play thousands of cases in node.
+  `armPose.ts` is the next natural candidate — it is pure maths over
+  quaternions and should not need a GPU to prove.
+- **When a state is unreachable by scripted clicks, drive a solver** (a
+  constraint solver won Minesweeper on game 27 through the real DOM).
+- **React updates are NOT synchronous here.** A programmatic `.click()` does
+  not flush before the next statement. Wait between steps, or run the whole
+  interaction as an in-page async IIFE writing to `window.__something`.
+- **Headless renders this scene at 2–6 fps on software GL.** It cannot
+  produce input at a real 60 fps cadence, so anything timing-sensitive —
+  the dock's 350 ms pause, the behaviour scheduler's pacing, the tail wag's
+  "is it slow enough" — is owner-verified only. Say so rather than claiming it.
 
-## Unresolved Threads — all of these are 9.2 material
+## QA gotchas (accumulated, all still true)
 
-- **P6 audio has never been heard by a human.** Verified structurally
-  only. Levels, `MIN_CLACK_GAP_S`, and the leak falloff are the obvious
-  owner-adjustment candidates.
-- **The mobile shell has never run on a real phone**, only headless
-  Chromium at 360×640 / 390×844. Untested by construction: real
-  touch-drag on swipe-to-close, iOS Safari's dynamic viewport, the
-  LinkedIn in-app webview.
-- **The ladder has never been paced by a human.** A device pinned at
-  20 fps walks all nine rungs in ~64 s. `GRACE_FRAMES` and `EMA_ALPHA`
-  are the knobs, both documented in-file.
-- **The low tier optimizes the wrong axis** — triangles drop 77 %, but
-  textures/geometries/texture bytes are identical (bakes aren't
-  detail-dependent). On a phone texture upload is often the tighter
-  constraint. Halving bake sizes changes how the room *looks*, so it is
-  an owner call.
-- **Minesweeper mine count** (16 vs. the era's 10), per above.
-- `src/lib/aboutMe.ts` copy — owner review (draft is interview-approved
-  facts only; motif stays subtext per memory).
-- **7.1 items deliberately not done** (app-internal, not shell):
-  Explorer/tree panes collapsing to stacked lists, touch scrub through
-  Lenis, app-internal type still at the desktop's 9px. Doing these blind
-  would be guessing at content never seen on a phone — bundle with 9.2.
-- Accepted behaviors (documented, don't "fix" without owner ask):
-  single-`scale` Window drag ~5 % x error; keyboard undock can leave
-  progress a few thousandths past the rest point (snap settles it).
-- Self-noted nits (owner has NOT flagged — mention, don't gold-plate):
-  shaft billboard pale edge-on; chair backrest plain boxes; ch2 rest
-  framing may want calibration; faint CRT moiré at some distances.
-- Committer identity auto-resolves to the owner's work email; owner has
-  been told twice and not acted — **leave it**, keep it consistent with
-  the rest of the branch rather than amending.
-
-## Architecture contracts (all committed, all still binding)
-
-- `src/lib/win98State.ts` — ONE store for both renderers; version
-  counter feeds `useWin98Version`. Pure, no DOM/three imports.
-- `win98/painter.ts` event-driven only; `crt/CrtScreen.tsx` owns
-  canvas→CanvasTexture→CRT shader, writes `screenLight` per frame.
-  **Brightness contract (gate 2.3): luminance cap 0.7 in CrtScreen +
-  `CAST_MAX 2.6` in Lighting — preserve in every screen change.**
-- Shell renders in **640×480 virtual space** (`DESKTOP_W/H`);
-  `Window.tsx` divides client px by a `scale` prop. Taskbar must stay a
-  `<div>`. `?scene=shell` is the DOM harness; `?scene=full` etc. are
-  orbit harnesses — **no choreography by design** (owner asked once).
-- Boot: `bootScript.ts` (POST interpolates `stats.ts`) +
-  `bootSequencer.ts`. Crash: `bsodScript.ts` + `crashWorkstation()` /
-  `rebootFromCrash()`.
-- Journey: `choreography/cameraPath.ts` keyframes (dock square-on at
-  `DOCK_DISTANCE 0.26`, fov 50 — `dockAlignment.ts` must match);
-  **`HEAD_FOCUS` is the single head point the ch. 2 shot and the 6.2
-  leak both measure against**; `DockSwap.tsx` phase machine — **`docked`
-  is released on undock intent, never by a timer**; dev-only
-  `window.__experienceState` and `window.__fidelity` QA handles.
-- Lazy apps: `lazyApps.ts` → `registerNN.ts` chunks. Every chunk has
-  been verified split out of the initial bundle in `out/`.
-- Conventions: figure faces **-Z**; `DESK_TOP_Y` 0.72; `assets-src/`
-  stays untracked (ADR-012 §3).
-
-## QA gotchas (accumulated — all still true)
-
-- Floor-page DOM coexists under the shell: **scope selectors to the
-  window `section[aria-label=...]`** (bare `find text` collides).
+- Floor-page DOM coexists under the shell: **scope selectors to the window
+  `section[aria-label=...]`** — bare `find text` collides.
 - Direct `click <ref>` on in-window controls can hang on actionability;
-  eval-driven clicks are the reliable path, then wait ~400 ms.
-- **On touch, a single tap opens an icon** (`Icon.tsx`) — dispatching
-  only `dblclick` does nothing there.
+  eval-driven clicks then a ~400 ms wait is the reliable path.
+- **On touch a single tap opens an icon** (`Icon.tsx`) — dispatching only
+  `dblclick` does nothing there.
 - `agent-browser` viewport is `set viewport <w> <h>`, not `viewport`.
 - In `agent-browser eval`, PowerShell strips inner double quotes from
-  native-exe args — write JS with **single** quotes, or use a bash
-  heredoc into a variable.
-- Quote refs as `'@e1'` in PowerShell; commit via `-F <file>` written by
-  the Write tool (PS `Out-File` adds a BOM).
-- The full journey needs the power button *clicked* and ~15 s of boot
-  before PageDown stepping moves progress.
+  native-exe args — write JS with **single** quotes, or heredoc via bash.
+- Quote refs as `'@e1'` in PowerShell; commit via `-F <file>` written by the
+  Write tool (PS `Out-File` adds a BOM).
+- The full journey needs the power button *clicked* and ~15 s of boot before
+  stepping moves progress. **This changes in slice 2.3** — update the QA
+  scripts when it does.
+- Reset before any first-run test: `w98-intro-seen`, `w98-muted`,
+  `w98-fidelity-floor`.
 
 ## Key References
 
-- **ADR:** `docs/decisions/ADR-012-win98-workstation-cinematic-redesign.md`
-  — ten locked decisions; do not re-litigate.
-- **Plan:** `docs/plans/implementation-plan-0009.md` — gates 1.2 ✅ ·
-  2.3 ✅ · 4.3 ✅ · **9.2 open**. AFK gate is always lint + build green.
-- **Standing rules:** root `CLAUDE.md` / `AGENTS.md` (now Workstation-
-  accurate). Agent memory: `noise-signal-redesign-state.md`,
-  `owner-motif-privacy.md`, `client-name-leak-accepted.md`,
-  `windows-shell-gotchas.md`.
+- **ADRs:** `docs/decisions/ADR-013-…md` (this branch — ten decisions, made
+  with the owner, don't re-litigate) · `ADR-012-…md` (the experience layer;
+  ADR-013 amends only its §5 chapter table and §2 rig).
+- **Plan:** `docs/plans/implementation-plan-0010.md` — 25 slices, dependency
+  graph, per-slice acceptance criteria, risk table. AFK gate is always lint +
+  build green.
+- **Prior gate record:** `docs/qa/9.2-desktop-checklist.md`, especially §17
+  (session-13 fixes) and §17d (what an agent could not verify).
+- **Standing rules:** root `CLAUDE.md` / `AGENTS.md`. Agent memory:
+  `noise-signal-redesign-state.md`, `owner-motif-privacy.md`,
+  `client-name-leak-accepted.md`, `windows-shell-gotchas.md`.
 
 ## Recommended Next Steps
 
-- [x] ~~**P8 eggs**~~ — done (`13086ab` + `3cec489`).
-- [x] ~~**9.1 docs reconcile**~~ — done (`bbf85c7`).
-- [x] ~~**HITL gate 9.2**~~ — PASSED by the owner this session after the
-      two blocking fixes; `redesign-attempt2` merged to `main`.
-- [ ] **Nothing is blocking.** Next work comes off "Unresolved Threads"
-      above; the three that most need human senses are still **audio**,
-      **a real phone**, and **ladder pacing**. The owner's §15 ask —
-      open on the tower's power button with the figure's arm pressing it,
-      then move to the desktop — was explicitly deferred out of 9.2 and
-      is the largest outstanding piece of work.
+- [ ] **Fix or revert the broken 1.1 edit** (`ORIGIN` undefined,
+      `buildWardrobe`/`Figure` not reparented). Nothing else can be verified
+      until `npm run lint` and `npm run build` are green again.
+- [ ] **Confirm the plan-0010 breakdown with the owner** before building past
+      1.1.
+- [ ] Finish **1.1**, then hold at **gate 1.3** — one owner look at the rig
+      before four behaviours are built on top of it.
+- [ ] In parallel, land **P7** (scroll cue contrast) and **P6.1** (picture
+      pipeline). Both are independent of the rig and P6.1 unblocks the other
+      cheap owner gate.
+- [ ] Commit ADR-013 and plan-0010 — they are on disk but not in git.
 
 ## Recommended Skills
 
-- `agent-browser` — isolated `--session` QA for anything visual, and the
-  only practical way to exercise the mobile viewports; the owner's
-  headed session only for owner-angle checks (ask before reloads).
-- None otherwise (the plan is the spec).
+- `test-driven-development` or the pure-module + `npx tsc` simulation pattern
+  for `armPose.ts` — the pose maths is the part most worth proving offline,
+  and the part a browser proves worst.
+- `agent-browser` — isolated `--session` QA for anything visual. The owner's
+  headed session only for owner-angle checks; ask before reloads.
+- `documentation-and-adrs` at close-out for slice 8.2.
