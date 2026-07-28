@@ -40,6 +40,15 @@ export const REST_POINTS: number[] = (() => {
   });
 })();
 
+/**
+ * Index into CHAPTERS/REST_POINTS of the dock chapter. Named because three
+ * modules measure against that one rest point — the camera path keyframes
+ * the square-on pose there, CrtScreen flattens the glass toward it, and
+ * DockSwap latches on it — and a bare `4` in three files is a rename away
+ * from silently disagreeing.
+ */
+export const DOCK_REST_INDEX = 4;
+
 /** Index of the chapter whose scrub span contains `progress` (0..1). */
 export function chapterAtProgress(progress: number): number {
   let acc = 0;

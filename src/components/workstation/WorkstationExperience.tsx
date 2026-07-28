@@ -9,6 +9,7 @@ import { WorkstationCanvas } from "./WorkstationCanvas";
 import { ExperienceBoundary } from "./ExperienceBoundary";
 import { PowerOn } from "./PowerOn";
 import { TitleBeats } from "./TitleBeats";
+import { ScrollHint } from "./ScrollHint";
 import { SignOff } from "./SignOff";
 import { DockSwap } from "./crt/DockSwap";
 import { MuteToggle } from "./MuteToggle";
@@ -115,6 +116,8 @@ export default function WorkstationExperience() {
       {/* Ch. 0 entry gesture + ch. 1 title beats (4.1). */}
       <PowerOn />
       <TitleBeats />
+      {/* Says "scroll" wherever the journey has come to a stop (9.2). */}
+      <ScrollHint />
       {/* Ch. 4 painter→DOM swap at the dock rest point (4.2). */}
       <DockSwap />
       {/* Ch. 5 contact layer — the journey's final rest point (5.3). */}

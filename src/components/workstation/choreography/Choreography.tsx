@@ -5,7 +5,11 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Snap from "lenis/snap";
 import { useLenisRef } from "@/components/LenisProvider";
-import { REST_POINTS, chapterAtProgress } from "@/lib/chapters";
+import {
+  DOCK_REST_INDEX,
+  REST_POINTS,
+  chapterAtProgress,
+} from "@/lib/chapters";
 import { experienceState } from "@/lib/experienceState";
 
 /**
@@ -53,12 +57,23 @@ export function Choreography({
     let snap: Snap | null = null;
     let removeSnaps: (() => void)[] = [];
 
-    const addSnaps = () => {
+    // One function for both jobs, because both are the same fact — where
+    // the runway sits in page pixels. Publishing it lets the dock convert
+    // its rest point back to a scroll target (4.2) without re-deriving the
+    // runway's layout, and the two can never disagree about the mapping.
+    const publishRunway = () => {
+      const span = trigger.end - trigger.start;
+      experienceState.runwayStart = trigger.start;
+      experienceState.runwaySpan = span;
       if (!snap) return;
       removeSnaps.forEach((remove) => remove());
-      const span = trigger.end - trigger.start;
-      removeSnaps = REST_POINTS.map((p) =>
-        snap!.add(trigger.start + p * span),
+      // Chapter 4 is deliberately NOT a snap point: the dock owns its own
+      // landing now (DockSwap latches on crossing, then eases the camera
+      // exactly square-on). Two mechanisms competing for one rest point is
+      // what made that approach feel twitchy — and left the proximity snap
+      // tugging a visitor back the moment they undocked.
+      removeSnaps = REST_POINTS.filter((_, i) => i !== DOCK_REST_INDEX).map(
+        (p) => snap!.add(trigger.start + p * span),
       );
     };
 
@@ -68,12 +83,12 @@ export function Choreography({
         duration: 0.6,
         distanceThreshold: "20%",
       });
-      addSnaps();
     }
+    publishRunway();
 
     // Rest-point pixel positions depend on trigger.start/end — recompute
     // whenever ScrollTrigger refreshes (resize, font load, etc.).
-    ScrollTrigger.addEventListener("refresh", addSnaps);
+    ScrollTrigger.addEventListener("refresh", publishRunway);
 
     // Keyboard stepping (ADR-012 §5/§9): arrows/space/page keys drive the
     // SAME timeline by scrolling to the neighbouring rest point via Lenis.
@@ -100,12 +115,14 @@ export function Choreography({
 
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      ScrollTrigger.removeEventListener("refresh", addSnaps);
+      ScrollTrigger.removeEventListener("refresh", publishRunway);
       removeSnaps.forEach((remove) => remove());
       snap?.destroy();
       trigger.kill();
       experienceState.scrollProgress = 0;
       experienceState.chapterIndex = 1;
+      experienceState.runwayStart = 0;
+      experienceState.runwaySpan = 0;
     };
   }, [runway, lenisRef]);
 

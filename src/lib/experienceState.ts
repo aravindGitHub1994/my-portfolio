@@ -16,6 +16,13 @@ export const experienceState = {
   /** 0..1 across chapter 5 — the dusk-deepening lighting cue (4.1);
    *  Lighting damps the cool fill from it per frame. */
   duskDeepen: 0,
+  /** Runway pixel geometry, republished by Choreography on every
+   *  ScrollTrigger refresh: the scroll-y at progress 0 and the pixel span
+   *  of the whole runway. The dock converts its rest point back into a
+   *  scroll target with these, so it can pull the camera the last of the
+   *  way square-on without re-deriving the runway's layout. */
+  runwayStart: 0,
+  runwaySpan: 0,
   /** Mirrored from WorkstationRoot's tier detection; "pending" pre-detect. */
   fidelityTier: "pending" as FidelityTier | "pending",
   /** Dev-only perf readout (§7.2's recorded budgets). Written by

@@ -27,7 +27,7 @@ import {
 import { startBoot, type BootController } from "@/lib/bootSequencer";
 import { paintScreen } from "@/components/win98/painter";
 import { experienceState } from "@/lib/experienceState";
-import { REST_POINTS } from "@/lib/chapters";
+import { DOCK_REST_INDEX, REST_POINTS } from "@/lib/chapters";
 import { screenLight } from "../scene/screenLight";
 import {
   createCrtMaterial,
@@ -142,7 +142,7 @@ export function CrtScreen({
     uniforms.uTime.value += delta;
 
     const dockDistance = Math.abs(
-      experienceState.scrollProgress - REST_POINTS[4],
+      experienceState.scrollProgress - REST_POINTS[DOCK_REST_INDEX],
     );
     const flat = Math.min(dockDistance / DOCK_FLATTEN_WINDOW, 1);
     uniforms.uCurvature.value =
