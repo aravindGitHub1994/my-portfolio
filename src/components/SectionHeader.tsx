@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { KineticText } from "@/components/lens/kinetic/KineticText";
 
 interface SectionHeaderProps {
   /** Small uppercase eyebrow label above the title. */
@@ -25,24 +24,13 @@ export function SectionHeader({
       ].join(" ")}
     >
       {eyebrow && (
-        <KineticText
-          as="p"
-          className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-accent-bright"
-        >
+        <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-accent-bright">
           {eyebrow}
-        </KineticText>
+        </p>
       )}
-      <KineticText as="h2" className="text-3xl text-ink sm:text-4xl">
-        {title}
-      </KineticText>
+      <h2 className="text-3xl text-ink sm:text-4xl">{title}</h2>
       {description && (
-        <KineticText
-          as="p"
-          variant="plain"
-          className="mt-4 text-lg leading-8 text-ink-muted"
-        >
-          {description}
-        </KineticText>
+        <p className="mt-4 text-lg leading-8 text-ink-muted">{description}</p>
       )}
     </div>
   );

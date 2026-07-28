@@ -3,18 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { SectionHeader } from "@/components/SectionHeader";
-import { KineticText } from "@/components/lens/kinetic/KineticText";
 import { APPROACH_STATS, type StatFigure } from "@/lib/stats";
 
 /**
- * Act 2 — Approach (ADR-006 §3, slice 3.3): the method statement plus its
- * proof band — stat figures that count up as they resolve. The numbers are
- * kinetic type: on the high tier the GL twin refracts in while the DOM
- * source counts (the text layer re-rasters on mutation); on the low tier
- * the visible DOM counts. The prerender ships the RESOLVED values, and
- * reduced-motion never overwrites them — crawlers and static tier see real
- * numbers, never a zero. Counting stays silent for screen readers (no
- * aria-live; the settled DOM text is the accessible value).
+ * Approach — the method statement plus its proof band: stat figures that
+ * count up as they scroll into view. The prerender ships the RESOLVED
+ * values, and reduced-motion never overwrites them — crawlers and
+ * reduced-motion visitors see real numbers, never a zero. Counting stays
+ * silent for screen readers (no aria-live; the settled DOM text is the
+ * accessible value).
  */
 export function Approach() {
   return (
@@ -76,20 +73,13 @@ function StatItem({ stat, index }: { stat: StatFigure; index: number }) {
 
   return (
     <li ref={item} className="flex flex-col gap-2">
-      <KineticText
-        as="span"
-        className="text-electric text-5xl font-semibold tabular-nums sm:text-6xl"
-      >
+      <span className="text-electric text-5xl font-semibold tabular-nums sm:text-6xl">
         {display}
         {stat.suffix}
-      </KineticText>
-      <KineticText
-        as="span"
-        variant="plain"
-        className="max-w-[16ch] text-sm leading-6 text-ink-muted"
-      >
+      </span>
+      <span className="max-w-[16ch] text-sm leading-6 text-ink-muted">
         {stat.label}
-      </KineticText>
+      </span>
     </li>
   );
 }

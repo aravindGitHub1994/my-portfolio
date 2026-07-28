@@ -1,0 +1,251 @@
+"use client";
+
+// Explorer (plan-0009 §5.1, ADR-012 §6): the file-manager pastiche. Two
+// entry points share this component — `My Computer` (appId "explorer",
+// drive-level browsing) and `My Projects` (appId "explorer-projects",
+// straight into the projects folder listing the 5 projects.ts entries).
+// Double-click / Enter opens each project's own window. All original
+// chrome — zero Microsoft-derived art (ADR-012 §10).
+
+import { useState } from "react";
+import { PROJECTS } from "@/lib/projects";
+import { EXPERIENCE } from "@/lib/resume";
+import {
+  crashWorkstation,
+  openWindow,
+  type IconGlyph,
+  type Win98Window,
+} from "@/lib/win98State";
+import { PixelIcon } from "../pixelIcons";
+import { launchApp } from "../shell/appDefs";
+import { CareerTree } from "./CareerTree";
+
+/** Window geometry for a project opened from the listing. */
+const PROJECT_WIN = { width: 500, height: 400 } as const;
+
+export function openProjectWindow(slug: string): void {
+  const project = PROJECTS.find((p) => p.slug === slug);
+  if (!project) return;
+  openWindow({
+    id: `project-${slug}`,
+    appId: `project-${slug}`,
+    title: project.title,
+    glyph: "document",
+    ...PROJECT_WIN,
+  });
+}
+
+interface ExplorerItem {
+  id: string;
+  label: string;
+  glyph: IconGlyph;
+  /** Navigate within this Explorer window. */
+  goto?: ViewId;
+  /** Or launch something (project window / another shell app). */
+  open?: () => void;
+  /** Or just deadpan-refuse in the status bar. */
+  status?: string;
+  /** 8.1 gag: the second activation crashes, with this as the BSOD's
+   *  opening line. The first only warns (via `status`) — one stray
+   *  double-click should not blue-screen a visitor who was just browsing. */
+  danger?: string;
+}
+
+type ViewId = "computer" | "c" | "projects" | "career";
+
+interface View {
+  /** Address-bar text. */
+  address: string;
+  /** Parent view for the Up button (undefined at a root). */
+  up?: ViewId;
+  items: ExplorerItem[];
+  /** Replaces the item grid with a custom pane (5.2 career tree). */
+  pane?: "career";
+}
+
+const VIEWS: Record<ViewId, View> = {
+  computer: {
+    address: "My Computer",
+    items: [
+      {
+        id: "a",
+        label: "3½ Floppy (A:)",
+        glyph: "computer",
+        status: "There is no disk in the drive. There is never a disk in the drive.",
+      },
+      { id: "c", label: "(C:)", glyph: "computer", goto: "c" },
+      {
+        id: "d",
+        label: "(D:)",
+        glyph: "computer",
+        status: "The CD tray is open. It makes a good cup holder.",
+      },
+    ],
+  },
+  c: {
+    address: "C:\\",
+    up: "computer",
+    items: [
+      { id: "projects", label: "My Projects", glyph: "folder", goto: "projects" },
+      { id: "career", label: "Career", glyph: "folder", goto: "career" },
+      {
+        id: "resume",
+        label: "resume.doc",
+        glyph: "document",
+        open: () => launchApp("resume-doc"),
+      },
+      {
+        id: "about",
+        label: "ABOUT_ME.txt",
+        glyph: "notepad",
+        open: () => launchApp("about-me"),
+      },
+      {
+        id: "system32",
+        label: "System32",
+        glyph: "folder",
+        status:
+          "This folder is required. Open it again if you disagree.",
+        danger: "You opened System32 after being asked not to.",
+      },
+    ],
+  },
+  career: {
+    address: "C:\\Career",
+    up: "c",
+    items: [],
+    pane: "career",
+  },
+  projects: {
+    address: "C:\\My Projects",
+    up: "c",
+    items: PROJECTS.map((p) => ({
+      id: p.slug,
+      label: `${p.title}${p.status === "in-progress" ? " (draft)" : ""}`,
+      glyph: "document" as const,
+      open: () => openProjectWindow(p.slug),
+    })),
+  },
+};
+
+export function Explorer({ win }: { win: Win98Window }) {
+  const [view, setView] = useState<ViewId>(
+    win.appId === "explorer-projects" ? "projects" : "computer",
+  );
+  const [trail, setTrail] = useState<ViewId[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  /** Item id whose warning has already been read once (8.1 two-strike). */
+  const [armed, setArmed] = useState<string | null>(null);
+
+  const current = VIEWS[view];
+
+  const navigate = (next: ViewId) => {
+    setTrail((t) => [...t, view]);
+    setView(next);
+    setSelected(null);
+    setStatus(null);
+  };
+
+  const back = () => {
+    setTrail((t) => {
+      if (t.length === 0) return t;
+      setView(t[t.length - 1]);
+      setSelected(null);
+      setStatus(null);
+      return t.slice(0, -1);
+    });
+  };
+
+  const activate = (item: ExplorerItem) => {
+    if (item.danger) {
+      if (armed === item.id) crashWorkstation(item.danger);
+      else {
+        setArmed(item.id);
+        setStatus(item.status ?? null);
+      }
+      return;
+    }
+    if (item.goto) navigate(item.goto);
+    else if (item.open) item.open();
+    else if (item.status) setStatus(item.status);
+  };
+
+  return (
+    <div className="-m-2 flex h-[calc(100%+16px)] flex-col">
+      {/* Toolbar */}
+      <div className="flex shrink-0 items-center gap-1 p-1">
+        <button
+          type="button"
+          className="w98-btn h-[18px] px-2 font-w98 text-[8px]"
+          disabled={trail.length === 0}
+          style={{ opacity: trail.length === 0 ? 0.5 : 1 }}
+          onClick={back}
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          className="w98-btn h-[18px] px-2 font-w98 text-[8px]"
+          disabled={!current.up}
+          style={{ opacity: current.up ? 1 : 0.5 }}
+          onClick={() => current.up && navigate(current.up)}
+        >
+          Up
+        </button>
+        <span className="ml-1 font-w98 text-[8px] text-w98-ink">Address</span>
+        <span className="w98-sunken flex-1 truncate bg-w98-field px-1 py-0.5 font-w98-mono text-[11px] leading-none">
+          {current.address}
+        </span>
+      </div>
+
+      {/* Career gets the 5.2 tree pane; every other view the item grid. */}
+      {current.pane === "career" ? (
+        <div className="min-h-0 flex-1">
+          <CareerTree />
+        </div>
+      ) : (
+      <div className="w98-field min-h-0 flex-1 overflow-auto p-2">
+        <div className="flex flex-wrap content-start gap-1">
+          {current.items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="flex w-[88px] flex-col items-center gap-1 p-1 text-w98-ink"
+              data-selected={selected === item.id}
+              style={
+                selected === item.id
+                  ? { outline: "1px dotted var(--color-w98-ink)" }
+                  : undefined
+              }
+              onClick={() => setSelected(item.id)}
+              onDoubleClick={() => activate(item)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  activate(item);
+                }
+              }}
+            >
+              <PixelIcon glyph={item.glyph} size={24} />
+              <span className="text-center font-w98 text-[8px] leading-tight">
+                {item.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+      )}
+
+      {/* Status bar */}
+      <div className="w98-sunken mt-[2px] shrink-0 truncate px-1 py-0.5 font-w98 text-[8px] text-w98-ink">
+        {status ??
+          (current.pane === "career"
+            ? `${EXPERIENCE.length} folder(s) · arrow keys navigate`
+            : `${current.items.length} object(s)${
+                view === "projects" ? " · double-click to open" : ""
+              }`)}
+      </div>
+    </div>
+  );
+}

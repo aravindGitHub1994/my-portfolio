@@ -1,5 +1,13 @@
 # ADR-005: Dark, Scroll-Driven Three.js Portfolio Around One Morphing Glass Cube
 
+> [!NOTE]
+> **Superseded as the site's experience layer by
+> [ADR-012](ADR-012-win98-workstation-cinematic-redesign.md)** (The Workstation).
+> What survives is restated there: the **Electric Dark token set** for the site's
+> own UI, the design-token discipline in `globals.css` (semantic classes, no raw
+> hex), and the "one constant object" storytelling principle — now the CRT rather
+> than a solid. This file is an immutable record: not renamed, not rewritten.
+
 ## Status
 Accepted — **supersedes ADR-003** (tri-mode theme) and **ADR-004** (animated
 celestial sky) in full; **extends ADR-002** (diagrams stay pre-rendered SVGs but are

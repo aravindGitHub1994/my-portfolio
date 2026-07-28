@@ -1,5 +1,12 @@
 # ADR-007 — Curtain-reveal project cards
 
+> [!NOTE]
+> **Superseded as the site's experience layer by
+> [ADR-012](ADR-012-win98-workstation-cinematic-redesign.md)** (The Workstation).
+> The curtain reveal is retired with the Lens; project content is now reached
+> through the Win98 shell's Explorer and project windows. This file is an
+> immutable record: not renamed, not rewritten.
+
 **Status:** Accepted · Supersedes the project-card portion of [ADR-006](ADR-006-lens-refractive-redesign.md) §5–§6 · Amended by [ADR-008](ADR-008-projection-work-act-and-prism-finale.md) (the preview now renders inside a Safari-style browser frame; the reveal itself is unchanged) · Amended by [ADR-009](ADR-009-lens-refinement-glass-refraction-and-high-default-fidelity.md) (a hover/focus discovery affordance — hint pill + cursor "Reveal" label — added; the reveal mechanism unchanged)
 **Date:** 2026-07-09
 

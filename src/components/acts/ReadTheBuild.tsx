@@ -29,11 +29,6 @@ const SECTIONS = [
  * layer, so the native cursor comes back for the dialog's lifetime.
  * Entry motion is a CSS @starting-style fade/rise, which the global
  * prefers-reduced-motion rule zeroes out.
- *
- * DEVIATION from ADR-010 §1 scope: the dialog copy stays crisp DOM. A native
- * <dialog> lives in the browser top layer, which always paints above the
- * kinetic canvas (fixed, -z-10) — a GL twin here would be invisible behind
- * the opaque dialog surface. Flagged for the 6.2 owner review.
  */
 export function ReadTheBuild({ project }: { project: Project }) {
   const dialog = useRef<HTMLDialogElement>(null);

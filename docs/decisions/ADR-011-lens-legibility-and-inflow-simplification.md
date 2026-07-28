@@ -1,5 +1,14 @@
 # ADR-011: Lens legibility and inflow simplification — the backside transmission bake, a blue specular, anonymous packets
 
+> [!NOTE]
+> **Superseded as the site's experience layer by
+> [ADR-012](ADR-012-win98-workstation-cinematic-redesign.md)** (The Workstation).
+> All of it is retired with the Lens. The **process lesson** survives and is worth
+> carrying: a retune that reads correct on paper can be ineffective because a
+> library silently overwrites the prop you tuned — verify the value the renderer
+> actually uses, not the one you set. This file is an immutable record: not
+> renamed, not rewritten.
+
 ## Status
 Accepted — **supersedes ADR-010 §4** (the tool-icon coin inflow is **retracted**; the
 inflow returns to the anonymous data-packets of **ADR-006 §1**); **amends ADR-009 §1**

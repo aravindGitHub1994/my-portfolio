@@ -1,5 +1,14 @@
 # ADR-009: Lens refinement — glass prism, physical beam refraction, high-by-default fidelity, reveal affordance, extended aberration
 
+> [!NOTE]
+> **Superseded as the site's experience layer by
+> [ADR-012](ADR-012-win98-workstation-cinematic-redesign.md)** (The Workstation).
+> Every Lens-material decision here is retired. What survives is **§8's
+> high-by-default fidelity policy** — capable devices get the full experience and
+> are not pre-emptively downgraded by a device-class guess — restated in
+> `docs/design-system.md`. Note its *silent* downgrade was already reversed by
+> ADR-010 §2. This file is an immutable record: not renamed, not rewritten.
+
 ## Status
 Accepted — **partially supersedes ADR-005 §3 and ADR-006 §8** (the static GPU-tier
 heuristic that downgraded mobile/weak hardware to `low` is replaced by **high-by-default

@@ -1,5 +1,13 @@
 # ADR-008: Projection Work Act, Safari-Frame Previews, and the Prism-Constant Finale
 
+> [!NOTE]
+> **Superseded as the site's experience layer by
+> [ADR-012](ADR-012-win98-workstation-cinematic-redesign.md)** (The Workstation).
+> The projection Work act and the prism finale are retired. The **constant-object
+> principle** survives — ADR-012 §5 hands the role to the CRT, which the whole
+> camera journey orbits. This file is an immutable record: not renamed, not
+> rewritten.
+
 ## Status
 Accepted — **partially supersedes ADR-006** (§1's "cube returns as the payoff" and
 the Work-act recede choreography; the prism no longer transforms at all), **amends
