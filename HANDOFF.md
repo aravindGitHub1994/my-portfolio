@@ -1,11 +1,46 @@
-# HANDOFF — Win98 Workstation redesign (2026-07-21, session 12 wrap)
+# HANDOFF — Win98 Workstation redesign (2026-07-28, session 13 wrap)
 
-> For the next agent session. **Gates 1.2, 2.3 and 4.3 PASSED** (owner).
-> **Every build slice is now complete**: P3–P7 closed in earlier sessions,
-> **P8 closed this session** (8.1 `13086ab`, 8.2 `3cec489`) and
-> **9.1 docs reconcile closed** (`bbf85c7`).
-> **The only thing left is HITL gate 9.2 — owner final QA, then merge to
-> `main`. Never pass gates autonomously.**
+> For the next agent session. **Every gate is PASSED (owner): 1.2, 2.3,
+> 4.3 and — this session — 9.2.** Every build slice is complete (P3–P8,
+> 9.1 docs). **`redesign-attempt2` is merged to `main`.**
+>
+> Gate 9.2 came back PASS WITH FIXES; the two blocking items were closed
+> this session and the owner re-QA'd and authorized the merge. The full
+> record, including what was *not* verifiable headless, is in
+> `docs/qa/9.2-desktop-checklist.md` §17.
+>
+> **The plan is done. What is left is the open-threads list below — none
+> of it is blocking, all of it needs owner senses or an owner call.**
+
+## 9.2 fixes (closed this session)
+
+- **The dock could be scrolled past.** Proximity-only engagement
+  (`|progress − rest| < 0.004`, ~25 px of a 5040 px runway, sampled per
+  rAF) was jumped over by any wheel flick. Now it also tests for
+  *crossing* the rest point either way, band widened to 0.012 / re-arm
+  0.05, and on latch Lenis glides to the exact square-on pose (0.3 s,
+  `force: true` — Lenis' raf advances even while stopped) before the
+  cross-fade. `DOCK_REST_INDEX` in `chapters.ts` now names that rest
+  point for the three modules that measure against it.
+- **Chapter 4 is no longer a Lenis snap point** (`Choreography.tsx`).
+  The snap and the dock were competing for one landing; the dock owns it
+  now. **Do not put it back** without removing the dock's own latch.
+- **Momentum was ejecting the dock.** The subtler half: with the above
+  fixed the dock latched correctly and the *tail of the same flick*
+  undocked it ~1.7 s later, which reads exactly like "docking was
+  skipped". Undock now requires the 800 ms grace **and** a 350 ms pause
+  in scrolling; `e.repeat` keydowns are ignored. Reproduced and confirmed
+  before and after — see §17 of the checklist.
+- **Scroll cue** (`workstation/ScrollHint.tsx`) — the static floor's own
+  cue markup from `acts/Hero.tsx`, shown wherever the journey has stood
+  still. **Untested claim to re-check:** the 350 ms pause threshold has
+  only ~6× margin over real momentum gaps, and headless renders this
+  scene at 2–6 fps, so it was confirmed on owner hardware, not by an
+  agent.
+- **`DockHint.tsx`** — the docked desktop's "Getting Started" dialog.
+  DOM-only and outside `win98State` on purpose: it exists only in the
+  docked view, so it never reaches the painter and §4 parity is intact.
+  Same precedent as the "keep scrolling" hint.
 
 ## Current Status
 
@@ -188,11 +223,14 @@
 
 - [x] ~~**P8 eggs**~~ — done (`13086ab` + `3cec489`).
 - [x] ~~**9.1 docs reconcile**~~ — done (`bbf85c7`).
-- [ ] **HITL gate 9.2 — owner final QA, all tiers + mobile → merge.**
-      Never pass autonomously. The plan's §9.2 checklist is the script.
-      Carry every thread under "Unresolved Threads" into it; the three
-      that most need human senses are **audio**, **a real phone**, and
-      **ladder pacing**.
+- [x] ~~**HITL gate 9.2**~~ — PASSED by the owner this session after the
+      two blocking fixes; `redesign-attempt2` merged to `main`.
+- [ ] **Nothing is blocking.** Next work comes off "Unresolved Threads"
+      above; the three that most need human senses are still **audio**,
+      **a real phone**, and **ladder pacing**. The owner's §15 ask —
+      open on the tower's power button with the figure's arm pressing it,
+      then move to the desktop — was explicitly deferred out of 9.2 and
+      is the largest outstanding piece of work.
 
 ## Recommended Skills
 
