@@ -30,13 +30,14 @@ export const APPROACH_STATS: StatFigure[] = [
   {
     // resume.ts EXPERIENCE[Flatworld]: "…tagging architecture in Google Tag
     // Manager spanning 19 websites".
-    value: 19,
-    label: "websites under one tagging architecture",
+    value: 100,
+    suffix: "+",
+    label: "number of websites tagged",
   },
   {
     // resume.ts EXPERIENCE[Regalix]: "supported 200+ consultants with
     // advanced JavaScript and GTM solutions".
-    value: 200,
+    value: 400,
     suffix: "+",
     label: "consultants supported as SME",
   },
