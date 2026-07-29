@@ -23,7 +23,7 @@ import { createSkinMaterial, createForearmMaterial } from "./skinTexture";
 import { createIdle, type IdleUpdate } from "./idle";
 import { effectsState } from "../scene/sheddable";
 import { createTyping, type TypingUpdate } from "./typing";
-import { createArmPose, type ArmPoseDriver } from "./armPose";
+import { armPoseRef, createArmPose, type ArmPoseDriver } from "./armPose";
 
 /**
  * The figure (plan-0009 §1.1 + 1.3): seeded parametric builders under a
@@ -124,6 +124,11 @@ export function Figure({
     } else {
       console.error("[character] arm rig pivots missing — poses disabled");
     }
+    // Publish for readers outside this subtree (2.3's press has to move
+    // the right arm from a component mounted under RoomScene). Null when
+    // the rig is missing, which is why `powerPress` has a reach timeout
+    // rather than waiting forever for a contact that cannot come.
+    armPoseRef.current = armPose.current;
 
     // Typing rig: the eight named fingers + both hands + the chest. The
     // finger ORDER is load-bearing — 4.1 maps indices 0–3 to the right arm
@@ -170,6 +175,7 @@ export function Figure({
       idle.current = null;
       typing.current = null;
       armPose.current = null;
+      armPoseRef.current = null;
       if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
         window.__armPose = undefined;
       }

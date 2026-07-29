@@ -54,7 +54,12 @@ export function buildCrt({ detail, materials }: RoomBuilderOptions): Group {
     button.position.set(-0.12 + i * 0.04, bodyY - 0.145, 0.131);
     group.add(button);
   }
-  const led = new Mesh(new BoxGeometry(0.008, 0.008, 0.006), materials.metal);
+  // The monitor's power LED. It was `materials.metal` and had never lit —
+  // a grey dot beside a glowing tube, which chapter 1's close-up sits
+  // right on. It now shares the tower LED's material and therefore its
+  // state: one machine, one lamp colour, lit from win98State's phase.
+  const led = new Mesh(new BoxGeometry(0.008, 0.008, 0.006), materials.led);
+  led.name = "crtLed";
   led.position.set(0.15, bodyY - 0.145, 0.131);
   group.add(led);
 

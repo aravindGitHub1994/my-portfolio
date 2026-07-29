@@ -18,6 +18,7 @@
 
 import type { Object3D } from "three";
 import { mulberry32 } from "@/lib/prng";
+import { powerPressHoldsArms } from "@/lib/powerPress";
 import {
   EASE_IN_S,
   EASE_OUT_S,
@@ -104,6 +105,10 @@ export function createTyping(targets: TypingTargets, seed: number): TypingUpdate
   // one writer. -1 means "not leaning".
   let leanStart = -1;
   let leanHold = 0;
+  /** Previous frame's clock, only so the schedule can be *frozen* rather
+   *  than merely blocked while the entry gesture holds the figure. -1 is
+   *  "first frame". */
+  let lastElapsed = -1;
 
   /** Weighted pick that never repeats the previous behaviour — the cheapest
    *  defence against "no visible repeating cycle" that does not need a
@@ -129,10 +134,28 @@ export function createTyping(targets: TypingTargets, seed: number): TypingUpdate
   }
 
   return (elapsed) => {
+    const dt = lastElapsed < 0 ? 0 : elapsed - lastElapsed;
+    lastElapsed = elapsed;
+
+    // --- The entry gesture holds the whole figure (2.3). The machine is
+    // off: nobody types on it, and the right arm belongs to the press. It
+    // is a hold rather than a block — `nextBehaviourAt` rides the frozen
+    // clock forward, so the seeded first gap is measured from the desktop
+    // settling and is preserved *exactly* (no rnd() is drawn here, so 4.1's
+    // simulated ride is bit-identical to before). False in every `?scene=`
+    // harness, where nothing arms the press.
+    //
+    // `busy()` already stopped behaviours OVERLAPPING the press; only this
+    // stops one starting a second BEFORE it and sending the right arm
+    // across the desk exactly when the button needs it.
+    const held = powerPressHoldsArms();
+    if (held) nextBehaviourAt += dt;
+
     // --- Scheduler. Only starts something when both arms are home, so
     // behaviours never overlap and an interrupted reach is impossible.
     if (
       armPose &&
+      !held &&
       elapsed >= nextBehaviourAt &&
       !armBusy("R") &&
       !armBusy("L")
@@ -180,8 +203,11 @@ export function createTyping(targets: TypingTargets, seed: number): TypingUpdate
 
     // --- Finger taps, seeded and staggered, suspended on the busy arm
     // only. The other hand carries on, which is what people actually do.
-    const busyR = armBusy("R");
-    const busyL = armBusy("L");
+    // `held` suspends both hands: a dead machine gets no keystrokes, and
+    // because 6.2's clacks are driven by taps this is also what keeps the
+    // keyboard silent under the POST.
+    const busyR = held || armBusy("R");
+    const busyL = held || armBusy("L");
     for (let i = 0; i < fingers.length; i++) {
       const busy = i < 4 ? busyR : busyL;
       if (busy) {

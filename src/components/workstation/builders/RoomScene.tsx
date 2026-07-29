@@ -6,6 +6,7 @@ import { Lighting } from "../scene/Lighting";
 import { Atmosphere } from "../scene/Atmosphere";
 import { Postprocessing } from "../scene/postprocessing";
 import { CrtScreen } from "../crt/CrtScreen";
+import { TowerPower } from "./TowerPower";
 import { createRoomMaterials, type RoomBuilderOptions } from "./materials";
 import { buildRoom } from "./room";
 import { buildDesk, DESK_TOP_Y } from "./desk";
@@ -112,6 +113,10 @@ export function RoomScene({
       {/* 3.1: real Win98 feed on the crtScreen mesh (painter + CRT
           shader + screenLight); replaced the 2.2 ScreenTestPattern. */}
       <CrtScreen root={scene.root} autoBoot={autoBoot} />
+      {/* 2.3: the power switch and its lamp. Lives with the set rather
+          than with the figure — an auto-booting harness lights its LED
+          without a person in the room. */}
+      <TowerPower root={scene.root} />
       <primitive object={scene.root} />
     </>
   );

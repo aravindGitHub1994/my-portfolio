@@ -28,6 +28,12 @@ export interface RoomMaterials {
   plasticDark: MeshStandardMaterial;
   rubber: MeshStandardMaterial;
   metal: MeshStandardMaterial;
+  /** Power LEDs — the tower's (2.3) and the CRT's, which shares this same
+   *  instance because they report the same thing: the machine is on. Its
+   *  `emissiveIntensity` is animated by `TowerPower` and is 0 at rest, so
+   *  a scene that never boots shows dead plastic. Split the instance if
+   *  the two lamps ever need to disagree. */
+  led: MeshStandardMaterial;
   paper: MeshStandardMaterial;
   cardboard: MeshStandardMaterial;
   /** CRT glass — the distinct slot slice 3.1 will target. */
@@ -266,6 +272,15 @@ export function createRoomMaterials(seed: number): RoomMaterials {
       roughness: 0.45,
       metalness: 0.6,
     }),
+    // Dark green plastic until it lights. Emissive only — it adds no light
+    // to the room, so the gate-2.3 brightness contract (screen luminance
+    // cap 0.7 + Lighting's CAST_MAX 2.6) is untouched by it.
+    led: new MeshStandardMaterial({
+      color: "#0d2b18",
+      emissive: "#4bff9b",
+      emissiveIntensity: 0,
+      roughness: 0.35,
+    }),
     paper: new MeshStandardMaterial({ map: paperTex, roughness: 0.9 }),
     cardboard: new MeshStandardMaterial({ color: "#e4dfd2", roughness: 0.9 }),
     screen: new MeshStandardMaterial({ color: "#0b1512", roughness: 0.35 }),
@@ -283,6 +298,7 @@ export function createRoomMaterials(seed: number): RoomMaterials {
         materials.plasticDark,
         materials.rubber,
         materials.metal,
+        materials.led,
         materials.paper,
         materials.cardboard,
         materials.screen,

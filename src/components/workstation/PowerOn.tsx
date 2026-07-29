@@ -17,14 +17,37 @@
 // There is no scrim any more. "A dark room and one glowing button" is the
 // shot; covering it with 95 % opaque page background was the old
 // composition, from when the camera opened on the glass instead.
+//
+// As of 2.3 the click no longer boots the machine. It starts a reach; the
+// figure's right hand crosses into frame, and the boot — with it the
+// degauss thunk, the POST and the LED — starts when the fingertip lands.
+// `src/lib/powerPress.ts` owns that ordering; this component keeps only
+// what it is uniquely able to own: the real user gesture (`unlockAudio`
+// must run synchronously inside one) and the boot controller's lifetime.
 
 import { useEffect, useRef, useState } from "react";
 import { useLenisRef } from "@/components/LenisProvider";
 import { startBoot, type BootController } from "@/lib/bootSequencer";
 import { unlockAudio } from "@/lib/audio";
 import { experienceState } from "@/lib/experienceState";
+import {
+  armPowerPress,
+  attachPowerContact,
+  forcePowerContact,
+  notePowerPressBooted,
+  requestPowerPress,
+  resetPowerPress,
+  skipPowerPress,
+} from "@/lib/powerPress";
 
 const SEEN_KEY = "w98-intro-seen";
+
+/** Liveness net. The press machine is ticked from inside the Canvas, so a
+ *  scene that failed to mount its room would leave a click doing nothing
+ *  at all — the worst failure this page has, since the visitor is looking
+ *  at a dark room with no other affordance. Far past the arm's own 1.4 s
+ *  reach timeout, so it only ever fires if nothing is ticking. */
+const PRESS_WATCHDOG_MS = 3000;
 
 export function PowerOn() {
   const lenisRef = useLenisRef();
@@ -36,6 +59,7 @@ export function PowerOn() {
   );
   const boot = useRef<BootController | null>(null);
   const ring = useRef<HTMLButtonElement>(null);
+  const watchdog = useRef(0);
 
   // Park scroll at the top while the entry owns the frame.
   useEffect(() => {
@@ -70,24 +94,48 @@ export function PowerOn() {
     return () => cancelAnimationFrame(raf);
   }, [stage]);
 
+  // Tell the figure the machine is off: hands on the keys, no taps, no
+  // behaviours, until the desktop settles (2.3). Also what stops a mouse
+  // reach firing a second before the click and stealing the arm the press
+  // needs. Reset on unmount, so a `?scene=` harness is never held.
   useEffect(() => {
-    return () => boot.current?.cancel();
+    armPowerPress();
+    return resetPowerPress;
   }, []);
 
-  const finish = () => setStage("done");
+  // The boot starts on CONTACT, not on the click — the press machine calls
+  // this the frame the fingertip lands. The controller stays here because
+  // its lifetime is this component's: cancel on unmount, skip on skip.
+  useEffect(() => {
+    return attachPowerContact(() => {
+      boot.current = startBoot();
+      void boot.current.done.then(() => {
+        notePowerPressBooted();
+        setStage("done");
+      });
+    });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      boot.current?.cancel();
+      window.clearTimeout(watchdog.current);
+    };
+  }, []);
 
   const press = () => {
     if (stage !== "idle") return;
     window.localStorage.setItem(SEEN_KEY, "1");
-    // Unlock BEFORE startBoot: the sequencer synchronously sets phase
-    // "post", which is what fires the degauss/beep cues — with no context
-    // yet they would land silently. Must also stay synchronous in the
-    // handler (no await ahead of it) or the gesture goes stale and the
-    // autoplay policy refuses the context.
+    // Unlock FIRST, and synchronously: this is the only real user gesture
+    // the page gets, and an await ahead of it makes the gesture stale and
+    // the autoplay policy refuse the context. It has to happen here rather
+    // than at contact for exactly that reason — the boot's own cues fire
+    // ~0.55 s later, by which time the context is long since running.
     unlockAudio();
     setStage("booting");
-    boot.current = startBoot();
-    void boot.current.done.then(finish);
+    requestPowerPress();
+    // Nothing else. The arm swings in; contact does the rest.
+    watchdog.current = window.setTimeout(forcePowerContact, PRESS_WATCHDOG_MS);
   };
 
   const skip = () => {
@@ -95,9 +143,13 @@ export function PowerOn() {
     // Its own gesture (returning visitors can click skip without ever
     // pressing power) — the shell still needs audio. Idempotent.
     unlockAudio();
+    window.clearTimeout(watchdog.current);
+    // Brings the arm home rather than freezing it mid-reach, and releases
+    // the figure — the skip path must not strand a hand over the tower.
+    skipPowerPress();
     if (boot.current) boot.current.skip();
     else startBoot().skip();
-    finish();
+    setStage("done");
   };
 
   if (stage === "done") return null;

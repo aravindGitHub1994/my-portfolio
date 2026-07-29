@@ -53,7 +53,18 @@ export function buildTower({ materials }: RoomBuilderOptions): Group {
   );
   const badge = new Mesh(new BoxGeometry(0.035, 0.018, 0.003), materials.metal);
   badge.position.set(-0.17, height * 0.32, frontZ);
-  group.add(power, badge);
+
+  // Power LED, beside the button (2.3). The tower had none at all, and in
+  // the recomposed opening the dark-to-green pop is the payoff of the
+  // visitor's one gesture — the frame is a macro on this pair, so the
+  // whole reward for pressing has to live inside it. Dark until
+  // `TowerPower` ramps `materials.led`; over Bloom's 0.68 threshold at
+  // full, deliberately, so it blooms in a dark room.
+  const led = new Mesh(new BoxGeometry(0.008, 0.005, 0.004), materials.led);
+  led.name = "towerLed";
+  led.position.set(POWER_BUTTON_LOCAL.x - 0.035, POWER_BUTTON_LOCAL.y, frontZ);
+
+  group.add(power, badge, led);
 
   return group;
 }

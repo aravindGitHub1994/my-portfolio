@@ -51,6 +51,18 @@ export const armPoseState = {
   L: { pose: "typing" as ArmPose, contact: false },
 };
 
+/** The live driver for the mounted figure, or null when the scene has no
+ *  figure (`?scene=room`) or the rig failed to build. Published by
+ *  `Figure`, read by 2.3's power-press rig — which has to move an arm it
+ *  does not own and is mounted in a different subtree.
+ *
+ *  A module singleton rather than context for the same reason
+ *  `experienceState` is one: the readers are frame loops, and a context
+ *  read that re-renders is exactly what the choreography rules forbid.
+ *  Read it lazily at call time — mount order between `RoomScene` and
+ *  `Figure` is not something the callers should have to know. */
+export const armPoseRef: { current: ArmPoseDriver | null } = { current: null };
+
 // --- Pose targets -----------------------------------------------------
 //
 // Figure space, which is world space: `FullScene` mounts `<Figure/>` and
