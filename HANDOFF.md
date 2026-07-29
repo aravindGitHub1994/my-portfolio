@@ -14,18 +14,13 @@
 - **Plan-0010's breakdown is APPROVED by the owner as written** (session 15).
   Build to it — dependency graph, slice boundaries, acceptance criteria as
   committed. This unblocks everything past 1.1.
-- **Slices 1.2, 2.1 and 2.2 are written, verified and NOT COMMITTED.**
-  Session 17 left them in the working tree deliberately (the session was not
-  authorised to commit). Lint, `tsc` and `npm run build` are green across
-  all three. **Gate 1.3 PASSED**, so P1 is closed.
-  - 1.2 — `character/armPose.ts` (new), `character/buildBody.ts`,
-    `character/Figure.tsx`
-  - 2.1 — `src/lib/chapters.ts`, `choreography/cameraPath.ts`,
-    `builders/tower.ts`, `TitleBeats.tsx`, `src/lib/experienceState.ts`,
-    `choreography/Choreography.tsx`
-  - 2.2 — `choreography/PowerButtonAnchor.tsx` (new), `PowerOn.tsx`,
-    `WorkstationCanvas.tsx`, `src/app/globals.css`,
-    `src/lib/experienceState.ts`
+- **Gate 1.3 PASSED** (owner, 2026-07-29) — P1 is closed. Four slices landed
+  in session 17: 1.2, 2.1, 2.2 and 4.1. Lint, `tsc` and `npm run build` are
+  green at HEAD.
+- Still uncommitted and **not this branch's work**:
+  `docs/qa/9.2-desktop-checklist.md` gained one line in session 16 recording
+  that the owner confirmed the P7 scroll cue reads. **P7 is owner-closed.**
+  Fold it into whatever docs commit comes next.
 - Also uncommitted, from session 16 and **not this branch's work**:
   `docs/qa/9.2-desktop-checklist.md` gained one line recording that the owner
   confirmed the P7 scroll cue reads on the dev server. **P7 is owner-closed.**
@@ -140,6 +135,55 @@ ride the projected anchor would jitter it against the scene.
 The button is still a DOM button for the reason ADR-013 §3 gives, and the
 press handler is **byte-identical** — `unlockAudio()` first, synchronously.
 
+### What 4.1 actually did — including the owner's 1.3 note
+
+Taken **out of plan order, on purpose**: plan-0010 puts 4.1 after P2, but
+the owner's gate-1.3 note (*the fingers keep tapping while the hand is away*)
+becomes a defect in the first twenty seconds the moment 2.3's arm reaches
+for the power button — and gate 2.4 is exactly those twenty seconds.
+
+`typing.ts` gains the seeded scheduler over `typing | mouse | mug | lean`.
+Taps suspend **per arm**: fingers 0–3 are the right hand and 4–7 the left,
+which is the order `Figure` collects them in, so one hand keeps working
+while the other is out. The wrist bob stills on the busy arm too, and a
+finger caught mid-tap is parked at rest rather than frozen mid-dip.
+
+The old lean-back beat was a **parallel clock** — its own 60–110 s timer
+that moved the chest while the arms stayed on the keys. It is now one of
+the scheduler's states, and the chest rides `armPose`'s own `EASE_IN_S` /
+`EASE_OUT_S` (exported for this) so the torso and the arms cannot disagree
+about whether the figure is leaning. `chest.rotation` still has exactly one
+writer.
+
+`typingState` is untouched, so `AudioTextures` needed no change: a hand off
+the keyboard cannot tap, so it cannot clack.
+
+**The mug is a reach, not yet a sip** — 4.2 makes the mug follow the hand
+and adds the head tilt. The arm half of the motion is here.
+
+Verified by simulating a **one-hour ride at 60 fps** against the real
+modules (the scheduler is pure over a seeded PRNG, so an hour costs
+seconds): 141 behaviours — mouse 57, mug 48, lean 36 — gaps mean 20.0 s
+(sd 5.5, range 11–30), holds mean 5.4 s (sd 1.7, range 3.0–9.2), zero
+finger dips on a busy arm, zero clacks with both hands away, zero frames of
+chest lean without the arms in the lean pose, no behaviour ever repeating
+back to back, and 10 of 12 three-minute windows containing all three
+behaviours. Different seeds give different rides. Still ~zero retained
+bytes over 108 000 frames.
+
+Two things that harness got wrong first, worth knowing if you extend it:
+a finger returning **to** rest when its arm leaves the keyboard is a
+position change but is not a tap (assert a dip below rest, not any
+movement); and `lean` drives both arms, so it opens two episodes at the
+same instant and the sequence looks like it repeats every single lean
+unless you merge them.
+
+Measured and accepted, not a defect: with only three behaviours the *pose
+sequence* does coincide with an earlier stretch up to about 9 episodes
+long. That is ~3.7 minutes, longer than the observation window, and the
+holds and gaps differ throughout even where the sequence matches — so
+there is no visible cycle, only an unavoidable alphabet.
+
 ### What P7 actually did
 
 Gating logic in `ScrollHint.tsx` is **byte-for-byte unchanged** — it was never
@@ -159,9 +203,10 @@ dependency graph are in **plan-0010**. Not repeated here.
 
 The structural fact worth carrying: **three of the seven requests are one
 missing capability** — the arm rig. That is why P1 gates everything. **P1 is
-closed** (1.1 rig, 1.2 driver, gate 1.3 passed), and **P2 is two thirds
-built** (2.1 the scroll span and the opening frame, 2.2 the hotspot). What
-is left of the opening is 2.3, the press itself.
+closed** (1.1 rig, 1.2 driver, gate 1.3 passed). **P2 is two thirds built**
+(2.1 the scroll span and the opening frame, 2.2 the hotspot) and **4.1 is in
+early**, out of plan order, because the owner's 1.3 note lands inside gate
+2.4's twenty seconds. What is left of the opening is 2.3, the press itself.
 
 ## Decisions already made — do not re-litigate
 
@@ -442,21 +487,22 @@ Unchanged from session 13 except where ADR-013 amends them.
 
 ## Recommended Next Steps
 
-- [ ] **Commit 1.2, 2.1 and 2.2** — all three are verified and green but
-      sitting in one working tree. They are three separate slices and want
-      three commits; the file sets barely overlap (`Figure.tsx` is 1.2's
-      alone), so `git add` by path splits them cleanly. Don't rebuild any of
-      them; read them.
-- [ ] **Slice 4.1, and do it before 2.3.** Plan-0010 puts 4.1 after P2, but
-      the owner's 1.3 note — *the fingers keep typing while the hand is
-      away* — lands in the first twenty seconds once the arm reaches for the
-      power button, and gate 2.4 is exactly those twenty seconds. `busy()`
-      already exists for this; `typing.ts` just has to consult it.
 - [ ] **Slice 2.3 — the press.** Everything it needs is in place:
-      `armPose.goTo("R", "power")`, `armPoseState.R.contact` for the timing,
-      the `towerPower` mesh to depress, and `POWER_BUTTON_LOCAL` for the new
-      emissive LED beside it. Note the existing LED is on the **CRT**
-      (`builders/crt.ts:57`, `materials.metal`) and has never lit.
+      `armPose.goTo("R", "power")`, `armPoseState.R.contact` for the timing
+      (true only during the hold, so the depress, the LED and the thunk all
+      land on contact rather than on click), the `towerPower` mesh to
+      depress, and `POWER_BUTTON_LOCAL` to place the new emissive LED beside
+      it. Note the existing LED is on the **CRT** (`builders/crt.ts:57`,
+      `materials.metal`) and has never lit; the tower has none at all.
+      One thing to decide while building it: the scheduler must not fire a
+      behaviour during the boot, or the figure will reach for the mouse
+      mid-press. `busy()` already stops overlap once the press has started,
+      but nothing stops a mouse reach a second *before* it.
+- [ ] **Slice 4.2 — prop handle + the mug sip.** 4.1 left the mug behaviour
+      as a reach; 4.2 makes the mug follow the hand and adds the head tilt
+      via `idle.ts`'s additive offset.
+- [ ] **Gate 2.4** once 2.3 lands — and put the POST-visibility thread
+      (above) to the owner in the same pass.
 - [ ] **Raise the SignOff/scroll-cue overlap with the owner** and act on their
       answer — it is a one-line change either way, but it is a gate change.
 - [ ] **P6.1 (picture pipeline)** is still the other independent track and
