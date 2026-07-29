@@ -24,6 +24,9 @@ import { buildFloppies } from "./floppies";
 import { buildCables } from "./cables";
 import { buildChair } from "./chair";
 import { buildPoster } from "./poster";
+import { buildCatTree, CAT_TREE_X, CAT_PERCHES } from "./catTree";
+import { buildCat } from "./cat";
+import { WINDOW } from "./room";
 
 /**
  * `?scene=room` harness (plan-0009 §2.1): the dressed set, no figure.
@@ -72,6 +75,28 @@ export function RoomScene({
       [buildCables(opts), 0, 0, 0, 0],
       [buildChair(opts), 0, 0, 0.1, 0],
       [buildPoster(opts), 0.35, 1.6, -1.044, 0],
+      // 5.1: the cat tree stands against the +X wall beside the window, its
+      // x derived from the sill so it cannot grow into the ledge. Ivy takes
+      // the perch — she is the bigger cat and it is her spot in the
+      // photographs; Nimbus is a platform down. Both yaw to face +X, which
+      // is the glass: the builder faces them -Z like the figure.
+      [buildCatTree(opts), CAT_TREE_X, 0, WINDOW.z, 0],
+      [
+        buildCat({ ...opts, cat: "ivy", index: 0 }),
+        CAT_PERCHES[2].x,
+        CAT_PERCHES[2].y,
+        CAT_PERCHES[2].z,
+        -Math.PI / 2,
+      ],
+      [
+        buildCat({ ...opts, cat: "nimbus", index: 1 }),
+        CAT_PERCHES[1].x,
+        CAT_PERCHES[1].y,
+        CAT_PERCHES[1].z,
+        // A few degrees off his sister's line — two cats staring on exactly
+        // the same axis reads as a pair of ornaments.
+        -Math.PI / 2 + 0.22,
+      ],
     ];
     for (const [group, x, y, z, rotY] of placements) {
       group.position.set(x, y, z);

@@ -44,6 +44,18 @@ export interface RoomMaterials {
   cdCase: MeshStandardMaterial;
   /** One material per labeled CD spine (from resume EDUCATION). */
   cdSpines: MeshStandardMaterial[];
+  /** Cat tree (5.1): fleece-covered platforms and the sisal-wrapped post,
+   *  matched to the reference photograph — navy fleece, tan rope. */
+  fleece: MeshStandardMaterial;
+  sisal: MeshStandardMaterial;
+  /** The two cats' coats (ADR-013 §8). Nimbus is ginger; Ivy is a dilute
+   *  calico, so she is mostly `catGrey` with `catCream` underneath and a
+   *  little `catGinger` on the head — which is why the ginger slot is
+   *  shared rather than named for one cat. `catCream` does both cats'
+   *  muzzle, chest and paws. */
+  catGinger: MeshStandardMaterial;
+  catCream: MeshStandardMaterial;
+  catGrey: MeshStandardMaterial;
   dispose(): void;
 }
 
@@ -289,6 +301,13 @@ export function createRoomMaterials(seed: number): RoomMaterials {
     windowDusk: new MeshBasicMaterial({ map: windowTex }),
     cdCase: new MeshStandardMaterial({ color: "#2b2e35", roughness: 0.45 }),
     cdSpines,
+    // Fabric and fur are the roughest things in the room — anything shiny
+    // here reads as plastic at this scale.
+    fleece: new MeshStandardMaterial({ color: "#2f3a52", roughness: 0.98 }),
+    sisal: new MeshStandardMaterial({ color: "#bda27a", roughness: 0.95 }),
+    catGinger: new MeshStandardMaterial({ color: "#c8763a", roughness: 0.95 }),
+    catCream: new MeshStandardMaterial({ color: "#ecdcc2", roughness: 0.95 }),
+    catGrey: new MeshStandardMaterial({ color: "#8f8d8c", roughness: 0.95 }),
     dispose() {
       const all = [
         materials.wood,
@@ -306,6 +325,11 @@ export function createRoomMaterials(seed: number): RoomMaterials {
         materials.poster,
         materials.windowDusk,
         materials.cdCase,
+        materials.fleece,
+        materials.sisal,
+        materials.catGinger,
+        materials.catCream,
+        materials.catGrey,
         ...materials.cdSpines,
       ];
       for (const material of all) {
