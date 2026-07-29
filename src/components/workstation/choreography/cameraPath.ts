@@ -74,17 +74,33 @@ const KEYS: CameraKey[] = [
     target: head,
   },
   {
-    // Ch. 2→3 arc: swing behind the chair at height — a straight lerp
-    // from the profile to the wide shot cuts through the figure's hair.
+    // Ch. 2→3 arc: crane up and pull back on the figure's own side.
+    //
+    // This used to swing right, across the front of the figure, because
+    // ch. 3 finished on the far side of the room and a straight lerp from
+    // the profile cut through the hair. Since 3.2 moved ch. 3 to the
+    // FRONT-LEFT the crossing is gone — both ends are now at x ≈ -1.4 —
+    // so the arc bows gently outward instead. Keep both keys on the same
+    // side of the figure or the hair problem comes straight back.
     p: REST_POINTS[2] + (REST_POINTS[3] - REST_POINTS[2]) * 0.5,
-    position: new Vector3(-0.35, 1.6, 1.3),
-    target: new Vector3(-0.05, 1.02, -0.3),
+    position: new Vector3(-1.55, 1.6, 0.95),
+    target: new Vector3(0.1, 1.05, -0.4),
   },
   {
-    // Ch. 3 rest: dolly back + crane to the wide dusk establishing shot.
+    // Ch. 3 rest: the wide dusk establishing shot — "this is where it
+    // started" (ADR-012 §5).
+    //
+    // 3.2 moved this from (1.35, 1.85, 1.55). That was on the +X side,
+    // i.e. the SAME wall as the window, looking away from it: the glass,
+    // the light shafts, the cat tree and both cats all sat behind the
+    // camera, and 5.1 would have built a tree nobody ever saw. From the
+    // front-left the shot gets the two walls that matter — the desk
+    // against the back wall and the window along +X — in one frame, with
+    // the figure near the centre of it. The cats read off to the right of
+    // frame, which is what keeps this "the room" and not "the cats".
     p: REST_POINTS[3],
-    position: new Vector3(1.35, 1.85, 1.55),
-    target: new Vector3(-0.1, 0.95, -0.45),
+    position: new Vector3(-1.45, 1.95, 1.7),
+    target: new Vector3(0.45, 1.02, -0.5),
   },
   {
     // Ch. 4 approach: over-the-shoulder arc…
