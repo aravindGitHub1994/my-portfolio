@@ -55,6 +55,41 @@ const UP = new Vector3(0, 1, 0);
  *  clones its endpoints, so one instance can be reused safely. */
 export const ORIGIN = new Vector3(0, 0, 0);
 
+// Hand geometry offsets, authored right-handed; x mirrors for the left.
+// Hoisted out of the builder so `armPose.ts` can solve reaches against the
+// points the mesh actually occupies instead of a second copy of the same
+// numbers — the two drifting apart would put the hand *near* the mouse.
+/** Palm centre, relative to the wrist. */
+const PALM_OFFSET = new Vector3(-0.015, -0.01, -0.04);
+/** Finger root, relative to the palm centre (before the x spread). */
+const FINGER_ROOT_OFFSET = new Vector3(0, -0.004, -0.042);
+/** Centre-to-centre spacing of the four fingers across the palm. */
+const FINGER_SPREAD = 0.019;
+/** Fingertip, relative to that finger's root. */
+const FINGER_TIP_OFFSET = new Vector3(0, -0.012, -0.02);
+
+/** A hand point the arm rig can aim: the palm centre (flat contact — the
+ *  mouse, the mug) or the mean fingertip (point contact — a button). */
+export type ArmPoint = "palm" | "fingertips";
+
+/**
+ * Where a hand point sits in **elbow-pivot-local space**, which is the frame
+ * the hand group is parented into and therefore the frame `armPose.ts`'s
+ * two-bone solve works in. Allocates — creation-time only, never per frame.
+ */
+export function armPointLocal(side: 1 | -1, point: ArmPoint): Vector3 {
+  const e = side === 1 ? ARM_JOINTS.elbow : mirror(ARM_JOINTS.elbow);
+  const w = side === 1 ? ARM_JOINTS.wrist : mirror(ARM_JOINTS.wrist);
+  const palm = w
+    .clone()
+    .sub(e)
+    .add(side === 1 ? PALM_OFFSET : mirror(PALM_OFFSET));
+  if (point === "palm") return palm;
+  // The four finger roots are spread symmetrically about the palm centre in
+  // x, so their mean tip sits straight ahead of it and the spread cancels.
+  return palm.add(FINGER_ROOT_OFFSET).add(FINGER_TIP_OFFSET);
+}
+
 /** Capsule limb between two joints — the workhorse of the whole figure. */
 export function capsuleBetween(
   a: Vector3,
@@ -186,7 +221,7 @@ export function buildBody({ detail, material, palette }: BuilderOptions): Group 
   // (both pivots at identity) every vertex lands exactly where the old
   // body-space construction put it — the typing pose is unchanged by the
   // rig, which is the property that makes it safe to land on its own.
-  for (const side of [1, -1]) {
+  for (const side of [1, -1] as const) {
     const suffix = side === 1 ? "R" : "L";
     const s = side === 1 ? ARM_JOINTS.shoulder : mirror(ARM_JOINTS.shoulder);
     const e = side === 1 ? ARM_JOINTS.elbow : mirror(ARM_JOINTS.elbow);
@@ -229,14 +264,20 @@ export function buildBody({ detail, material, palette }: BuilderOptions): Group 
     const hand = new Group();
     hand.name = `hand${suffix}`;
     const palm = new Mesh(new BoxGeometry(0.075, 0.028, 0.085), skin);
-    palm.position.copy(wristLocal).add(new Vector3(-0.015 * side, -0.01, -0.04));
+    palm.position.copy(armPointLocal(side, "palm"));
     palm.rotation.set(-0.25, 0, 0);
     hand.add(palm);
     for (let f = 0; f < 4; f++) {
       const root = palm.position
         .clone()
-        .add(new Vector3((f - 1.5) * 0.019 * side, -0.004, -0.042));
-      const tip = root.clone().add(new Vector3(0, -0.012, -0.02));
+        .add(
+          new Vector3(
+            (f - 1.5) * FINGER_SPREAD * side,
+            FINGER_ROOT_OFFSET.y,
+            FINGER_ROOT_OFFSET.z,
+          ),
+        );
+      const tip = root.clone().add(FINGER_TIP_OFFSET);
       const finger = capsuleBetween(root, tip, 0.0095, skin, detail);
       finger.name = `finger${suffix}${f}`;
       hand.add(finger);

@@ -23,6 +23,7 @@ import { createSkinMaterial, createForearmMaterial } from "./skinTexture";
 import { createIdle, type IdleUpdate } from "./idle";
 import { effectsState } from "../scene/sheddable";
 import { createTyping, type TypingUpdate } from "./typing";
+import { createArmPose, type ArmPoseDriver } from "./armPose";
 
 /**
  * The figure (plan-0009 §1.1 + 1.3): seeded parametric builders under a
@@ -40,6 +41,7 @@ export function Figure({
 }) {
   const idle = useRef<IdleUpdate | null>(null);
   const typing = useRef<TypingUpdate | null>(null);
+  const armPose = useRef<ArmPoseDriver | null>(null);
 
   const figure = useMemo(() => {
     // Fallback clay (only used if a palette slot is missing).
@@ -124,6 +126,27 @@ export function Figure({
       );
     }
 
+    // Arm-pose driver (1.2): owns the four rig pivots 1.1 introduced. The
+    // pivots are required, not optional — without them the power press,
+    // the mouse reach and the mug sip all fail together, so a missing one
+    // is worth the same loud failure `elbowPivotL` already gets.
+    const shoulderR = root.getObjectByName("shoulderPivotR");
+    const shoulderL = root.getObjectByName("shoulderPivotL");
+    const elbowR = root.getObjectByName("elbowPivotR");
+    const elbowL = root.getObjectByName("elbowPivotL");
+    if (shoulderR && shoulderL && elbowR && elbowL) {
+      armPose.current = createArmPose({ shoulderR, shoulderL, elbowR, elbowL });
+    } else {
+      console.error("[character] arm rig pivots missing — poses disabled");
+    }
+
+    // Dev-only QA handle, the `__fidelity` pattern: 1.2's acceptance is
+    // "calling goTo from the console moves the correct arm", and this is
+    // what makes that sentence executable.
+    if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
+      window.__armPose = armPose.current ?? undefined;
+    }
+
     // Poly budget (1.1 acceptance: recorded, target < 60 k) — instances
     // counted at full weight.
     let tris = 0;
@@ -142,6 +165,10 @@ export function Figure({
     return () => {
       idle.current = null;
       typing.current = null;
+      armPose.current = null;
+      if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
+        window.__armPose = undefined;
+      }
       root.traverse((obj) => {
         if (obj instanceof Mesh) obj.geometry.dispose();
       });
@@ -169,7 +196,17 @@ export function Figure({
       idle.current?.(clock.elapsedTime, delta);
     }
     typing.current?.(clock.elapsedTime);
+    // Poses run at full rate even when idle density is shed: a reach is a
+    // deliberate movement the visitor is watching, not garnish, and
+    // halving its rate would read as a dropped frame rather than as calm.
+    armPose.current?.(clock.elapsedTime, delta);
   });
 
   return <primitive object={figure.root} />;
+}
+
+declare global {
+  interface Window {
+    __armPose?: ArmPoseDriver;
+  }
 }
