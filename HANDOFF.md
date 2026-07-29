@@ -4,9 +4,8 @@
 > `redesign-attempt2` → `main` @ `dac6de4`; every gate (1.2, 2.3, 4.3, 9.2)
 > is owner-PASSED. The 9.2 record is `docs/qa/9.2-desktop-checklist.md`.
 >
-> **The branch compiles; P1 and P7 are built.** Nothing is broken on disk —
-> but slice 1.2 is **uncommitted** in the working tree. Read Current Status
-> before you touch anything.
+> **Everything is committed and green.** Working tree clean apart from
+> untracked `assets-src/`. P1, P4.1 and P7 are done; P2 needs only 2.3.
 
 ## Current Status
 
@@ -14,27 +13,23 @@
 - **Plan-0010's breakdown is APPROVED by the owner as written** (session 15).
   Build to it — dependency graph, slice boundaries, acceptance criteria as
   committed. This unblocks everything past 1.1.
-- **Gate 1.3 PASSED** (owner, 2026-07-29) — P1 is closed. Four slices landed
-  in session 17: 1.2, 2.1, 2.2 and 4.1. Lint, `tsc` and `npm run build` are
-  green at HEAD.
-- Still uncommitted and **not this branch's work**:
-  `docs/qa/9.2-desktop-checklist.md` gained one line in session 16 recording
-  that the owner confirmed the P7 scroll cue reads. **P7 is owner-closed.**
-  Fold it into whatever docs commit comes next.
-- Also uncommitted, from session 16 and **not this branch's work**:
-  `docs/qa/9.2-desktop-checklist.md` gained one line recording that the owner
-  confirmed the P7 scroll cue reads on the dev server. **P7 is owner-closed.**
-- Untracked `assets-src/` stays untracked.
+- **Gate 1.3 PASSED** (owner, 2026-07-29) — P1 is closed. **P7 is
+  owner-closed** (confirmed on the dev server; recorded in checklist §17b).
+- **Working tree is clean.** Everything below is committed; lint, `tsc` and
+  `npm run build` are green at HEAD. Untracked `assets-src/` stays untracked.
 - Commits on the branch, newest first:
+  - `53776f6` — docs: 4.1 + the P7 confirmation session 16 left loose
+  - `dc3c6bb` — **slice 4.1** (behaviour scheduler; taps suspend per arm)
+  - `3b87f43` — docs: session-17 handoff
+  - `e02de5c` — **slice 2.2** (power hotspot pinned over the 3D button)
+  - `f6cd25b` — **slice 2.1** (chapter 0 gains scroll span; opening frame)
+  - `d10aac6` — **slice 1.2** (`armPose.ts`, the driver that moves the rig)
   - `cd9abc5` — docs: session-16 handoff refresh
   - `7f1722c` — **P7 complete** (7.1 scroll-cue contrast + 7.2 QA-record fix)
-  - `0784e3d` — **slice 1.1 complete** (two-bone arm rig)
+  - `0784e3d` — **slice 1.1** (two-bone arm rig)
   - `28410fc` — ADR-013 + plan-0010
-- The previous handoff said ADR-013 and plan-0010 were "on disk but not in
-  git." That was **wrong** — they were already committed at `28410fc`. Don't
-  go looking for uncommitted docs.
-- A dev server may still be running on **3004** from session 15; it was left
-  up deliberately for the owner to look at the cue. `EADDRINUSE` → use theirs.
+- A dev server is running on **3004** and was used for session-17 QA.
+  `EADDRINUSE` → use theirs. Ask before stopping it.
 
 ### What 1.1 actually did
 
@@ -52,9 +47,11 @@ back to `root` — body-space placement is only correct at rest, and
 `ExperienceBoundary` converts the throw into the static floor plus a named
 console error, so the failure is loud instead of silently-correct-at-rest.
 
-`typing.ts` and `idle.ts` needed **no change**: every write they make
-(`fingers[i].position.y`, `hands[i].position.y`, `chest.rotation.x`) is
-local-space, so reparenting is transparent to them.
+`typing.ts` and `idle.ts` needed **no change for the reparent**: every write
+they make (`fingers[i].position.y`, `hands[i].position.y`,
+`chest.rotation.x`) is local-space, so reparenting is transparent to them.
+(`typing.ts` was later rewritten by 4.1 for a different reason — the
+scheduler — but the local-space property is why 1.1 could land alone.)
 
 ### What 1.2 actually did
 
@@ -230,20 +227,13 @@ Resolved with the owner (ADR-013 records the reasoning):
 
 ## Unresolved Threads
 
-**Awaiting the owner, asked and not yet answered:**
+**Gate 1.3 — CLOSED, but it left constraints.** The owner drove all five
+poses from the console in `?scene=full` and said "all good". Their one note
+— *the fingers keep tapping while the hand is away from the keyboard* — was
+not a rig defect and is **fixed by 4.1**.
 
-- ~~Start 1.2, or take gate 1.3 first?~~ **Moot.** Plan-0010 blocks 1.3 on
-  1.2, so there was never an order to choose.
-- **GATE 1.3 PASSED** (owner, 2026-07-29). They drove all five poses from
-  the console in `?scene=full` — "all good". **P1 is closed; P2 and P4 are
-  open.** One note, not a defect in the rig: *the fingers keep tapping while
-  the hand is away from the keyboard.* That is precisely what `busy()`
-  exists for and it is slice **4.1**'s to wire — but it must land before
-  gate 2.4, because the power press shows the same thing in the first
-  twenty seconds.
-- **The three 1.3 questions the owner did not have to answer**, because the
-  poses read fine. Keep them: they are the constraints anything built on
-  the rig still has to respect.
+The three questions they did not have to answer, because the poses read
+fine. **Keep them: they bind anything built on the rig from here.**
   1. **Three of the four reaches run at 94–96 % of full extension** (power
      95.1 %, mouse 95.9 %, mug 94.3 %; `lean` is the relaxed one at 64 %).
      The arm is nearly straight at the far end of every reach that matters.
@@ -269,6 +259,8 @@ Resolved with the owner (ADR-013 records the reasoning):
      swing 9 mm through the desk top. 4.2 replaces this constant with the
      live prop handle anyway (ADR-013 §6) — but it should replace it with
      the same *point on* the mug, not with the mug's origin.
+**Awaiting the owner, asked and not yet answered:**
+
 - **The scroll cue now overlaps the SignOff card.** Newly *exposed* by P7, not
   caused by it: at p ≈ 0.94 the "Scroll" label sits ~30 px below the contact
   links and competes with them. The cue has always run to `END_P` (0.995) and
@@ -295,13 +287,17 @@ Resolved with the owner (ADR-013 records the reasoning):
 
 **New, from this branch:**
 
-- **Gate 1.3 and gate 6.2 should still be pulled forward** — both are cheap and
-  both gate expensive work.
-- **The dock is this branch's biggest regression risk.** Giving chapter 0
-  scroll span moves `RUNWAY_LENGTH_VH` 660 → 750, which changes what
-  `DockSwap`'s `ENGAGE_EPS` of 0.012 means in pixels — and the dock is
-  precisely what the owner signed off in session 13. Slice 8.1 re-runs
-  checklist §4/§17a in full.
+- **Gate 6.2 should still be pulled forward** — it is cheap and it gates
+  expensive work (6.4, the Gallery app). Nothing blocks 6.1 today.
+- **The dock is this branch's biggest regression risk, and 2.1 has now
+  triggered it.** `RUNWAY_LENGTH_VH` is 660 → **750**, so `DockSwap`'s
+  `ENGAGE_EPS` of 0.012 now covers **~70 px instead of ~60 px** at
+  1440×900 — and the dock is precisely what the owner signed off in
+  session 13. **Not yet re-tested at all.** Slice 8.1 re-runs checklist
+  §4/§17a in full; do not leave it to the end if anything feels off sooner.
+- **Nothing gates the scheduler during boot.** 4.1's `busy()` stops
+  behaviours overlapping once a pose has started, but a mouse reach can
+  still fire a second *before* 2.3's press. 2.3 has to close that.
 - Steam adds a **tenth rung** to the fidelity ladder, pushing the
   static-floor offer from ~64 s to roughly ~69 s at a pinned 20 fps. Slice
   4.3 measures the real number. Folding steam into the existing `dust` flag
@@ -451,10 +447,14 @@ Unchanged from session 13 except where ADR-013 amends them.
   `scrollProgress`, `chapterIndex`, `docked`, `duskDeepen`, `runwayStart`,
   `runwaySpan`, `fidelityTier`, `perf`.
 - **`window.scrollTo(0, y)` moves the journey** — Lenis picks it up, so you can
-  jump to any chapter instead of wheeling there. At 1440×900 the runway is
-  5040 px, so `p ≈ y / 5040`. **Jumping past chapter 4 engages the dock**
-  (`docked: true`, progress clamps to the dock rest); wheel a few notches to
-  undock before continuing.
+  jump to any chapter instead of wheeling there. **The scrollable span is
+  `RUNWAY_LENGTH_VH − 100vh`**, not the runway height: the trigger runs
+  top-top to bottom-bottom, so the sticky viewport is not scrolled past. As
+  of 2.1 that is 650 vh = **5850 px at 1440×900**, so `p ≈ y / 5850` (it was
+  5040 px before 2.1 — any script carrying the old number is now ~16 % off).
+  Rest points land at p = 0.12, 0.28, 0.467, 0.653, 0.813, 1.0.
+  **Jumping past chapter 4 engages the dock** (`docked: true`, progress
+  clamps to the dock rest); wheel a few notches to undock before continuing.
 - The entry control is an **unlabeled 96×96 `<button>`** — find it by size,
   not by text. **As of 2.2 it is no longer at viewport centre**: it pins
   itself over the projected 3D power button, which at 1440×900 lands at
@@ -464,9 +464,15 @@ Unchanged from session 13 except where ADR-013 amends them.
   `pointer-events-auto` on the button itself. A programmatic `.click()`
   ignores that, so it is not evidence a real pointer lands — hit-test with
   `document.elementFromPoint(x, y)` and check it resolves to the button.
-- The full journey needs the power button *clicked* and ~15 s of boot before
-  stepping moves progress. **This changes in slice 2.3** — update the QA
-  scripts when it does.
+- The full journey needs the power button *clicked* before stepping moves
+  progress. Budget **~30–40 s** for the boot in a headless session, not the
+  ~15 s it takes on real hardware — the sequencer is wall-clock driven but
+  the page runs at 2–6 fps on software GL. A 25 s wait is not enough and
+  looks exactly like a hang. **The press changes again in slice 2.3** —
+  update the QA scripts when it does.
+- **Scroll is parked (Lenis stopped) for the whole boot**, so `scrollTo`
+  does nothing until the desktop settles. Check
+  `document.querySelector('.power-ring')` is gone before scrubbing.
 - Reset before any first-run test: `w98-intro-seen`, `w98-muted`,
   `w98-fidelity-floor`.
 
@@ -506,16 +512,24 @@ Unchanged from session 13 except where ADR-013 amends them.
 - [ ] **Raise the SignOff/scroll-cue overlap with the owner** and act on their
       answer — it is a one-line change either way, but it is a gate change.
 - [ ] **P6.1 (picture pipeline)** is still the other independent track and
-      still unblocks the cheap 6.2 owner gate. Nothing in P1 blocks it.
-- [ ] Stop the session-15 dev server on 3004 if the owner is done with it.
+      still unblocks the cheap 6.2 owner gate. Nothing blocks it.
+- [ ] **Spot-check the dock early**, ahead of 8.1. 2.1 lengthened the runway
+      and nothing has re-tested the latch since. See Unresolved Threads.
 
 ## Recommended Skills
 
-- `test-driven-development`, or better the **pure-module + `npx tsc`
-  simulation** pattern for `armPose.ts` — the pose maths is the part most
-  worth proving offline, and the part a browser proves worst. The session-15
-  geometry-diff harness is the closest working example of the setup.
-- `agent-browser` — isolated `--session` QA for anything visual. Always
-  `run_in_background`. The owner's headed session only for owner-angle checks;
-  ask before reloads.
+- **The pure-module + `npx tsc` simulation pattern, before anything else.**
+  It has now paid for itself three sessions running: it proved 1.1's
+  "identical to `main`", found three real defects in 1.2, caught two wrong
+  "derived and fine" claims in 2.1, and replaced 4.1's three-minute
+  observation with an hour of simulated ride. **2.3's press is the next
+  natural candidate** — the ordering of click → reach → contact → depress →
+  LED → thunk is a state machine, and a browser at 2–6 fps is the worst
+  available instrument for judging it. Two harnesses from this session are
+  in the scratchpad as working examples (`armcheck-check.ts`,
+  `schedcheck-check.ts`).
+- `agent-browser` — isolated `--session` QA for anything visual, and the
+  only way to prove *wiring* (that a driver is actually mounted and running
+  in the app). Always `run_in_background` with an `EXIT=` sentinel. The
+  owner's headed session only for owner-angle checks; ask before reloads.
 - `documentation-and-adrs` at close-out for slice 8.2.
