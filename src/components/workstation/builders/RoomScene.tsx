@@ -7,6 +7,7 @@ import { Atmosphere } from "../scene/Atmosphere";
 import { Postprocessing } from "../scene/postprocessing";
 import { CrtScreen } from "../crt/CrtScreen";
 import { TowerPower } from "./TowerPower";
+import { publishMug } from "../scene/propHandles";
 import { createRoomMaterials, type RoomBuilderOptions } from "./materials";
 import { buildRoom } from "./room";
 import { buildDesk, DESK_TOP_Y } from "./desk";
@@ -83,6 +84,13 @@ export function RoomScene({
   useEffect(() => {
     const { root, materials } = scene;
 
+    // Hand the mug to whoever can lift it (ADR-013 §6). Publishing a prop
+    // is the only thing this component knows about the character, and it
+    // does not know even that — it puts the object on a noticeboard and
+    // never asks who reads it. `?scene=room` publishes to nobody.
+    const mug = root.getObjectByName("mug");
+    const retractMug = mug instanceof Group ? publishMug(mug) : undefined;
+
     // Poly budget (2.1 acceptance: props total < 150 k tris at high).
     let tris = 0;
     root.traverse((obj) => {
@@ -98,6 +106,9 @@ export function RoomScene({
     );
 
     return () => {
+      // Retract before disposing: a handle outliving its geometry is how a
+      // "harmless" singleton keeps a whole scene alive.
+      retractMug?.();
       root.traverse((obj) => {
         if (obj instanceof Mesh) obj.geometry.dispose();
       });

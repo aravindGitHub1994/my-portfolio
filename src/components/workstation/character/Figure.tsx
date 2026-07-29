@@ -23,6 +23,7 @@ import { createSkinMaterial, createForearmMaterial } from "./skinTexture";
 import { createIdle, type IdleUpdate } from "./idle";
 import { effectsState } from "../scene/sheddable";
 import { createTyping, type TypingUpdate } from "./typing";
+import { createMugSip, type MugSip } from "./mugSip";
 import { armPoseRef, createArmPose, type ArmPoseDriver } from "./armPose";
 
 /**
@@ -42,6 +43,7 @@ export function Figure({
   const idle = useRef<IdleUpdate | null>(null);
   const typing = useRef<TypingUpdate | null>(null);
   const armPose = useRef<ArmPoseDriver | null>(null);
+  const sip = useRef<MugSip | null>(null);
 
   const figure = useMemo(() => {
     // Fallback clay (only used if a palette slot is missing).
@@ -142,9 +144,24 @@ export function Figure({
     }
     const handR = root.getObjectByName("handR");
     const handL = root.getObjectByName("handL");
+
+    // The mug sequence (4.2). Needs the left hand as the frame the mug is
+    // carried in, and the pose driver to sequence — without either, the
+    // scheduler falls back to 4.1's bare reach rather than losing the
+    // behaviour, which is also what happens in a scene with no mug in it.
+    if (armPose.current && handL) {
+      sip.current = createMugSip(armPose.current, handL);
+    }
+
     if (chest && fingers.length === 8 && handR && handL) {
       typing.current = createTyping(
-        { fingers, hands: [handR, handL], chest, armPose: armPose.current },
+        {
+          fingers,
+          hands: [handR, handL],
+          chest,
+          armPose: armPose.current,
+          sip: sip.current,
+        },
         seed,
       );
     }
@@ -172,6 +189,10 @@ export function Figure({
     );
 
     return () => {
+      // Before anything else: the mug belongs to the room, and unmounting
+      // mid-sip must not leave it floating where the hand happened to be.
+      sip.current?.release();
+      sip.current = null;
       idle.current = null;
       typing.current = null;
       armPose.current = null;

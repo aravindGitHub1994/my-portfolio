@@ -26,6 +26,7 @@ import {
   type ArmPoseDriver,
   type ArmSide,
 } from "./armPose";
+import type { MugSip } from "./mugSip";
 
 export interface TypingTargets {
   /** The eight named finger meshes, right hand first: fingerR0–3 then
@@ -38,6 +39,10 @@ export interface TypingTargets {
   /** The arm rig's driver (1.2). Null when the rig is missing: the figure
    *  then types forever, which is exactly what it did before 4.1. */
   armPose: ArmPoseDriver | null;
+  /** The mug sequence (4.2). Null falls back to 4.1's bare reach — the hand
+   *  goes to the handle and comes back — so a scene without it still has a
+   *  figure that takes its hands off the keyboard. */
+  sip: MugSip | null;
 }
 
 export type TypingUpdate = (elapsed: number) => void;
@@ -70,8 +75,10 @@ interface Behaviour {
 }
 const BEHAVIOURS: readonly Behaviour[] = [
   { pose: "mouse", sides: ["R"], minHold: 3, maxHold: 8, weight: 5 },
-  // 4.2 makes this an actual lift and sip; for now the hand goes to the
-  // handle and comes back, which is the arm half of the same motion.
+  // The one behaviour that is not a bare reach: 4.2 hands it to `mugSip`,
+  // which lifts the mug to the mouth and sets it back down. `minHold` is
+  // therefore the time spent *drinking*, not the whole behaviour — the
+  // sequence around it costs about 2.3 s more.
   { pose: "mug", sides: ["L"], minHold: 1.6, maxHold: 3.2, weight: 3 },
   { pose: "lean", sides: ["R", "L"], minHold: 2.5, maxHold: 5, weight: 2 },
 ];
@@ -86,7 +93,7 @@ const smooth = (t: number) => t * t * (3 - 2 * t);
 
 export function createTyping(targets: TypingTargets, seed: number): TypingUpdate {
   const rnd = mulberry32(seed ^ 0x54595045);
-  const { fingers, hands, chest, armPose } = targets;
+  const { fingers, hands, chest, armPose, sip } = targets;
 
   const baseY = new Float64Array(fingers.length);
   const nextTap = new Float64Array(fingers.length);
@@ -151,6 +158,14 @@ export function createTyping(targets: TypingTargets, seed: number): TypingUpdate
     const held = powerPressHoldsArms();
     if (held) nextBehaviourAt += dt;
 
+    // The sip advances whatever else is going on. It is only ever running
+    // because this scheduler started it, and it has to see every frame of
+    // its own sequence — including one where the entry gesture has just
+    // taken hold, which would otherwise strand a mug in mid-air. (Not
+    // reachable today: `PowerOn` mounts before the first behaviour ever
+    // fires. Cheap enough not to depend on that staying true.)
+    sip?.(elapsed);
+
     // --- Scheduler. Only starts something when both arms are home, so
     // behaviours never overlap and an interrupted reach is impossible.
     if (
@@ -164,8 +179,17 @@ export function createTyping(targets: TypingTargets, seed: number): TypingUpdate
       const behaviour = BEHAVIOURS[index];
       const hold =
         behaviour.minHold + rnd() * (behaviour.maxHold - behaviour.minHold);
-      for (let s = 0; s < behaviour.sides.length; s++) {
-        armPose.goTo(behaviour.sides[s], behaviour.pose, hold);
+      // The mug is a sequence rather than a pose, and it reports its own
+      // length; everything else is one reach and costs the envelope. The
+      // draw order above is untouched by that split on purpose — 4.1's
+      // seeded ride is still the same ride, just with a longer mug beat.
+      let duration = EASE_IN_S + hold + EASE_OUT_S;
+      if (behaviour.pose === "mug" && sip) {
+        duration = sip.start(elapsed, hold);
+      } else {
+        for (let s = 0; s < behaviour.sides.length; s++) {
+          armPose.goTo(behaviour.sides[s], behaviour.pose, hold);
+        }
       }
       if (behaviour.pose === "lean") {
         leanStart = elapsed;
@@ -174,13 +198,7 @@ export function createTyping(targets: TypingTargets, seed: number): TypingUpdate
       lastBehaviour = index;
       // Measured from when the behaviour ENDS, not when it starts, so the
       // gap is quiet typing rather than partly the reach itself.
-      nextBehaviourAt =
-        elapsed +
-        EASE_IN_S +
-        hold +
-        EASE_OUT_S +
-        GAP[0] +
-        rnd() * (GAP[1] - GAP[0]);
+      nextBehaviourAt = elapsed + duration + GAP[0] + rnd() * (GAP[1] - GAP[0]);
     }
 
     // --- Lean: the torso rides the arms' own envelope.

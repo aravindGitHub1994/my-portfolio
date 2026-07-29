@@ -21,7 +21,7 @@
 import { Quaternion, Vector3, type Object3D } from "three";
 import { ARM_JOINTS, armPointLocal, type ArmPoint } from "./buildBody";
 
-export type ArmPose = "typing" | "power" | "mouse" | "mug" | "lean";
+export type ArmPose = "typing" | "power" | "mouse" | "mug" | "lean" | "sip";
 export type ArmSide = "R" | "L";
 
 export interface ArmPoseTargets {
@@ -35,12 +35,26 @@ export interface ArmPoseTargets {
 export interface ArmPoseDriver {
   (elapsed: number, delta: number): void;
   /** Ease the arm to `pose`, hold `holdS` seconds, ease back to typing.
-   *  Calling mid-move re-targets from wherever the arm currently is. */
+   *  Calling mid-move re-targets from wherever the arm currently is.
+   *  Pass `HOLD_UNTIL_RELEASED` to stay there until told otherwise — the
+   *  sip needs three legs in a row and must not fall home between them. */
   goTo(side: ArmSide, pose: ArmPose, holdS: number): void;
   /** True while an arm is anywhere but its typing rest — 4.1 suspends taps
    *  on the busy arm only, so the other hand keeps working. */
   busy(side: ArmSide): boolean;
 }
+
+/** A hold that never expires: the arm arrives and stays until something
+ *  calls `goTo` again (4.2). The sip is four legs — handle, mouth, handle,
+ *  home — and an arm that fell back to typing between them would put the
+ *  mug down halfway through drinking from it.
+ *
+ *  Infinity rather than a sentinel the envelope has to special-case: the
+ *  hold test is `t >= holdS`, which is simply never true, so the "hold"
+ *  phase needs no new branch and `busy()` keeps reporting the arm as out.
+ *  **Whoever passes this owns bringing the arm home** — nothing else will.
+ */
+export const HOLD_UNTIL_RELEASED = Number.POSITIVE_INFINITY;
 
 /** Read-only-ish frame state, the `typingState` pattern. `contact` is true
  *  only during the hold phase — the window in which the hand is actually
@@ -111,6 +125,44 @@ export const POWER_BUTTON = new Vector3(-0.05, 0.777, -0.518);
 export const LEAN_REST_R = new Vector3(0.32, 0.79, -0.3);
 export const LEAN_REST_L = new Vector3(-0.32, 0.79, -0.3);
 
+/** The mug at the mouth (4.2) — where the left FINGERTIPS go, not where the
+ *  mug goes. The mug is carried from the handle grip, so it hangs below and
+ *  in front of this point: the hand ends up under the chin and the rim
+ *  arrives at the lips.
+ *
+ *  **Solved, not typed**, the same way the other four are. An offline sweep
+ *  of 3 366 fingertip targets × 17 elbow swivels scored each candidate by
+ *  where the *mug's rim* ends up once the prop is carried from the `mug`
+ *  pose, subject to the mug clearing the desk, the keyboard and the head at
+ *  every frame of both carried legs. At this target the rim lands **24.8 mm
+ *  from the lips** — close enough to read as drinking, far enough to leave
+ *  the beard alone — the mug's nearest point stays **54.5 mm** outside the
+ *  skull, and it passes **305 mm** clear of the keyboard.
+ *
+ *  Two things the sweep settled that are worth not rediscovering:
+ *
+ *  - **The lips are the front face of the mustache box** (`buildBeard`, z
+ *    -0.124 local), not the centre of the head. Aiming at the mustache's
+ *    centre asks the solve to drive the rim 22 mm into the beard, and it
+ *    obliges.
+ *  - **The tilt is not choosable from here.** Across the whole reachable
+ *    set, every swivel included, the mug arrives at the mouth tipped
+ *    **59–136°** from upright — pouring. That is the missing wrist, not a
+ *    badly chosen target, and it is why `mugSip.ts` clamps the carried
+ *    tilt. Do not try to fix it by moving this constant; it cannot be. */
+export const SIP_GRIP = new Vector3(-0.07, 1.09, -0.19);
+
+/** The elbow's spin about the shoulder→target axis at the sip — the one
+ *  degree of freedom the fingertip's position leaves free.
+ *
+ *  Nonzero here alone, because the sip is the only pose whose *hand
+ *  orientation* matters: every other reach only has to put a hand point
+ *  somewhere, while this one is also carrying a mug whose angle and
+ *  clearances follow from how the forearm is rolled. 1.2 rad is what keeps
+ *  the mug's body out of the face while the rim is at the lips — at swivel
+ *  0 the same rim distance costs 16 mm of skull penetration. */
+const SIP_SWIVEL = 1.2;
+
 /** Solve the two bones so `point` lands on `target`. Every pose is a reach
  *  — even `lean`, which reaches the desk rather than an object. */
 interface PoseSpec {
@@ -131,6 +183,7 @@ const POSES: Record<
   power: { R: { target: POWER_BUTTON, point: "fingertips" } },
   mouse: { R: { target: MOUSE_GRIP, point: "palm" } },
   mug: { L: { target: MUG_GRIP, point: "fingertips" } },
+  sip: { L: { target: SIP_GRIP, point: "fingertips", swivel: SIP_SWIVEL } },
   lean: {
     R: { target: LEAN_REST_R, point: "palm" },
     L: { target: LEAN_REST_L, point: "palm" },

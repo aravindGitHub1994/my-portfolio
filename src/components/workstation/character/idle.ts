@@ -16,6 +16,22 @@ export interface IdleTargets {
 
 export type IdleUpdate = (elapsed: number, delta: number) => void;
 
+/** Additive head rotation, in radians, owned by whoever is making the head
+ *  do something deliberate — today only 4.2's sip (ADR-013 §6).
+ *
+ *  It exists because `head.rotation` must keep exactly **one writer**. The
+ *  sip wants the head to dip toward the mug; the sway wants to keep
+ *  breathing underneath it. Two writers would fight for the property and
+ *  whichever ran second would win, which is how you get a head that jitters
+ *  between two poses at frame rate. So the sip states an *offset* and this
+ *  driver adds it to the sway it was going to write anyway — the tilt
+ *  composes with the sway instead of replacing it, and letting go is just
+ *  easing the offset back to zero.
+ *
+ *  **The setter owns the easing.** Nothing here smooths it, so a writer
+ *  that snaps this from 0 to its full value snaps the head. */
+export const headOffset = { pitch: 0, yaw: 0 };
+
 const BREATH_PERIOD = 4.2;
 const BLINK_DURATION = 0.14;
 /** Resting eyelid scale — a hairline crease, not a closed lid. */
@@ -36,9 +52,12 @@ export function createIdle(targets: IdleTargets, seed: number): IdleUpdate {
     chest.scale.set(1 + breath * 0.006, lift, lift);
 
     // Head sway — two incommensurate sines so it never visibly loops.
+    // `headOffset` rides on top: the sip's tilt is added here rather than
+    // written by the sip, so this stays the only writer of head.rotation.
     head.rotation.y = baseRotY + Math.sin(elapsed * 0.31) * 0.045 +
-      Math.sin(elapsed * 0.83) * 0.02;
-    head.rotation.x = baseRotX + Math.sin(elapsed * 0.47) * 0.02;
+      Math.sin(elapsed * 0.83) * 0.02 + headOffset.yaw;
+    head.rotation.x = baseRotX + Math.sin(elapsed * 0.47) * 0.02 +
+      headOffset.pitch;
 
     // Blinks — randomized 2–6 s apart (seeded), ~140 ms each.
     if (blinkStart < 0 && elapsed >= nextBlinkAt) {
