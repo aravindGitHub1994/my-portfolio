@@ -9,22 +9,31 @@
 > answers to the five §4 questions, is
 > **`docs/qa/3.3-camera-ride-checklist.md`**. **P3 is closed.**
 >
-> **Everything is committed and green.** Working tree clean apart from
-> untracked `assets-src/`. **P1, P2, P3, P4, P5 and P7 are all done**, and
-> gates 1.3, 2.4 and 3.3 are owner-PASSED. **The only package never touched
-> is P6** (the Gallery), plus slice **8.1** (the dock regression sweep) and
-> **8.2** (close-out docs). Nothing is blocking.
+> **Everything is committed and green.** `assets-src/` is now **gitignored**
+> rather than merely untracked, so the working tree is genuinely clean.
+> **P1, P2, P3, P4, P5 and P7 are all done**, gates 1.3, 2.4 and 3.3 are
+> owner-PASSED, and **P6 is started** — 6.1 (the picture pipeline, 29
+> photographs at 4.34 MB) and 6.3 (the Gallery glyph) both landed.
 >
-> **Four of the five §4 answers were "leave it",** which promotes a set of
+> **ONE THING BLOCKS THE BRANCH: gate 6.2**, the owner's photo-and-caption
+> review. 6.4 needs it and 6.5 needs 6.4, so it is the entire critical path.
+> Its checklist is written and committed: **`docs/qa/6.2-picture-review.md`**.
+> Read that before planning anything, and note that **captions do not exist
+> yet by decision** — they are the owner's voice about his own life.
+>
+> **Four of the five 3.3 §4 answers were "leave it",** which promotes a set of
 > numbers from open threads to settled ones — see "Settled by gate 3.3"
 > under Unresolved Threads before retuning anything in the opening.
 >
-> **What is owner-unseen:** 4.3's announced boot skip (built after their
-> ride, so the entry frame they passed is not quite the one that ships) and
-> **the whole of 5.2** — "is the wag slow enough" is eyes-only, and the
-> handoff has said so since session 13. Everything else recorded here from
-> sessions 20–21 was either owner-approved in the browser or proved
-> offline; say which is which when you report.
+> **Owner-closed since:** 5.2's tail wag (*"the tail wag is fine"*). **Still
+> owner-unseen:** 4.3's announced boot skip, built after their ride, so the
+> entry frame they passed is not quite the one that ships. Everything else
+> recorded here from sessions 20–21 was either owner-approved in the browser
+> or proved offline; say which is which when you report.
+>
+> **The dock's recorded risk was overstated** and is now spot-checked — see
+> Unresolved Threads before treating 8.1 as the big job three handoffs called
+> it.
 
 ## Current Status
 
@@ -44,7 +53,9 @@
 - **Working tree is clean.** Everything below is committed; lint, `tsc` and
   `npm run build` are green at HEAD. Untracked `assets-src/` stays untracked.
 - Commits on the branch, newest first:
-  - *(session 21)* — **slice 5.2** (the tail wag and the ear flick)
+  - `c1e9e2e` — **slice 6.3** (the Gallery glyph, in both renderers)
+  - `5e16fb5` — **slice 6.1** (the picture pipeline; 29 photographs, 4.34 MB)
+  - `d0b6e28` — **slice 5.2** (the tail wag and the ear flick)
   - `0320d32` — **gate 3.3 PASSED + slice 4.3's answer** (the announced skip)
   - `1c47a59` — docs (the 3.3 checklist, HANDOFF pointing at it)
   - `ad48a47` — **slice 3.1** (chapter 2 becomes a face reveal)
@@ -732,10 +743,12 @@ reveal, 3.2 the room wide, gate 3.3 passed). **P4 is complete** (4.1
 scheduler, 4.2 the sip, 4.3 steam). **P5 is complete** (5.1 the cat tree and
 the cats, 5.2 the tail wag).
 
-**What is left is P6 and P8.** P6 — the Gallery — has never been touched and
-is independent of everything else; 6.2 is a cheap owner gate that should be
-pulled forward because it gates the expensive 6.4. P8 is 8.1 (the dock
-regression sweep, the branch's biggest known risk) and 8.2 (close-out docs).
+**What is left is the back half of P6, and P8.** **P6 is started** — 6.1 (the
+picture pipeline) and 6.3 (the glyph) are done, which leaves **6.2 (the owner's
+review, and the only blocker on the branch)**, then 6.4 (the app) and 6.5 (the
+painter's thumbnail-grid suggestion). P8 is 8.1 (the dock sweep — **spot-checked
+in session 21 and smaller than three handoffs implied**) and 8.2 (close-out
+docs).
 
 ## Decisions already made — do not re-litigate
 
@@ -860,12 +873,33 @@ untested rather than approved.
 - **Gate 6.2 should still be pulled forward** — it is cheap and it gates
   expensive work (6.4, the Gallery app). Nothing blocks 6.1 today, and with
   P3 and P5 closed **P6 is the only package left with build work in it.**
-- **The dock is this branch's biggest regression risk, and 2.1 has now
-  triggered it.** `RUNWAY_LENGTH_VH` is 660 → **750**, so `DockSwap`'s
-  `ENGAGE_EPS` of 0.012 now covers **~70 px instead of ~60 px** at
-  1440×900 — and the dock is precisely what the owner signed off in
-  session 13. **Not yet re-tested at all.** Slice 8.1 re-runs checklist
-  §4/§17a in full; do not leave it to the end if anything feels off sooner.
+- **The dock: spot-checked in session 21, and the recorded risk was
+  overstated.** Three handoffs have called 2.1's runway change (660 →
+  **750 vh**) this branch's biggest regression risk, because `ENGAGE_EPS`
+  0.012 covers ~70 px instead of ~60 px at 1440×900. **That framing had the
+  direction wrong.** Every dock constant is expressed in *progress* units, and
+  both engage tests are scale-invariant: `DockSwap.tsx:214` fires on
+  `away < ENGAGE_EPS` **or** a sign change of `progress − rest`, so no scroll
+  speed and no runway length can carry the visitor past the latch. The
+  `REARM_EPS` (0.05) : `ENGAGE_EPS` (0.012) relationship is likewise in
+  progress space and unchanged. The band being ~16 % wider in *pixels* means
+  the dock engages a little more readily on a slow approach — the opposite of
+  the feared failure, which was the dock being *missed*.
+
+  **Verified on the production export at 1440×900**, four checks, all passing:
+  parked at p = 0.70 not docked; **one 1462 px jump to p = 0.95 latched** and
+  clamped progress to 0.813 (the crossing test, at the new runway length);
+  `ArrowUp` after a pause undocked; and — the adversarial one — left parked
+  with `away = 0`, i.e. dead on the rest point and deep inside the engage
+  band, it **stayed undocked for 6 s**, so the hysteresis holds in the worst
+  case the keyboard-undock path can produce.
+
+  **What that does NOT cover, and 8.1 still owns:** the momentum case. A hard
+  flick is a burst of events, and headless renders this scene at 2–6 fps so it
+  cannot produce that cadence — `UNDOCK_GRACE_MS` 800 and `SCROLL_QUIET_MS`
+  350 remain owner-hardware-verified only, exactly as they were at 9.2. The
+  *mechanics* are re-proved at 750 vh; the *feel* is not. Downgrade the risk,
+  do not close it.
 - ~~Steam adds a tenth rung…~~ **Done and measured at 4.3: 70.0 s, and it
   is slower on slower hardware.** See "What 4.3, 5.1 and 3.2 actually did".
 
@@ -1189,6 +1223,11 @@ Unchanged from session 13 except where ADR-013 amends them.
   transcription of the owner's five calls, and §7 carries the verdict and the
   one thing the pass did not cover. **Read it before planning anything that
   touches the opening or the camera.**
+- **The live gate:** `docs/qa/6.2-picture-review.md` — **the only thing
+  blocking the branch.** Written for the owner at the end of session 21; a
+  reading task, not a QA pass. §1.1 names what inspection found rather than
+  asking a blank question, §1.2 carries the three naming problems, and §1.3 is
+  where the captions get settled. **Check it before planning anything in P6.**
 - **Prior gate record:** `docs/qa/9.2-desktop-checklist.md`, especially §17
   (session-13 fixes), §17b (rewritten in session 15 — the P7 record and the
   SignOff-overlap thread) and §17d (what an agent could not verify).
@@ -1203,25 +1242,43 @@ Unchanged from session 13 except where ADR-013 amends them.
       answers are transcribed there under "Answers". Four were "leave it" —
       **do not reopen them**, and see "Settled by gate 3.3" above before
       touching any number in the opening. The fifth (4.3) is built.
-- [x] ~~**Slice 5.2 — tail wag.**~~ **Done** this session. `catIdle.ts` plus
-      `CatMotion.tsx`; see "What 5.2 actually did". **Owner-unseen** — the
-      "is it slow enough" half is eyes-only.
-- [ ] **P6.1 (picture pipeline) is the work.** With P3 and P5 closed it is the
-      only package with build left in it, it is independent of everything, and
-      it unblocks the cheap 6.2 owner gate — which in turn gates the expensive
-      6.4 (the Gallery app). ADR-013 §9: downscaled copies ship into
-      `public/`, **never `assets-src/` itself**, and the chunk must split out
-      of the initial bundle in `out/` like every other lazy app.
-- [ ] **Spot-check the dock early**, ahead of 8.1. 2.1 lengthened the runway
-      (660 → 750 vh) and **nothing has re-tested the latch since** — it is the
-      branch's biggest known regression risk, and gate 3.3 explicitly put it
-      out of scope. See Unresolved Threads.
-- [ ] **Fold three cheap owner glances into the next browser session** rather
-      than opening one for any of them alone: **5.2's wag** (is it slow
-      enough — the only acceptance criterion no harness can answer; the ear
-      flick wants a patient minute at chapter 3), **4.3's announced skip** on
-      the entry frame, and **the sip in `?scene=full`**. All three are "look
-      once", not sittings. See Unresolved Threads.
+- [x] ~~**Slice 5.2 — tail wag.**~~ **Done, and owner-closed** — *"the tail wag
+      is fine"* (2026-07-30). P5 is complete.
+- [x] ~~**P6.1 (picture pipeline)**~~ and ~~**6.3 (the glyph)**~~ **both done**
+      this session. See "What 6.1 and 6.3 actually did".
+- [ ] **GATE 6.2 IS THE ONLY THING BLOCKING ANYTHING.** 6.4 (the Gallery app)
+      needs it and 6.5 needs 6.4, so the owner's photo-and-caption review is
+      the whole critical path. **The checklist is written and committed:
+      `docs/qa/6.2-picture-review.md`.** It is a reading task, no dev server.
+      Three questions, and **§1.1 is not a blank box** — it names what
+      inspection found (the two photographs showing tattooed forearms, the two
+      identifiable third parties in `guitar-01`, the work laptop in
+      `workspace-01`). **Captions do not exist yet, on purpose**; §1.3 offers
+      the owner two ways to settle them, one of which is "tell me the register
+      and I will draft 29".
+- [ ] **After 6.2: slice 6.4**, the Gallery app itself. Blockers are 6.2 and
+      6.3, and 6.3 is done. `src/lib/pictures.ts` for content (dimensions are
+      in `scripts/pictures-manifest.tsv` — do not transcribe them by hand),
+      a `DEFAULT_ICONS` entry at **col 0 row 5** (free, and the glyph was
+      already proved rendering there in both renderers), an `APP_DEFS` entry,
+      `apps/Gallery.tsx`, a `register54.ts` chunk and its `lazyApps.ts` loader.
+      **Verify the chunk actually splits out of the initial bundle in `out/`** —
+      that criterion has caught regressions before. Reuse `IEFrame.tsx`'s
+      period image chrome and `Explorer.tsx`'s grid + `w98-sunken` status line
+      rather than reinventing either.
+- [x] ~~**Spot-check the dock early**~~ **Done, session 21 — and the risk was
+      overstated.** The latch mechanics are re-proved at 750 vh and the
+      constants are scale-invariant by construction; see Unresolved Threads for
+      the four checks and for the one thing still owner-only (the momentum
+      case). **8.1 is now a smaller job than the handoffs implied**, but it is
+      not closed.
+- [ ] **Fold two cheap owner glances into the next browser session** rather
+      than opening one for either alone: **4.3's announced skip** on the entry
+      frame (one muted line, and the three-lines-for-returning-visitors
+      overlap), and **the sip in `?scene=full`**. Both are "look once", not
+      sittings. *(5.2's wag is closed — the owner called it fine. Its **ear
+      flick** was never commented on and at 14–40 s apart was probably never
+      seen; treat as untested, not approved.)* See Unresolved Threads.
 
 ## Recommended Skills
 
