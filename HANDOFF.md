@@ -24,20 +24,24 @@
 - **Working tree is clean.** Everything below is committed; lint, `tsc` and
   `npm run build` are green at HEAD. Untracked `assets-src/` stays untracked.
 - Commits on the branch, newest first:
-  - `<this session>` — **slice 4.2** (prop handle, the sip, the head tilt)
+  - `358e2bd` — docs (this handoff, gate 2.4 + the 4.2 wrap)
+  - `16199d1` — **slice 4.2** (prop handle, the sip, the head tilt)
+  - `657f22c` — docs (ADR-013 §2a and §10a)
   - `edab2bc` — **the three owner calls on 2.3** (boot pan, cue/SignOff
     gate, boot skip)
   - `d075597` — **slice 2.3** (the press)
   - `bd95003` / `53776f6` / `3b87f43` / `cd9abc5` — docs
   - `dc3c6bb` — **slice 4.1** (behaviour scheduler; taps suspend per arm)
+    *(4.1 predates 2.3 in the log — it was taken out of plan order)*
   - `e02de5c` — **slice 2.2** (power hotspot pinned over the 3D button)
   - `f6cd25b` — **slice 2.1** (chapter 0 gains scroll span; opening frame)
   - `d10aac6` — **slice 1.2** (`armPose.ts`, the driver that moves the rig)
   - `7f1722c` — **P7 complete** (7.1 scroll-cue contrast + 7.2 QA-record fix)
   - `0784e3d` — **slice 1.1** (two-bone arm rig)
   - `28410fc` — ADR-013 + plan-0010
-- A dev server is running on **3004** and was used for session-18 QA.
-  `EADDRINUSE` → use theirs. Ask before stopping it.
+- A dev server was left running on **3004** (session 18). Session 19 never
+  opened a browser — 4.2 was proved offline end to end — so treat its state
+  as unknown. `EADDRINUSE` → use theirs. Ask before stopping it.
 
 ### What 2.3 actually did — the press
 
@@ -429,8 +433,9 @@ missing capability** — the arm rig. That is why P1 gates everything. **P1 is
 closed** (1.1 rig, 1.2 driver, gate 1.3 passed). **P2 is built** (2.1 the
 scroll span and the opening frame, 2.2 the hotspot, 2.3 the press) and
 **4.1 came in early**, out of plan order, because the owner's 1.3 note lands
-inside gate 2.4's twenty seconds. **Gate 2.4 has since passed**, and 4.2
-followed 4.1, so P4 is two-thirds built and only 4.3 (steam) remains.
+inside gate 2.4's twenty seconds. **P2 is now closed too** — gate 2.4 passed
+— and 4.2 followed 4.1, so P4 is two-thirds built and only 4.3 (steam)
+remains. **P3 and P5 have not been started at all.**
 
 ## Decisions already made — do not re-litigate
 
@@ -510,7 +515,28 @@ silence as approval, and do not treat the pass as approval of each number:
 - **Is 90 vh the right amount of camera move** (not scroll — the pan eats
   chapter 0's span)?
 
-**New, from this branch:**
+**New, from 4.2 — two gaps, both deliberate, neither blocking:**
+
+- **The sip has never run in a browser.** Session 19 opened none: the
+  sequence, the carry, the clearances and the teardown paths were all proved
+  offline against the real modules, which is stronger than a 2–6 fps
+  headless render for everything *except the one thing a pure harness cannot
+  see* — that the parts are actually mounted and talking. `Figure` creating
+  the sip and `RoomScene` publishing the handle are wiring, and wiring is
+  exactly what 2.3 needed a browser for. **The cheap probe, mirroring 2.3's:
+  in `?scene=full`, `window.__armPose.goTo('L','mug',…)` moves the arm, but
+  only the scheduler starts a real sip — so watch for the mug leaving the
+  desk, or expose the driver if you want it on demand.** Behaviours are on
+  an 11–30 s seeded gap, so budget a minute of watching.
+- **Nobody has seen the sip.** The shot is composed to numbers — rim 24.8 mm
+  from the lips, 28° of tilt — and those numbers are defensible, but whether
+  it *reads* as drinking is an owner judgement that no gate currently asks
+  for. Plan-0010 has no HITL between 4.2 and gate 3.3. **The two things most
+  likely to want retuning are the tilt clamp (`MAX_TILT`) and the head dip
+  (`SIP_PITCH`/`SIP_YAW`)**, both single constants in `mugSip.ts`. Worth
+  folding into whatever the owner watches next rather than raising alone.
+
+**New, from earlier in this branch:**
 
 - **Gate 6.2 should still be pulled forward** — it is cheap and it gates
   expensive work (6.4, the Gallery app). Nothing blocks 6.1 today.
@@ -616,10 +642,13 @@ Unchanged from session 13 except where ADR-013 amends them.
   **This is how 1.2 was proved**, and it earned its keep — it found three real
   defects a browser would not have shown: a `for…of` over a two-element array
   literal allocating on every frame of the ride, the mug reach dragging 9 mm
-  through the desk top, and `lean` sagging 15 mm through the keycaps. The
-  harness (`check.ts` + its tsconfig) is in this session's scratchpad; it
-  builds the real body with `buildBody`, drives the real `createArmPose` at a
-  simulated 60 fps, and asserts, in one run:
+  through the desk top, and `lean` sagging 15 mm through the keycaps.
+  **No harness is committed and the scratchpads do not survive the session —
+  every one of these has been rebuilt from this recipe, and doing so takes
+  about twenty minutes.** The shape: a scratch project inside the repo
+  (`.rigcheck/`, `.sipcheck/`, deleted after) that copies the real modules
+  in, flattens them into one directory and rewrites `@/lib/…` and `../scene/…`
+  imports to `./x.js`. The 1.2 build asserts, in one run:
   1. **rest geometry byte-identical to `HEAD`** (the 1.1 property, re-proved
      after the hand-offset hoist) — 4866 vertices at high, 2102 at low;
   2. every reach lands within 2 mm of its target (all landed at 0.00 mm);
@@ -647,6 +676,15 @@ Unchanged from session 13 except where ADR-013 amends them.
   **minimum-clearance metric at lift-off is dominated by frame granularity**
   — the mug is already millimetres up on its first carried frame, so that
   number rules out scrapes but ranks nothing.
+  The 4.2 harness needed exactly these modules copied in: `prng`,
+  `powerPress`, `propHandles`, `mug`, `desk`, `keyboard`, `buildBody`,
+  `buildHead`, `buildBeard`, `armPose`, `idle`, `mugSip`, `typing` — plus a
+  three-field stub for `builders/materials` (the real one bakes canvases and
+  imports site content, and `buildMug` only type-imports it). Feed builders a
+  `Proxy` that returns one `MeshStandardMaterial` for any slot; the harness
+  cares about geometry. **Assemble the world from `RoomScene`'s placement
+  literals, quoted not approximated** — the harness is only as honest as
+  those.
 - **Headless geometry diffing — new in session 15, and how 1.1's "visually
   identical to `main`" criterion was actually met.** The builders are pure, so
   both versions can be assembled in node and compared *numerically* instead of
@@ -779,19 +817,24 @@ Unchanged from session 13 except where ADR-013 amends them.
       are both unblocked and both AFK. 5.1 gates 3.2, which gates 3.3.
 - [ ] **Spot-check the dock early**, ahead of 8.1. 2.1 lengthened the runway
       and nothing has re-tested the latch since. See Unresolved Threads.
+- [ ] **Eyeball the sip once in `?scene=full`** — cheap, and it closes the
+      one thing 4.2's offline proof cannot cover (that the parts are mounted
+      and talking). Fold it into the next browser session rather than opening
+      one for it alone. See Unresolved Threads.
 
 ## Recommended Skills
 
 - **The pure-module + `npx tsc` simulation pattern, before anything else.**
-  It has now paid for itself three sessions running: it proved 1.1's
-  "identical to `main`", found three real defects in 1.2, caught two wrong
-  "derived and fine" claims in 2.1, and replaced 4.1's three-minute
-  observation with an hour of simulated ride. **2.3's press is the next
-  natural candidate** — the ordering of click → reach → contact → depress →
-  LED → thunk is a state machine, and a browser at 2–6 fps is the worst
-  available instrument for judging it. Two harnesses from this session are
-  in the scratchpad as working examples (`armcheck-check.ts`,
-  `schedcheck-check.ts`).
+  Five sessions running now: it proved 1.1's "identical to `main`", found
+  three real defects in 1.2, caught two wrong "derived and fine" claims in
+  2.1, replaced 4.1's three-minute observation with an hour of simulated
+  ride, timed 2.3's press to the frame, and in 4.2 caught an inherited
+  constant whose doc comment was wrong by 172 mm. **The next natural
+  candidate is 4.3's steam** — a seeded particle system with a shed flag is
+  pure by construction, and the acceptance criterion that costs real work
+  (when the static-floor offer arrives at a pinned 20 fps, now that the
+  ladder has ten rungs) is a simulation question, not a browser one.
+  See "Verification patterns" for the recipe and the two traps.
 - `agent-browser` — isolated `--session` QA for anything visual, and the
   only way to prove *wiring* (that a driver is actually mounted and running
   in the app). Always `run_in_background` with an `EXIT=` sentinel. The
