@@ -47,6 +47,32 @@ const GLYPHS: Record<IconGlyph, Layer[]> = {
     ["#2a2a2a", [[6, 2, 4, 1], [4, 3, 8, 2], [3, 5, 10, 6], [4, 11, 8, 2], [6, 13, 4, 1], [7, 0, 2, 2], [7, 14, 2, 2], [0, 7, 2, 2], [14, 7, 2, 2], [2, 2, 2, 2], [12, 2, 2, 2], [2, 12, 2, 2], [12, 12, 2, 2]]],
     ["#e8e8e8", [[5, 5, 2, 2]]],
   ],
+  // 6.3 — the Gallery (plan-0010 §6.3). A framed photograph of a hill under a
+  // sun: the set is mostly ridges and roads, so the icon says what is inside
+  // it. The 1 px cream mat inside the frame is what stops it reading as
+  // `computer` (beige box, dark screen) at 16 px — a photograph has a border,
+  // a monitor does not. Every colour is already in the set above; nothing new
+  // enters the palette.
+  //
+  // **These rectangles are duplicated in `painter.ts`'s `drawGlyph` and must
+  // stay in step** (ADR-012 §4 — the painter mirrors the shell's object
+  // language). This glyph is the one pair that is *pixel*-identical rather
+  // than merely alike: both sides are plain axis-aligned fills of the same
+  // cells, so they rasterize the same at every integer scale. `globe` and
+  // `mine` only approximate each other, because the painter draws those with
+  // arcs. Keep this one exact — it is cheaper to preserve than to restore.
+  gallery: [
+    // frame
+    ["#8a8272", [[1, 1, 14, 1], [1, 13, 14, 1], [1, 2, 1, 11], [14, 2, 1, 11]]],
+    // mat
+    ["#ede7d6", [[2, 2, 12, 11]]],
+    // sky
+    ["#6fb0c8", [[3, 3, 10, 9]]],
+    // sun, clear of the ridge line
+    ["#e8c25a", [[10, 4, 2, 2]]],
+    // the ridge, peak a shade left of centre so it does not read as a pyramid
+    ["#5d726b", [[7, 6, 1, 1], [6, 7, 3, 1], [5, 8, 5, 1], [4, 9, 7, 1], [3, 10, 10, 2]]],
+  ],
 };
 
 export function PixelIcon({

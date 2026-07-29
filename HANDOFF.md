@@ -625,6 +625,86 @@ chapter 3 logging `[room] ~4,348 tris` with **no `[cats]` error**, so
 name. **Whether the wag is slow enough is still owner-only** — 27.5 mm/s is a
 number, not a judgement, and headless renders this scene at 2–6 fps.
 
+### What 6.1 and 6.3 actually did — the Gallery's foundations
+
+**6.1 — the picture pipeline.** `scripts/build-pictures.mjs`, `sharp` as a
+devDependency imported only there. 29 photographs in, 58 files out at
+**4.34 MB** into `public/pictures/`; script and output both committed, so
+`npm run build` is still a plain static export. Run by hand:
+**`npm run pictures`** (and `npm run pictures -- --dry` reports without
+writing).
+
+**The sizes were measured, not chosen.** 1200×900 viewer copies and
+cover-cropped 192×144 thumbnails are what the Gallery needs in a 640×480
+virtual shell; that landed the directory at 3.27 MB, *under* ADR-013 §9's own
+4–5 MB band, so the spare megabyte went on quality — q80 → 3.82 MB, q84 →
+4.31 MB, q88 → 5.03 MB and over. Hence **q84**. Re-measure if the set changes.
+
+Four properties in that script are load-bearing, not incidental:
+
+- **The allow-list is explicit and never globs.** That is the *mechanism*
+  behind §9's boundary — `assets-src/workstation/` holds the four tattoo
+  reference close-ups and three AI concept sheets, and a glob would ship them
+  the day a file lands in the wrong folder. `assertAllowed` refuses to run at
+  all if any entry matches reference material, the concept sheets, the
+  character-QA screenshots, `docs/projects/**` or anything named "client".
+  **Proved by poisoning the list with `tattoo01.jpg`: exit 1, nothing written.**
+- **Metadata is stripped** — 0 of 29 shipped files carry EXIF/XMP/ICC.
+  Honest footnote: **0 of 29 sources carried EXIF either**, so no GPS was ever
+  actually at risk. The guarantee matters the moment a photo is added straight
+  off a phone; do not repeat it as "we prevented a GPS leak".
+- **`.rotate()` before the resize.** Stripping EXIF also strips the
+  orientation flag, so a portrait photograph would otherwise ship sideways.
+- **Deterministic encoding is what makes re-running idempotent** — verified
+  byte-identical on a second run. The script re-encodes every time rather than
+  checking timestamps; 29 photographs cost seconds and a cache can be wrong.
+
+**Ids are authored in the allow-list, not derived from filenames**, so
+renaming a source cannot change a shipped URL. `scripts/pictures-manifest.tsv`
+carries id/group/width/height for 6.4 — deliberately **not** under `public/`,
+because everything there ships.
+
+**`assets-src/` is now gitignored, not merely untracked.** 6.1's own
+acceptance criterion is that it stays unshipped and it was one `git add -A`
+from committing 27 MB including the tattoo references. **The memory note
+claiming it was already gitignored was wrong** — it never was.
+
+**What inspection actually found, and it is the reason 6.2 matters:**
+`guitar-01` and `workspace-01` **show the owner's tattooed forearms**, which
+breaches plan-0009's literal wording ("no image file under `public/` contains
+tattoo photography"). They ship, on three grounds, with the call put back to
+the owner in `docs/qa/6.2-picture-review.md`: ADR-013 §9's own heading is "No
+tattoo **reference** photography" and names the four close-ups; the owner
+decided all 29 ship, naming these two; and **`aravind-2.jpg` has shipped all
+along showing the same forearms**, so the criterion cannot ever have meant
+"no photo containing a tattoo". Also flagged there: `guitar-01` shows two
+other identifiable people close up, and `workspace-01` has a work laptop in
+frame (upscaled from the original the screen is thoroughly illegible — no
+client material, but it deserves a conscious yes).
+
+**Captions are deliberately unwritten.** They are the owner's voice about his
+own life; a plausible-sounding fabrication is worse than a blank. §1.3 of the
+review offers them two ways to settle it.
+
+**6.3 — the Gallery glyph.** `"gallery"` in `IconGlyph`, original 16×16 art in
+`pixelIcons.tsx` GLYPHS, and a mirrored `case "gallery":` in `painter.ts`'s
+`drawGlyph`. A framed photograph of a ridge under a sun — the set is mostly
+hills and roads, so the icon says what is inside it, and the 1 px cream mat is
+what stops it reading as `computer` at 16 px. Every colour was already in the
+palette; nothing new entered it.
+
+**This glyph pair is pixel-identical, which the others are not.** Both sides
+are plain axis-aligned fills of the same cells in the same layer order, so
+they rasterize the same at every integer scale — `globe` and `mine` only
+*approximate* each other because the painter draws those with arcs. Verified
+by parsing both files and comparing the colour and rectangle lists
+programmatically rather than by eye: 5 colours, 12 rectangles, identical.
+**Keep it exact; it is cheaper to preserve than to restore.**
+
+Remember which of the two is compile-forced: `pixelIcons.tsx` is a
+`Record<IconGlyph, …>` so a missing glyph fails the build, while the painter's
+`switch` is non-exhaustive and will **silently draw nothing** on the CRT.
+
 ### What P7 actually did
 
 Gating logic in `ScrollHint.tsx` is **byte-for-byte unchanged** — it was never
@@ -760,15 +840,16 @@ does not exist in a production build.
 as the constant most likely to want tuning. §3.2 of the checklist asked about
 it by name and the owner ticked it. Settled.
 
-**OPEN, and both are owner-eyes work rather than defects:**
+**CLOSED by the owner (2026-07-30) — 5.2's wag.** *"The tail wag is fine."*
+That was the one acceptance criterion no harness could answer, so **P5 is
+fully owner-closed**. The amplitudes in `catIdle.ts` (0.14 / 0.07 on
+`tail.rotation.y`, 0.15 / 0.08 on the tip) are **settled numbers** — do not
+retune them without a fresh ask. The **ear flick** was not commented on
+either way; at 14–40 s apart it is unlikely to have been seen, so treat it as
+untested rather than approved.
 
-- **5.2's wag has never been seen.** "Is it slow enough" is the whole
-  acceptance criterion and the harness cannot answer it — 27.5 mm/s peak tip
-  speed is a number, not a judgement. If it wants changing, the levers are
-  the two amplitudes on `tail.rotation.y` in `catIdle.ts` (0.14 / 0.07) and
-  the tip's (0.15 / 0.08); the frequencies are what keep it from looping and
-  should be the last thing touched. The **ear flick** has also never been
-  seen, and at 14–40 s apart it needs a patient minute at chapter 3.
+**OPEN, and owner-eyes work rather than a defect:**
+
 - **4.3's announced skip has never been seen** — it landed after the owner's
   ride, so the entry frame they passed is not quite the one that ships. One
   muted line; wants a glance, not a sitting. The three-lines-for-returning-

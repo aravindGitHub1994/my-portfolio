@@ -145,6 +145,32 @@ function drawGlyph(
       ctx.fillStyle = "#e8e8e8";
       ctx.fillRect(6 * u, 6 * u, 2 * u, 2 * u);
       break;
+    // 6.3 — the Gallery. **This switch is not compile-forced** (unlike
+    // `pixelIcons.tsx`'s `Record<IconGlyph, …>`), so a glyph added to
+    // `IconGlyph` and missed here draws nothing at all on the CRT rather than
+    // failing to build. Hence the deliberate mirror below.
+    //
+    // The cells are byte-for-byte the ones in `pixelIcons.tsx`'s `gallery`
+    // entry, in the same layer order, so the two renderers are **pixel**
+    // identical at every integer scale — not merely alike, which is all
+    // `globe` and `mine` manage (they use arcs here and cells there).
+    // Change one, change both.
+    case "gallery": {
+      const CELLS: [string, [number, number, number, number][]][] = [
+        ["#8a8272", [[1, 1, 14, 1], [1, 13, 14, 1], [1, 2, 1, 11], [14, 2, 1, 11]]],
+        ["#ede7d6", [[2, 2, 12, 11]]],
+        ["#6fb0c8", [[3, 3, 10, 9]]],
+        ["#e8c25a", [[10, 4, 2, 2]]],
+        ["#5d726b", [[7, 6, 1, 1], [6, 7, 3, 1], [5, 8, 5, 1], [4, 9, 7, 1], [3, 10, 10, 2]]],
+      ];
+      for (const [fill, cells] of CELLS) {
+        ctx.fillStyle = fill;
+        for (const [cx, cy, cw, ch] of cells) {
+          ctx.fillRect(cx * u, cy * u, cw * u, ch * u);
+        }
+      }
+      break;
+    }
   }
   ctx.restore();
 }

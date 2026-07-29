@@ -38,7 +38,8 @@ export type IconGlyph =
   | "envelope"
   | "globe"
   | "bin"
-  | "mine";
+  | "mine"
+  | "gallery";
 
 export interface Win98Icon {
   id: string;
