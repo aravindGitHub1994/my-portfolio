@@ -75,8 +75,11 @@ const PRESS_WATCHDOG_MS = 3000;
 // line. The camera is on the glass by ~55 % of the POST, leaving the rest
 // of the lines and the whole splash in frame.
 //
-// **These two are a shot, and no agent can judge a shot — they are the
-// first thing to retune at gate 2.4.**
+// **Both numbers are settled.** They are a shot, and no agent can judge a
+// shot, so they were put to the owner twice: implicitly at gate 2.4 and by
+// name at gate 3.3 §4.2, where the answer was "the current config is good".
+// They are chosen values now, not placeholders — do not retune them without
+// a fresh ask.
 const POST_MS = BOOT_TOTAL_MIN_MS - SPLASH_MIN_MS;
 /** Beat on the lit LED before the camera moves — the payoff of the press
  *  wants a moment to land before the frame changes. ~300 ms. */

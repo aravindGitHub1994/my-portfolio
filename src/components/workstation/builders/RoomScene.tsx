@@ -8,6 +8,7 @@ import { Steam } from "../scene/Steam";
 import { Postprocessing } from "../scene/postprocessing";
 import { CrtScreen } from "../crt/CrtScreen";
 import { TowerPower } from "./TowerPower";
+import { CatMotion } from "./CatMotion";
 import { publishMug } from "../scene/propHandles";
 import { createRoomMaterials, type RoomBuilderOptions } from "./materials";
 import { buildRoom } from "./room";
@@ -159,6 +160,10 @@ export function RoomScene({
           than with the figure — an auto-booting harness lights its LED
           without a person in the room. */}
       <TowerPower root={scene.root} />
+      {/* 5.2: the tails, and a rare ear flick. Its own leaf so the static
+          set keeps its static memo, and so the tails can ride the shed
+          ladder without this component knowing the ladder exists. */}
+      <CatMotion root={scene.root} seed={seed} />
       <primitive object={scene.root} />
     </>
   );

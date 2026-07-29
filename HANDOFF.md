@@ -1,24 +1,30 @@
-# HANDOFF — `scene-refinement` (2026-07-29, session 19 wrap)
+# HANDOFF — `scene-refinement` (2026-07-30, session 21 wrap)
 
 > For the next agent session. **ADR-012's plan is finished and merged.**
 > `redesign-attempt2` → `main` @ `dac6de4`; every gate (1.2, 2.3, 4.3, 9.2)
 > is owner-PASSED. The 9.2 record is `docs/qa/9.2-desktop-checklist.md`.
 >
+> **GATE 3.3 IS PASSED.** The owner ran the whole-ride camera gate and
+> ticked every item in §1, §2, §3 and §5 — the record, including their
+> answers to the five §4 questions, is
+> **`docs/qa/3.3-camera-ride-checklist.md`**. **P3 is closed.**
+>
 > **Everything is committed and green.** Working tree clean apart from
-> untracked `assets-src/`. **P1, P2, P4, P5.1, P7 and 3.2 are done and gate
-> 2.4 is owner-PASSED.** Nothing is blocking. The remaining AFK work is
-> **3.1**, **5.2** and **P6**; after 3.1 the branch is ready for gate 3.3.
+> untracked `assets-src/`. **P1, P2, P3, P4, P5 and P7 are all done**, and
+> gates 1.3, 2.4 and 3.3 are owner-PASSED. **The only package never touched
+> is P6** (the Gallery), plus slice **8.1** (the dock regression sweep) and
+> **8.2** (close-out docs). Nothing is blocking.
 >
-> **Session 20 was owner-attended** — 4.3, 5.1 and 3.2 were each looked at
-> in the browser and approved, and the 4.2 threads the last handoff left
-> open (the sip's tilt clamp and head dip) were confirmed "perfect". That
-> is unusual for this branch; most of what is recorded here was verified
-> offline. Say which is which when you report.
+> **Four of the five §4 answers were "leave it",** which promotes a set of
+> numbers from open threads to settled ones — see "Settled by gate 3.3"
+> under Unresolved Threads before retuning anything in the opening.
 >
-> **The one thing waiting on a human is gate 3.3**, and its checklist is
-> already written: **`docs/qa/3.3-camera-ride-checklist.md`**. Read that
-> file before anything else — the owner is filling it in, and §4 holds five
-> open questions whose answers land there rather than in this file.
+> **What is owner-unseen:** 4.3's announced boot skip (built after their
+> ride, so the entry frame they passed is not quite the one that ships) and
+> **the whole of 5.2** — "is the wag slow enough" is eyes-only, and the
+> handoff has said so since session 13. Everything else recorded here from
+> sessions 20–21 was either owner-approved in the browser or proved
+> offline; say which is which when you report.
 
 ## Current Status
 
@@ -26,6 +32,9 @@
 - **Plan-0010's breakdown is APPROVED by the owner as written** (session 15).
   Build to it — dependency graph, slice boundaries, acceptance criteria as
   committed. This unblocks everything past 1.1.
+- **Gate 3.3 PASSED** (owner, 2026-07-30, on the production static export) —
+  **P3 is closed**, and with it the last camera question on this branch.
+  Record and §4 answers: `docs/qa/3.3-camera-ride-checklist.md`.
 - **Gate 1.3 PASSED** (owner, 2026-07-29) — P1 is closed. **P7 is
   owner-closed** (confirmed on the dev server; recorded in checklist §17b).
 - **Gate 2.4 PASSED** (owner, 2026-07-29, checked in the browser) — P2 is
@@ -35,6 +44,11 @@
 - **Working tree is clean.** Everything below is committed; lint, `tsc` and
   `npm run build` are green at HEAD. Untracked `assets-src/` stays untracked.
 - Commits on the branch, newest first:
+  - *(session 21)* — **slice 5.2** (the tail wag and the ear flick)
+  - `0320d32` — **gate 3.3 PASSED + slice 4.3's answer** (the announced skip)
+  - `1c47a59` — docs (the 3.3 checklist, HANDOFF pointing at it)
+  - `ad48a47` — **slice 3.1** (chapter 2 becomes a face reveal)
+  - `e7d7a91` — docs (the session-20 wrap)
   - `fc8a413` — **slice 3.2** (chapter 3 reframed onto the window wall)
   - `612371b` — **slice 5.1** (cat tree, Nimbus and Ivy)
   - `a98f694` — **slice 4.3** (mug steam; the ladder is ten rungs)
@@ -54,9 +68,13 @@
   - `7f1722c` — **P7 complete** (7.1 scroll-cue contrast + 7.2 QA-record fix)
   - `0784e3d` — **slice 1.1** (two-bone arm rig)
   - `28410fc` — ADR-013 + plan-0010
-- A dev server was left running on **3004** (session 18). Session 19 never
-  opened a browser — 4.2 was proved offline end to end — so treat its state
-  as unknown. `EADDRINUSE` → use theirs. Ask before stopping it.
+- A dev server may still be running on **3004** from session 18. Sessions
+  19–21 did not use it: session 21 verified against a **production static
+  export served by `npx serve out -l 3005`**, which is what gate 3.3 asks for
+  and the only way to see what actually ships (`__armPose`, `__sipNow`,
+  `__fidelity` and the perf counter are all stripped from a production
+  build). `EADDRINUSE` on either port → use theirs. **Ask before stopping
+  anything.** A `serve` on 3005 was left running by session 21.
 
 ### What 2.3 actually did — the press
 
@@ -507,6 +525,106 @@ cats 16.7 % off centre to the right; CRT, window, shafts and dust all in
 frame. That distribution is the "reads as the room, not the cats" criterion
 made checkable — but it is a proxy, and the judgement was the owner's.
 
+### What gate 3.3 and 4.3 actually did — session 21
+
+**The gate passed as a whole**, and unlike 2.4 the §4 questions were each
+answered individually. Four were "leave it" — see "Settled by gate 3.3"
+below, because that is now a list of numbers nobody should retune casually.
+
+**4.3 was the one that needed code: the boot skip announces itself.** The
+owner chose the **entry frame** for it, so the copy sits under `press power`
+at the bottom of the shot — muted and lower-case, the way out rather than the
+invitation — and there is still **nothing over the boot**, which is what the
+original objection was actually about. The POST and the splash play
+uncovered. (ADR-013 **§3a**.)
+
+**That placement forced a behaviour change, and it is the part to know
+about: the key path is now live at the `idle` stage, not only while the boot
+runs.** Copy that promises a skip has to be true where it is read. It routes
+through the same `skip()` the returning visitor's link already called, so the
+never-pressed case was an exercised path — `unlockAudio()` included, which a
+`keydown` satisfies as a user gesture just as a click does.
+
+Two exclusions the announcement makes necessary, both narrowing "any key":
+
+- **Enter and Space on a focused control are that control's.** The power
+  button is `autoFocus`ed — verified: it holds focus on load — so those keys
+  are how a keyboard visitor presses power. Reading them as "skip" would take
+  the opening away from the one visitor who asked to see it.
+- **F1–F12 belong to the browser.** The 3.3 checklist itself opens DevTools
+  on the entry frame, so F12 discarding the opening is a trap, not an intent.
+
+**The pointer half stays boot-only and stays unannounced.** Before the press
+the ring is the only thing in frame that answers a pointer, and a stray click
+on the backdrop costing the whole opening is a worse trade than the one §4.3
+asked for.
+
+Proved on the production export at 1440×900, headless: the hint renders; Tab,
+F12, F5, Shift, Enter-on-the-button, Space-on-the-button and a backdrop
+pointerdown each leave the entry standing; an ordinary key skips and lands
+the page at **y = 702 px** — `REST_POINTS[0] × 5850`, so `chapterZeroPx`
+resolved and the skip parks at chapter 0's rest rather than an uncomposed
+frame.
+
+**One thing to look at rather than fix blind:** a *returning* visitor now
+reads three lines — `press power`, `any key skips the intro`, and the older
+underlined `skip intro` link. The last two overlap. The link predates this
+change and was owner-approved long ago, so it was left alone; if the owner
+wants two lines instead of three, dropping the link is the smaller cut.
+
+### What 5.2 actually did — the tails move
+
+`builders/catIdle.ts` in the shape of `character/idle.ts`: allocated once,
+`update()` allocates nothing, ticked from a thin leaf
+(`builders/CatMotion.tsx`) rather than by giving the static `RoomScene` a
+frame loop. Rides `effectsState.idleDensity` at half rate, exactly as
+`Figure` does.
+
+**Why sines and not a scheduler.** 4.1's behaviour scheduler exists because
+an arm has to *commit* — it is at the keyboard or at the mug, and the states
+are exclusive. A resting tail has no states; it drifts. Summed incommensurate
+sines are the honest model, they cost no bookkeeping, and they cannot leave a
+tail parked somewhere odd if frames are dropped. **The ear flick is the one
+discrete beat, so it is the one thing with a seeded timer.**
+
+**Everything is written as rest + offset.** `buildCat` seeds each cat's hang
+and curl (measured: −0.542 vs −0.716 rad), so a driver writing absolute
+angles would have flattened the two cats into one pose. The second cat also
+runs every frequency at **0.847×** the first — not 0.5 or 0.75, because a
+simple ratio makes the two tails beat on a period you can see.
+
+**The file is `CatMotion.tsx`, not `CatIdle.tsx`, and has to be.** The
+driver's name is fixed by the plan, and `CatIdle.tsx` beside `catIdle.ts`
+differs only in casing: fine on Linux, ambiguous on Windows and macOS, and
+**tsc rejects it outright (TS1149)**. Worth remembering the next time a
+driver and its component want the same name.
+
+`cat.ts` changed only to **name the ears** (`catEar{n}{R,L}`), the same
+reason the tail pivots were named in 5.1 — the flick needs to find one ear,
+not guess at traversal order. No geometry moved.
+
+Measured offline against the real `buildCat` rig at a simulated 60 fps (ten
+minutes of ride for the speeds, an hour for the flicks):
+
+- **peak tip speed 27.5 mm/s**, peak tail yaw rate **5.1 °/s**, max offset
+  **12°** from rest — at the chapter-3 framing that is roughly 19 px/s;
+- the two tails: correlation **r = −0.137** over 120 s, and they swing
+  **opposite ways 52.8 %** of frames;
+- **no loop**: the closest the pose comes to repeating within 120 s is
+  **81.6 %** of the motion's own amplitude, at a lag of 83 s;
+- **133 / 135 flicks an hour**, gaps 14.0–39.6 s, never two ears at once on
+  one cat, and an ear returns to its authored angle **bit-exactly**;
+- half-rate ticking is **bit-identical** on the frames it runs — the proof
+  that shedding `idleDensity` skips the *call* and does not slow the *clock*,
+  so a shed room stays in phase with the figure in it;
+- nothing retained over 300 000 frames.
+
+**Wiring proved separately, on the production export:** the room mounts at
+chapter 3 logging `[room] ~4,348 tris` with **no `[cats]` error**, so
+`CatMotion`'s effect ran and found both tails, both tips and all four ears by
+name. **Whether the wag is slow enough is still owner-only** — 27.5 mm/s is a
+number, not a judgement, and headless renders this scene at 2–6 fps.
+
 ### What P7 actually did
 
 Gating logic in `ScrollHint.tsx` is **byte-for-byte unchanged** — it was never
@@ -526,13 +644,18 @@ dependency graph are in **plan-0010**. Not repeated here.
 
 The structural fact worth carrying: **three of the seven requests are one
 missing capability** — the arm rig. That is why P1 gates everything. **P1 is
-closed** (1.1 rig, 1.2 driver, gate 1.3 passed). **P2 is built** (2.1 the
-scroll span and the opening frame, 2.2 the hotspot, 2.3 the press) and
-**4.1 came in early**, out of plan order, because the owner's 1.3 note lands
-inside gate 2.4's twenty seconds. **P2 is closed** (gate 2.4 passed), **P4
-is complete** (4.1 scheduler, 4.2 the sip, 4.3 steam), **5.1 is done** and
-**3.2 is done**. What is left: **3.1**, then gate 3.3; **5.2**; and all of
-**P6**, which has never been touched.
+closed** (1.1 rig, 1.2 driver, gate 1.3 passed). **P2 is closed** (2.1 the
+scroll span and the opening frame, 2.2 the hotspot, 2.3 the press, gate 2.4
+passed) and **4.1 came in early**, out of plan order, because the owner's 1.3
+note lands inside gate 2.4's twenty seconds. **P3 is closed** (3.1 the face
+reveal, 3.2 the room wide, gate 3.3 passed). **P4 is complete** (4.1
+scheduler, 4.2 the sip, 4.3 steam). **P5 is complete** (5.1 the cat tree and
+the cats, 5.2 the tail wag).
+
+**What is left is P6 and P8.** P6 — the Gallery — has never been touched and
+is independent of everything else; 6.2 is a cheap owner gate that should be
+pulled forward because it gates the expensive 6.4. P8 is 8.1 (the dock
+regression sweep, the branch's biggest known risk) and 8.2 (close-out docs).
 
 ## Decisions already made — do not re-litigate
 
@@ -596,21 +719,30 @@ playing off-camera, and the missing boot-skip path) were **all put to the
 owner at 2.3 and all answered.** Built to the answers; see "The three calls
 the owner made at 2.3" above and ADR-013 §2a/§10a. Do not reopen them.
 
-**Gate 2.4 passed — but three questions inside it went unanswered.** The
-owner passed the opening as a whole, in the browser. These three were
-raised as part of that gate and were *not* answered individually, so they
-are open questions with a passing shot around them rather than settled
-calls. Raise them again only if something forces the issue; do not treat
-silence as approval, and do not treat the pass as approval of each number:
+**SETTLED BY GATE 3.3 — do not retune these without a fresh ask.** The three
+questions gate 2.4 left hanging were re-put at 3.3 §4 and answered
+individually this time, along with two more. Four of the five were "leave
+it", which turns them from "passing shot around an open number" into decided:
 
-- **The boot pan's two numbers are a shot.** Hold-on-the-LED and travel
-  time are fractions of the POST phase (~300 ms and ~1.2 s at the current
-  `bootScript`). Nothing offline can judge them; they survived the gate as
-  they stand.
-- **Should the boot skip announce itself?** Still a deliberately
-  undiscoverable escape hatch.
-- **Is 90 vh the right amount of camera move** (not scroll — the pan eats
-  chapter 0's span)?
+- **`PAN_HOLD_MS` and `PAN_DURATION_S`** (the boot pan's hold on the LED and
+  its travel to the glass) — *"the current config is good."* This closes the
+  thread 2.4 left open. The code comment calling them "the first thing to
+  retune at gate 2.4" is now stale; the numbers are chosen.
+- **Chapter 0's 90 vh of camera move** — *"its good."*
+- **The chapter-2 earbud leak mix.** 3.1 brought the camera to 0.98 m and the
+  falloff saturates at 1.0 m, so the leak plays at **full** at the ch-2 rest.
+  The owner heard it: *"the current config is good."* Closest approach =
+  loudest glimpse inside his head, as intended.
+- **The fidelity ladder's slow-hardware inversion** (70 s to the static-floor
+  offer at 20 fps but **113 s at 10 fps**, because grace counts frames):
+  *"leave it."* Frame-counted grace stays; the inversion is accepted.
+- **4.3, the announced boot skip** — the one answer that needed code. Built
+  this session; see above.
+
+Also settled earlier and still standing: `MAX_TILT`, `SIP_PITCH`, `SIP_YAW`
+(session 20), and the 4.3 steam's rise speed — which **the 3.3 gate ticked
+explicitly**, so it is no longer the open tuning question the last handoff
+listed it as.
 
 **CLOSED in session 20 — both 4.2 gaps.** The sip has now run in a browser
 and the owner called the tilt clamp and the head dip "perfect". `MAX_TILT`,
@@ -624,15 +756,29 @@ a hold time for the frame loop to consume, because `start` must be handed
 the same clock the ticks read. Dev only — behind a NODE_ENV literal, so it
 does not exist in a production build.
 
-**Left unreviewed from 4.3, not blocking:** the steam's **rise speed** is
-the constant most likely to want tuning (too fast reads as smoke off a fire
-rather than heat off coffee). The owner passed the effect without commenting
-on it either way.
+**CLOSED at gate 3.3 — the steam's rise speed.** The last handoff listed it
+as the constant most likely to want tuning. §3.2 of the checklist asked about
+it by name and the owner ticked it. Settled.
+
+**OPEN, and both are owner-eyes work rather than defects:**
+
+- **5.2's wag has never been seen.** "Is it slow enough" is the whole
+  acceptance criterion and the harness cannot answer it — 27.5 mm/s peak tip
+  speed is a number, not a judgement. If it wants changing, the levers are
+  the two amplitudes on `tail.rotation.y` in `catIdle.ts` (0.14 / 0.07) and
+  the tip's (0.15 / 0.08); the frequencies are what keep it from looping and
+  should be the last thing touched. The **ear flick** has also never been
+  seen, and at 14–40 s apart it needs a patient minute at chapter 3.
+- **4.3's announced skip has never been seen** — it landed after the owner's
+  ride, so the entry frame they passed is not quite the one that ships. One
+  muted line; wants a glance, not a sitting. The three-lines-for-returning-
+  visitors overlap noted above is the specific thing to look at.
 
 **New, from earlier in this branch:**
 
 - **Gate 6.2 should still be pulled forward** — it is cheap and it gates
-  expensive work (6.4, the Gallery app). Nothing blocks 6.1 today.
+  expensive work (6.4, the Gallery app). Nothing blocks 6.1 today, and with
+  P3 and P5 closed **P6 is the only package left with build work in it.**
 - **The dock is this branch's biggest regression risk, and 2.1 has now
   triggered it.** `RUNWAY_LENGTH_VH` is 660 → **750**, so `DockSwap`'s
   `ENGAGE_EPS` of 0.012 now covers **~70 px instead of ~60 px** at
@@ -715,6 +861,19 @@ Unchanged from session 13 except where ADR-013 amends them.
   nothing else will. `headOffset` in `idle.ts` is additive and `idle.ts`
   stays the **only** writer of `head.rotation`; **the setter owns the
   easing**, since nothing there smooths it.
+- **The cats (ADR-013 §8, slice 5.2):** `builders/catIdle.ts` is the driver and
+  `builders/CatMotion.tsx` is its only ticker — a leaf, so `RoomScene` keeps
+  its static memo and the tails ride the shed ladder without the room knowing
+  the ladder exists. Every write is **rest + offset**, because `buildCat`
+  seeds each cat's hang and curl; a driver writing absolute angles flattens
+  the two cats into one pose. The tails are **sines, not a scheduler** — a
+  resting tail has no states to commit to — and the ear flick is the only
+  discrete beat, so it is the only thing with a timer. `idleDensity` halves
+  the **call**, never the clock: the driver is a pure function of elapsed, so
+  a shed room stays in phase with the figure in it (proved bit-exactly).
+- **A driver and its component cannot share a name.** `CatIdle.tsx` beside
+  `catIdle.ts` differs only in casing — fine on Linux, ambiguous on Windows
+  and macOS, and tsc refuses it (TS1149). Hence `CatMotion.tsx`.
 - Lazy apps: `lazyApps.ts` → `registerNN.ts` chunks, each **verified split
   out of the initial bundle in `out/`**. The Gallery must clear the same bar.
 - Conventions: figure faces **-Z**; `DESK_TOP_Y` 0.72; tower power button at
@@ -787,6 +946,29 @@ Unchanged from session 13 except where ADR-013 amends them.
   cares about geometry. **Assemble the world from `RoomScene`'s placement
   literals, quoted not approximated** — the harness is only as honest as
   those.
+- **Measuring "slow" and "does it loop"** (5.2, `.catcheck/`, deleted after).
+  The wag's acceptance criteria look unmeasurable — *slow*, *out of phase*,
+  *no visible loop* — but three of the four are numbers once you pick the
+  right one. Build the real `buildCat` rig (materials `Proxy`, as 4.2 did),
+  parent a probe `Object3D` at the tail's far end, tick the real driver at a
+  simulated 60 fps and read: **peak tip speed in mm/s** through
+  `matrixWorld` (that is what the eye tracks, not radians), **Pearson r**
+  between the two tails plus the share of frames they move opposite ways, and
+  for the loop an **autocorrelation over lags 2–120 s** on the pose vector.
+  Two traps, both of which produced a wrong verdict first:
+  1. **Scale the autocorrelation by per-channel amplitude, not by the spread
+     of the flattened pose vector.** Each channel has its own rest angle and
+     Ivy's tail hangs 0.17 rad off Nimbus's, so a flat sd measures the spread
+     *between* channels, swamps the motion, and made a perfectly aperiodic
+     driver report an 18 % near-repeat. Per-channel it is 81.6 %.
+  2. **A tail returning to rest is not an ear flick** — the same shape of
+     mistake as 4.1's "a finger returning to rest is not a tap". Detect the
+     flick by an ear's offset from its *authored* angle, and assert the
+     return is bit-exact rather than close.
+  The half-rate claim is worth asserting directly too: run one driver at full
+  rate and a second at every other frame, and check the poses are
+  **bit-identical on the frames both ran**. That is what proves shedding
+  `idleDensity` skips the call rather than slowing the clock.
 - **Project the real geometry through a real camera** (3.2). "Legible at
   1920×1080" is a pixel measurement, so measure pixels: build the room,
   point a `PerspectiveCamera` with the journey's own fov (**50**, from
@@ -897,24 +1079,35 @@ Unchanged from session 13 except where ADR-013 amends them.
   correct, not a stray scrub, and a first-run session ends parked at
   **y = 702 px** at 1440×900 rather than at 0. Check
   `document.querySelector('.power-ring')` is gone before scrubbing further.
-- **Any key or click now skips the boot** (2.3). A QA script that presses a
-  key or clicks empty space during the boot will skip the intro instead of
-  doing nothing. Clicks on buttons and links are excluded, as are Tab and
-  the modifier keys.
+- **Any key skips the intro, and as of 4.3 that is true BEFORE the click
+  too.** A QA script that presses a key on the *entry frame* — not just during
+  the boot — now skips the opening instead of doing nothing, and lands the
+  page at `REST_POINTS[0]` (702 px at 1440×900). Excluded, and therefore safe
+  to send: **Tab**, the modifier keys, **F1–F12** (so DevTools and reload are
+  safe), and **Enter/Space while the power button holds focus** — which it
+  does on load, so those two press power rather than skipping. **Clicking
+  empty space still only skips during the boot**, never at idle.
+- **The entry frame has three lines of copy for a returning visitor** and two
+  for a first-timer: `press power`, `any key skips the intro` (4.3), and the
+  older underlined `skip intro` link. A script matching on entry text should
+  not assume one line.
 - Reset before any first-run test: `w98-intro-seen`, `w98-muted`,
   `w98-fidelity-floor`.
 
 ## Key References
 
 - **ADRs:** `docs/decisions/ADR-013-…md` (this branch — ten decisions, made
-  with the owner, don't re-litigate) · `ADR-012-…md` (the experience layer;
-  ADR-013 amends only its §5 chapter table and §2 rig).
+  with the owner, don't re-litigate; amendments so far are **§2a**, **§3a**
+  and **§10a**) · `ADR-012-…md` (the experience layer; ADR-013 amends only its
+  §5 chapter table and §2 rig).
 - **Plan:** `docs/plans/implementation-plan-0010.md` — 25 slices, dependency
   graph, per-slice acceptance criteria, risk table. **Owner-approved as
   written.** AFK gate is always lint + build green.
-- **The live gate:** `docs/qa/3.3-camera-ride-checklist.md` — written for the
-  owner at the end of session 20, and where gate 3.3's verdict and the five
-  open questions get answered. **Check it before planning anything.**
+- **The 3.3 gate record:** `docs/qa/3.3-camera-ride-checklist.md` — **filled
+  in and PASSED** (2026-07-30). Its §4 "Answers" block is the authoritative
+  transcription of the owner's five calls, and §7 carries the verdict and the
+  one thing the pass did not cover. **Read it before planning anything that
+  touches the opening or the camera.**
 - **Prior gate record:** `docs/qa/9.2-desktop-checklist.md`, especially §17
   (session-13 fixes), §17b (rewritten in session 15 — the P7 record and the
   SignOff-overlap thread) and §17d (what an agent could not verify).
@@ -924,27 +1117,30 @@ Unchanged from session 13 except where ADR-013 amends them.
 
 ## Recommended Next Steps
 
-- [ ] **GATE 3.3 is with the owner.** P3 is complete (3.1 and 3.2 both
-      landed), so the whole-ride camera gate is unblocked and is the next
-      thing that needs a human. **The checklist is written and committed:
-      `docs/qa/3.3-camera-ride-checklist.md`** — the owner runs it and fills
-      in the verdict; read that file first next session, it is where their
-      answers will be. It carries five open questions (§4) including the
-      earbud leak 3.1 saturated and the ladder's slow-hardware inversion.
-      **Do not re-ask those here; read their answers there.**
-- [ ] **Slice 5.2 — tail wag.** `builders/catIdle.ts` in the shape of
-      `idle.ts`, driven from a thin component rather than giving the whole
-      static `RoomScene` a frame loop. The pivots are already named and
-      waiting. The owner asked for **slow**; headless cannot judge that, so
-      it is owner-verified only.
-- [ ] **P6.1 (picture pipeline)** is the independent track and still
-      unblocks the cheap 6.2 owner gate. Nothing blocks it.
+- [x] ~~**GATE 3.3 is with the owner.**~~ **PASSED** (2026-07-30). Read
+      `docs/qa/3.3-camera-ride-checklist.md` for the record; the five §4
+      answers are transcribed there under "Answers". Four were "leave it" —
+      **do not reopen them**, and see "Settled by gate 3.3" above before
+      touching any number in the opening. The fifth (4.3) is built.
+- [x] ~~**Slice 5.2 — tail wag.**~~ **Done** this session. `catIdle.ts` plus
+      `CatMotion.tsx`; see "What 5.2 actually did". **Owner-unseen** — the
+      "is it slow enough" half is eyes-only.
+- [ ] **P6.1 (picture pipeline) is the work.** With P3 and P5 closed it is the
+      only package with build left in it, it is independent of everything, and
+      it unblocks the cheap 6.2 owner gate — which in turn gates the expensive
+      6.4 (the Gallery app). ADR-013 §9: downscaled copies ship into
+      `public/`, **never `assets-src/` itself**, and the chunk must split out
+      of the initial bundle in `out/` like every other lazy app.
 - [ ] **Spot-check the dock early**, ahead of 8.1. 2.1 lengthened the runway
-      and nothing has re-tested the latch since. See Unresolved Threads.
-- [ ] **Eyeball the sip once in `?scene=full`** — cheap, and it closes the
-      one thing 4.2's offline proof cannot cover (that the parts are mounted
-      and talking). Fold it into the next browser session rather than opening
-      one for it alone. See Unresolved Threads.
+      (660 → 750 vh) and **nothing has re-tested the latch since** — it is the
+      branch's biggest known regression risk, and gate 3.3 explicitly put it
+      out of scope. See Unresolved Threads.
+- [ ] **Fold three cheap owner glances into the next browser session** rather
+      than opening one for any of them alone: **5.2's wag** (is it slow
+      enough — the only acceptance criterion no harness can answer; the ear
+      flick wants a patient minute at chapter 3), **4.3's announced skip** on
+      the entry frame, and **the sip in `?scene=full`**. All three are "look
+      once", not sittings. See Unresolved Threads.
 
 ## Recommended Skills
 
@@ -955,11 +1151,13 @@ Unchanged from session 13 except where ADR-013 amends them.
   ride, timed 2.3's press to the frame, caught an inherited constant whose
   doc comment was wrong by 172 mm in 4.2, measured 4.3's ladder to the
   tenth of a second, and in 5.1 caught two cats outweighing the whole room.
-  **For 5.2 it is the wrong tool** — "is the wag slow enough" is owner's
-  eyes, and the handoff has said so since session 13. **For 3.1 the right
-  tool is 3.2's projection harness**, which can tell you whether the beard,
-  hoop and forearm are actually in frame at the ch-2 rest point before
-  anyone looks at it. See "Verification patterns".
+  **At 5.2 the earlier handoffs called it the wrong tool** — and they were
+  half right. "Is the wag slow enough" is still owner's eyes, but three of the
+  four acceptance criteria (out of phase, no loop, sheds with the figure)
+  turned out to be plain measurements, and the harness caught its own metric
+  being wrong before it could report a false verdict. **Reach for it even when
+  the criterion sounds subjective; scope it to the measurable part.** See
+  "Verification patterns".
 - `agent-browser` — isolated `--session` QA for anything visual, and the
   only way to prove *wiring* (that a driver is actually mounted and running
   in the app). Always `run_in_background` with an `EXIT=` sentinel. The

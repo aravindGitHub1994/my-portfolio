@@ -14,8 +14,9 @@
 // makes her recognisable rather than just "the grey one".
 //
 // The tail hangs off a named pivot per cat — `tail0` / `tail1` — with a
-// second `tailTip{n}` inside it. 5.2 rotates them on slow incommensurate
-// sines; nothing here animates.
+// second `tailTip{n}` inside it, and each ear is `catEar{n}{R,L}`. 5.2
+// (`catIdle.ts`) rotates them on slow incommensurate sines; nothing here
+// animates, and the rest angles below are what it treats as zero.
 
 import { CapsuleGeometry, ConeGeometry, Group, Mesh, SphereGeometry } from "three";
 import { mulberry32 } from "@/lib/prng";
@@ -94,8 +95,11 @@ export function buildCat({ seed, detail, materials, cat, index }: CatOptions): G
 
   // Ears. Cones rather than anything cleverer — at this size an ear is a
   // triangle, and a triangle is what a cone gives you from any angle.
+  // Named for the same reason the tail pivots are: 5.2's flick needs to find
+  // one ear, not guess at traversal order.
   for (const side of [1, -1]) {
     const ear = new Mesh(new ConeGeometry(HEAD_R * 0.36, HEAD_R * 0.62, 4), coat);
+    ear.name = `catEar${index}${side === 1 ? "R" : "L"}`;
     ear.position.set(
       side * HEAD_R * 0.56,
       headY + HEAD_R * 0.78,
