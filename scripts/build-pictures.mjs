@@ -97,35 +97,58 @@ const BUDGET = { minMb: 4, maxMb: 5 };
 // There are also two `hike-04` sources (`goa` and `himachal`). The full slug
 // keeps them distinct, so nothing collides; the duplicate number is the owner's
 // to rename at 6.2 if it bothers them.
+//
+// **GATE 6.2 (owner, 2026-07-30) CUT THE SET FROM 29 TO 23.** Six entries were
+// pulled — `cat-04-nimbus`, `ride-04-maharashtra`, `ride-05-hogenakkal`,
+// `ride-06-tamil-nadu`, `ride-10-west-coast`, `ride-13-kashmir` — and the
+// `hike-04` collision was resolved by renumbering **goa to `hike-05-goa`**.
+// The gate also corrected one place name: **`ride-07-pondicherry` → `ride-07-goa`**,
+// because the owner identified the photograph as a Goa run. So "goa" now appears
+// in two ids, one `hike` and one `ride`. Nothing collides — different prefixes,
+// and the grid is grouped, not sorted by raw id.
+// Two consequences worth knowing before anyone "restores" anything:
+//
+//   - **This supersedes ADR-013's "all 29 photographs ship."** That decision is
+//     recorded as settled in the ADR and in HANDOFF; the gate that was created
+//     to review it overruled it. Do not put the six back on the ADR's authority.
+//   - **The typo entry left with `ride-06`.** `ride-06-tamila nadu.jpg` was the
+//     one source whose filename needed fixing in the id, and it is no longer in
+//     the list — so is the "Shot on OnePlus / By Chisty" watermark that was
+//     burned into it. Nothing ships with a watermark now.
+//
+// The sources are untouched under `assets-src/`, so any pull is reversible by
+// putting its line back and re-running.
 const PHOTOS = [
-  // --- the cats (8) ---
+  // --- the cats (7; `cat-04-nimbus` pulled at 6.2) ---
   { id: "cat-01-nimbus", group: "cats", src: "assets-src/personal/cat-01-nimbus.jpg" },
   { id: "cat-02-nimbus", group: "cats", src: "assets-src/personal/cat-02-nimbus.jpg" },
   { id: "cat-03-nimbus", group: "cats", src: "assets-src/personal/cat-03-nimbus.jpg" },
-  { id: "cat-04-nimbus", group: "cats", src: "assets-src/personal/cat-04-nimbus.jpg" },
   { id: "cat-05-nimbus", group: "cats", src: "assets-src/personal/cat-05-nimbus.jpg" },
   { id: "cat-06-ivy", group: "cats", src: "assets-src/personal/cat-06-ivy.jpg" },
   { id: "cat-07-both", group: "cats", src: "assets-src/personal/cat-07-both.jpg" },
   { id: "cat-08-ivy", group: "cats", src: "assets-src/personal/cat-08-ivy.jpg" },
 
-  // --- rides and hikes (17) ---
+  // --- rides and hikes (12; 04, 05, 06, 10 and 13 pulled at 6.2). The ride
+  //     numbering now has four more gaps on top of the missing 08 — all of them
+  //     deliberate, all of them for the same reason: an id traces back to its
+  //     source file, so closing a gap would point every later number at a
+  //     different photograph. ---
   { id: "hike-01-kalga", group: "journey", src: "assets-src/journey/photos/hike-01-Kalga.jpg" },
   { id: "hike-02-kheerganga", group: "journey", src: "assets-src/journey/photos/hike-02-kheerganga.jpg" },
   { id: "hike-03-kashmir", group: "journey", src: "assets-src/journey/photos/hike-03-kashmir.jpg" },
-  { id: "hike-04-goa", group: "journey", src: "assets-src/journey/photos/hike-04-goa.jpg" },
   { id: "hike-04-himachal", group: "journey", src: "assets-src/journey/photos/hike-04-himachal.jpg" },
+  // 6.2 renumbered this one; the SOURCE filename still says 04, which is fine —
+  // ids are authored here, never derived from filenames.
+  { id: "hike-05-goa", group: "journey", src: "assets-src/journey/photos/hike-04-goa.jpg" },
   { id: "ride-01-kerala", group: "journey", src: "assets-src/journey/photos/ride-01-kerala.jpg" },
   { id: "ride-02-coorg", group: "journey", src: "assets-src/journey/photos/ride-02-coorg.jpg" },
   { id: "ride-03-ladakh", group: "journey", src: "assets-src/journey/photos/ride-03-ladakh.png" },
-  { id: "ride-04-maharashtra", group: "journey", src: "assets-src/journey/photos/ride-04-maharashtra.jpg" },
-  { id: "ride-05-hogenakkal", group: "journey", src: "assets-src/journey/photos/ride-05-hogenakkal.jpg" },
-  { id: "ride-06-tamil-nadu", group: "journey", src: "assets-src/journey/photos/ride-06-tamila nadu.jpg" },
-  { id: "ride-07-pondicherry", group: "journey", src: "assets-src/journey/photos/ride-07-pondicherry.jpg" },
+  // 6.2: the owner identified this as a Goa run, so the source filename's
+  // "pondicherry" is simply wrong. The id is authored, so it can be right.
+  { id: "ride-07-goa", group: "journey", src: "assets-src/journey/photos/ride-07-pondicherry.jpg" },
   { id: "ride-09-tso-moriri", group: "journey", src: "assets-src/journey/photos/ride-09-tso-moriri.png" },
-  { id: "ride-10-west-coast", group: "journey", src: "assets-src/journey/photos/ride-10-alongTheWestCoast.jpg" },
   { id: "ride-11-rann-of-kutch", group: "journey", src: "assets-src/journey/photos/ride-11-rannOfKutchh.png" },
   { id: "ride-12-hawa-mahal", group: "journey", src: "assets-src/journey/photos/ride-12-hawaMahalJaipur.png" },
-  { id: "ride-13-kashmir", group: "journey", src: "assets-src/journey/photos/ride-13-kashmir.png" },
 
   // --- the desk and the guitar (2) ---
   { id: "workspace-01", group: "desk", src: "assets-src/personal/workspace-01.png" },
