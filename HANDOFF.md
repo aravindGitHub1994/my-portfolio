@@ -1,20 +1,37 @@
-# HANDOFF — `scene-refinement` (2026-07-28, session 15 wrap)
+# HANDOFF — `scene-refinement` (2026-07-29, session 17 wrap)
 
 > For the next agent session. **ADR-012's plan is finished and merged.**
 > `redesign-attempt2` → `main` @ `dac6de4`; every gate (1.2, 2.3, 4.3, 9.2)
 > is owner-PASSED. The 9.2 record is `docs/qa/9.2-desktop-checklist.md`.
 >
-> **The branch compiles and two slices are landed.** Unlike the last
-> handoff, there is nothing broken on disk waiting to bite you.
+> **The branch compiles; P1 and P7 are built.** Nothing is broken on disk —
+> but slice 1.2 is **uncommitted** in the working tree. Read Current Status
+> before you touch anything.
 
 ## Current Status
 
-- Branch **`scene-refinement`**, cut from `main` @ `dac6de4`. Working tree
-  clean apart from untracked `assets-src/` (which stays untracked).
+- Branch **`scene-refinement`**, cut from `main` @ `dac6de4`.
 - **Plan-0010's breakdown is APPROVED by the owner as written** (session 15).
   Build to it — dependency graph, slice boundaries, acceptance criteria as
   committed. This unblocks everything past 1.1.
+- **Slices 1.2, 2.1 and 2.2 are written, verified and NOT COMMITTED.**
+  Session 17 left them in the working tree deliberately (the session was not
+  authorised to commit). Lint, `tsc` and `npm run build` are green across
+  all three. **Gate 1.3 PASSED**, so P1 is closed.
+  - 1.2 — `character/armPose.ts` (new), `character/buildBody.ts`,
+    `character/Figure.tsx`
+  - 2.1 — `src/lib/chapters.ts`, `choreography/cameraPath.ts`,
+    `builders/tower.ts`, `TitleBeats.tsx`, `src/lib/experienceState.ts`,
+    `choreography/Choreography.tsx`
+  - 2.2 — `choreography/PowerButtonAnchor.tsx` (new), `PowerOn.tsx`,
+    `WorkstationCanvas.tsx`, `src/app/globals.css`,
+    `src/lib/experienceState.ts`
+- Also uncommitted, from session 16 and **not this branch's work**:
+  `docs/qa/9.2-desktop-checklist.md` gained one line recording that the owner
+  confirmed the P7 scroll cue reads on the dev server. **P7 is owner-closed.**
+- Untracked `assets-src/` stays untracked.
 - Commits on the branch, newest first:
+  - `cd9abc5` — docs: session-16 handoff refresh
   - `7f1722c` — **P7 complete** (7.1 scroll-cue contrast + 7.2 QA-record fix)
   - `0784e3d` — **slice 1.1 complete** (two-bone arm rig)
   - `28410fc` — ADR-013 + plan-0010
@@ -44,6 +61,85 @@ console error, so the failure is loud instead of silently-correct-at-rest.
 (`fingers[i].position.y`, `hands[i].position.y`, `chest.rotation.x`) is
 local-space, so reparenting is transparent to them.
 
+### What 1.2 actually did
+
+`character/armPose.ts` — `createArmPose({shoulderR, shoulderL, elbowR,
+elbowL})` returns the callable driver plan-0010 §1.2 specifies, with
+`goTo(side, pose, holdS)` and `busy(side)` hung off it. Ease-in 0.55 s /
+hold / ease-out 0.7 s, smoothstep, `slerpQuaternions` between two fixed
+endpoints. `Figure.tsx` builds it, ticks it at full rate (a reach is not
+garnish, so it does **not** halve with `idleDensity`), and publishes
+`window.__armPose` in dev so 1.2's "call `goTo` from the console" acceptance
+is literally executable.
+
+Two things it does that the plan text does not say, both deliberate:
+
+- **The pose rotations are solved, not hand-typed.** Plan §1.2 says "authored
+  as constants… hand-tuned against the harness", but hand-tuning needs owner
+  eyes and this slice is AFK, so what is authored is the *world target* and a
+  closed-form two-bone solve turns it into the two quaternions **once, at
+  driver creation**. Runtime is still "two quaternions per arm, `slerp`ed" —
+  ADR-013 §1's "no IK solver" rejects a per-frame solve to preserve bone
+  length, and nothing per-frame solves anything. Effect: every reach lands on
+  its target to **0.00 mm** rather than to however patiently someone nudged.
+  If the owner wants the literal reading of the plan, the fix is to paste the
+  four solved quaternions in and delete `solveReach` — say so at 1.3.
+- **`armPoseState`** (`{R,L}: {pose, contact}`), the `typingState` pattern.
+  `contact` is true only during the hold, which is the window 2.3 needs to
+  land the button depress, the LED and the thunk on *contact* rather than on
+  click.
+
+`ArmPose` is the five names the plan specifies. Targets: `MOUSE_GRIP`,
+`MUG_GRIP`, `POWER_BUTTON`, `LEAN_REST_{R,L}` — all exported, because 2.2/2.3
+want `POWER_BUTTON` too.
+
+`buildBody.ts` changed only to stop the duplication that would have made the
+solve aim at numbers the mesh no longer used: the palm/finger offsets are
+hoisted into constants and an exported `armPointLocal(side, "palm" |
+"fingertips")` returns the elbow-local hand points. **Verified moving zero
+vertices** (below). `Figure.tsx` also now `console.error`s if the four pivots
+are missing, matching 1.1's loud-failure treatment of `elbowPivotL`.
+
+### What 2.1 and 2.2 actually did
+
+**2.1 — chapter 0 gains scroll span.** `chapters.ts`: `power-on` 0 → **90 vh**,
+so `RUNWAY_LENGTH_VH` is **750** and `REST_POINTS[0]` is **0.12**.
+`cameraPath.ts` gains a `p: 0` macro on the power button (camera
+`(0.03, 0.825, -0.375)`, ~171 mm out) and the old extreme-CRT-close-up moves
+verbatim to `REST_POINTS[0]`. `builders/tower.ts` now exports
+`POWER_BUTTON_LOCAL` and names the mesh `towerPower`; `cameraPath` derives
+`POWER_WORLD` from it rather than typing the coordinate a third time.
+
+**Two downstream things were NOT merely "derived and fine"** — the plan said
+verify rather than change, and verifying found them:
+
+- `TitleBeats` normalised progress as `scrollProgress / REST_POINTS[1]`,
+  which was only correct because `REST_POINTS[0]` was 0. Unfixed, the name
+  card fades in over the power-button macro. It now normalises across
+  chapter 1's own span.
+- `experienceState.chapterIndex` and `Choreography`'s cleanup both defaulted
+  to `1`. Progress 0 is genuinely inside chapter 0 now, so both are `0`.
+
+Everything else really is derived and was confirmed rather than touched:
+`REST_POINTS`, `DOCK_REST_INDEX`, `signOffStart`, the `lengthVh === 0` skip
+in `chapterAtProgress`, and `LEAK_CHAPTER = 2`.
+
+**2.2 — the power hotspot.** `choreography/PowerButtonAnchor.tsx` projects
+`POWER_WORLD` to normalized viewport coords into
+`experienceState.powerAnchor` each frame (one scratch `Vector3`, allocates
+nothing), mounted in the journey Canvas after `JourneyCamera` so it projects
+this frame's pose. `PowerOn.tsx` **drops the full-screen `bg-bg/95` scrim**
+— the shot is "a dark room and one glowing button", and the scrim was
+composition from when the film opened on the glass — and pins its `<button>`
+to the anchor with a rAF writing `transform` (the TitleBeats pattern, no
+React state in the frame path). The mark is a thin accent ring with a slow
+breathe, `.power-ring` in `globals.css`. Instruction copy and the
+returning-visitor skip stay parked at the bottom of the frame; letting text
+ride the projected anchor would jitter it against the scene.
+
+The button is still a DOM button for the reason ADR-013 §3 gives, and the
+press handler is **byte-identical** — `unlockAudio()` first, synchronously.
+
 ### What P7 actually did
 
 Gating logic in `ScrollHint.tsx` is **byte-for-byte unchanged** — it was never
@@ -63,7 +159,9 @@ dependency graph are in **plan-0010**. Not repeated here.
 
 The structural fact worth carrying: **three of the seven requests are one
 missing capability** — the arm rig. That is why P1 gates everything. **P1 is
-now half-done:** 1.1 (the rig) is in; 1.2 (the driver that moves it) is not.
+closed** (1.1 rig, 1.2 driver, gate 1.3 passed), and **P2 is two thirds
+built** (2.1 the scroll span and the opening frame, 2.2 the hotspot). What
+is left of the opening is 2.3, the press itself.
 
 ## Decisions already made — do not re-litigate
 
@@ -89,10 +187,43 @@ Resolved with the owner (ADR-013 records the reasoning):
 
 **Awaiting the owner, asked and not yet answered:**
 
-- **Start 1.2, or take gate 1.3 first?** The question was put at the end of
-  session 15 and the reply had not landed. 1.2 is AFK and provable offline, so
-  starting it is low-risk; but 1.3 exists precisely to catch "does the arm bend
-  like an arm" *before* four behaviours are built on the rig.
+- ~~Start 1.2, or take gate 1.3 first?~~ **Moot.** Plan-0010 blocks 1.3 on
+  1.2, so there was never an order to choose.
+- **GATE 1.3 PASSED** (owner, 2026-07-29). They drove all five poses from
+  the console in `?scene=full` — "all good". **P1 is closed; P2 and P4 are
+  open.** One note, not a defect in the rig: *the fingers keep tapping while
+  the hand is away from the keyboard.* That is precisely what `busy()`
+  exists for and it is slice **4.1**'s to wire — but it must land before
+  gate 2.4, because the power press shows the same thing in the first
+  twenty seconds.
+- **The three 1.3 questions the owner did not have to answer**, because the
+  poses read fine. Keep them: they are the constraints anything built on
+  the rig still has to respect.
+  1. **Three of the four reaches run at 94–96 % of full extension** (power
+     95.1 %, mouse 95.9 %, mug 94.3 %; `lean` is the relaxed one at 64 %).
+     The arm is nearly straight at the far end of every reach that matters.
+     That is what the desk layout costs: the shoulder is a fixed point —
+     `shoulderPivot` is a sibling of `chest`, not a child, so no torso lean
+     or twist moves it, and the rig is rotation-only by contract. If it
+     reads as a mannequin, the levers are (a) move the mug and the mouse a
+     few cm closer, (b) let the shoulder pivot *translate* a couple of cm
+     for far reaches, which is what a real scapula does but **is a change to
+     the "rotations only" contract and needs the owner's word**, or (c)
+     accept it. Don't pick one without asking.
+  2. **`lean` had to be authored above keycap height.** A move is one
+     `slerp` between two rotations, so there is no arc control: a hand
+     going from over the keycaps to anywhere *below* them sags through
+     them. A sweep of targets × swivels measured 6–16 mm of keycap
+     penetration for every desk-height hand rest tried, and 0 mm from where
+     `LEAN_REST_{R,L}` now sits — hands lifted and drawn back, not resting
+     on the desk. **Any pose added in 2.x or 4.x must clear world y 0.752
+     along its whole path**, or the driver needs a via-point it does not
+     have. This is the one place the envelope's simplicity shows.
+  3. **`MUG_GRIP` aims at the top-outside of the handle arc**, not the
+     ring's centre. Chasing the centre cost 2.6 cm of reach and dragged the
+     swing 9 mm through the desk top. 4.2 replaces this constant with the
+     live prop handle anyway (ADR-013 §6) — but it should replace it with
+     the same *point on* the mug, not with the mug's origin.
 - **The scroll cue now overlaps the SignOff card.** Newly *exposed* by P7, not
   caused by it: at p ≈ 0.94 the "Scroll" label sits ~30 px below the contact
   links and competes with them. The cue has always run to `END_P` (0.995) and
@@ -101,6 +232,21 @@ Resolved with the owner (ADR-013 records the reasoning):
   §10 explicitly puts out of scope for a contrast pass. Options recorded in
   checklist §17b: drop `END_P` below SignOff's start, or add a SignOff term to
   `wanted`. **Owner's call — do not just fix it.**
+
+**New, from 2.1 — put this to the owner at gate 2.4:**
+
+- **The POST plays where the visitor cannot see it.** ADR-013 §2 is explicit
+  that the boot never scrubs and chapter 0's span is scrolled only *after*
+  the desktop settles. Taken literally that means the camera holds the
+  power-button macro for the whole boot — and the CRT is out of frame there,
+  so the POST lines, the drive chatter listing and the Win98 splash all
+  happen off-camera. What the visitor gets is the LED, the sound, and the
+  screen's light washing the tower face. That may well be the better film
+  (a machine waking up in the dark, heard not read), but it was not an
+  explicit decision, and it throws away a beat P3 built. **Built as
+  specified; flag it at 2.4.** The alternatives if the owner wants the POST
+  seen: an auto-play camera move during boot (contradicts "chapter 0 never
+  scrubs during the boot"), or a shorter hold before scroll releases.
 
 **New, from this branch:**
 
@@ -160,10 +306,15 @@ Unchanged from session 13 except where ADR-013 amends them.
   point the ch-2 shot and the 6.2 earbud leak both measure against.
   `DockSwap`'s `docked` is released on undock intent, **never by a timer**.
   Chapter 4 is **not** a Lenis snap point — do not put it back.
-- **The arm rig (new, ADR-013 §1):** geometry under the pivots is authored in
+- **The arm rig (ADR-013 §1):** geometry under the pivots is authored in
   pivot-local space and bone lengths are fixed at build time. `armPose.ts`
-  (1.2) must move the figure by **rotating the four pivots only** — never by
-  rebuilding geometry and never by writing world positions.
+  moves the figure by **rotating the four pivots only** — never by rebuilding
+  geometry, never by writing world positions, and (a live question at gate
+  1.3) never by translating a pivot either. The pose quaternions are solved
+  at driver creation and are constants from then on; nothing in the frame
+  path solves anything. `armPointLocal` in `buildBody.ts` is the single
+  source of truth for where the hand's palm and fingertips are — the solve
+  and the mesh must never carry separate copies of those offsets.
 - Lazy apps: `lazyApps.ts` → `registerNN.ts` chunks, each **verified split
   out of the initial bundle in `out/`**. The Gallery must clear the same bar.
 - Conventions: figure faces **-Z**; `DESK_TOP_Y` 0.72; tower power button at
@@ -179,8 +330,25 @@ Unchanged from session 13 except where ADR-013 amends them.
 
 - **Pure-module + simulation** (`fidelity.ts`, `minesweeper.ts`): compile
   standalone with `npx tsc` to a scratch dir, play thousands of cases in node.
-  **`armPose.ts` is the next natural candidate** — pure maths over quaternions,
-  and the part a browser proves worst.
+  **This is how 1.2 was proved**, and it earned its keep — it found three real
+  defects a browser would not have shown: a `for…of` over a two-element array
+  literal allocating on every frame of the ride, the mug reach dragging 9 mm
+  through the desk top, and `lean` sagging 15 mm through the keycaps. The
+  harness (`check.ts` + its tsconfig) is in this session's scratchpad; it
+  builds the real body with `buildBody`, drives the real `createArmPose` at a
+  simulated 60 fps, and asserts, in one run:
+  1. **rest geometry byte-identical to `HEAD`** (the 1.1 property, re-proved
+     after the hand-offset hoist) — 4866 vertices at high, 2102 at low;
+  2. every reach lands within 2 mm of its target (all landed at 0.00 mm);
+  3. ten round trips leave the four pivots at **exact** identity;
+  4. the elbow, palm and fingertips clear the desk slab, tower, CRT bezel,
+     keyboard and speaker at every frame of every path;
+  5. `heapUsed` across 108 000 interpolating frames, `global.gc()` on both
+     sides. **Measure retained bytes, not `heapUsed` deltas** — an unforced
+     reading showed "+2.9 MB" that was uncollected garbage, and the real
+     figure does not scale with frame count (27 k frames → 18 KB, 432 k
+     frames → 1.5 KB, i.e. noise).
+  Same three Windows/ESM traps as the session-15 recipe below.
 - **Headless geometry diffing — new in session 15, and how 1.1's "visually
   identical to `main`" criterion was actually met.** The builders are pure, so
   both versions can be assembled in node and compared *numerically* instead of
@@ -242,8 +410,15 @@ Unchanged from session 13 except where ADR-013 amends them.
   5040 px, so `p ≈ y / 5040`. **Jumping past chapter 4 engages the dock**
   (`docked: true`, progress clamps to the dock rest); wheel a few notches to
   undock before continuing.
-- The entry control is an **unlabeled 96×96 `<button>` at viewport centre** —
-  find it by size, not by text.
+- The entry control is an **unlabeled 96×96 `<button>`** — find it by size,
+  not by text. **As of 2.2 it is no longer at viewport centre**: it pins
+  itself over the projected 3D power button, which at 1440×900 lands at
+  ≈ (695, 519). Read `window.__experienceState.powerAnchor` (`{x, y}`,
+  fractions of the viewport) rather than assuming a position.
+- **The container around it is `pointer-events-none`** with
+  `pointer-events-auto` on the button itself. A programmatic `.click()`
+  ignores that, so it is not evidence a real pointer lands — hit-test with
+  `document.elementFromPoint(x, y)` and check it resolves to the button.
 - The full journey needs the power button *clicked* and ~15 s of boot before
   stepping moves progress. **This changes in slice 2.3** — update the QA
   scripts when it does.
@@ -267,14 +442,21 @@ Unchanged from session 13 except where ADR-013 amends them.
 
 ## Recommended Next Steps
 
-- [ ] **Ask the owner: 1.2 now, or gate 1.3 first?** (see Unresolved Threads).
-      Don't build 2.x or 4.x behaviours until 1.3 has passed either way.
-- [ ] **Slice 1.2 — `character/armPose.ts`.** Shaped like `idle.ts`/`typing.ts`:
-      allocated once, `update()` allocates nothing; quaternion `slerp` with an
-      ease-in / hold / ease-out envelope; `goTo(side, pose, holdS)` and
-      `busy(side)` so `typing.ts` can suspend taps on the working arm only.
-      Prove the maths offline first (see the geometry-diffing recipe above)
-      before spending a slow headless session on it.
+- [ ] **Commit 1.2, 2.1 and 2.2** — all three are verified and green but
+      sitting in one working tree. They are three separate slices and want
+      three commits; the file sets barely overlap (`Figure.tsx` is 1.2's
+      alone), so `git add` by path splits them cleanly. Don't rebuild any of
+      them; read them.
+- [ ] **Slice 4.1, and do it before 2.3.** Plan-0010 puts 4.1 after P2, but
+      the owner's 1.3 note — *the fingers keep typing while the hand is
+      away* — lands in the first twenty seconds once the arm reaches for the
+      power button, and gate 2.4 is exactly those twenty seconds. `busy()`
+      already exists for this; `typing.ts` just has to consult it.
+- [ ] **Slice 2.3 — the press.** Everything it needs is in place:
+      `armPose.goTo("R", "power")`, `armPoseState.R.contact` for the timing,
+      the `towerPower` mesh to depress, and `POWER_BUTTON_LOCAL` for the new
+      emissive LED beside it. Note the existing LED is on the **CRT**
+      (`builders/crt.ts:57`, `materials.metal`) and has never lit.
 - [ ] **Raise the SignOff/scroll-cue overlap with the owner** and act on their
       answer — it is a one-line change either way, but it is a gate change.
 - [ ] **P6.1 (picture pipeline)** is still the other independent track and
