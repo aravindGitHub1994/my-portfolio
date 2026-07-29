@@ -68,9 +68,30 @@ const KEYS: CameraKey[] = [
     target: new Vector3(SCREEN_WORLD.x, SCREEN_WORLD.y - 0.02, SCREEN_WORLD.z),
   },
   {
-    // Ch. 2 rest: orbit to the figure's profile (earbud/beard/forearm).
+    // Ch. 2 rest: the face reveal (3.1, ADR-013 §4).
+    //
+    // Was (-1.25, 1.14, 0.2) — a hair PAST profile, about 102° off the
+    // figure's own facing axis, so the shot was mostly the back of a head.
+    // This is a true three-quarter: 40° off that axis, 0.95 m out, and
+    // 0.22 m above the head looking down. **No head geometry changed** —
+    // `buildHead.ts` still has no eyes and no mouth by decision, and the
+    // reveal is done by moving the camera into the light the CRT was
+    // already throwing (ADR-012 §2, ADR-013 §4).
+    //
+    // **The height is forced, not a taste call.** The figure sits at a desk
+    // with a monitor directly in front of it, so there is no room for a
+    // frontal camera at head height — every candidate below ~0.2 m of lift
+    // either ends up inside the CRT or drags the CRT into frame, and the
+    // plan wants it keying from OFF screen. Coming over the top is the only
+    // frontal angle this desk allows. It also happens to be why the
+    // tattooed right forearm still reads: from up here the camera sees
+    // clean over the torso to the far arm, which a profile at head height
+    // does not (verified by raycast, not by projection).
+    //
+    // The +X side — the tattoo's own side — was swept too and yields
+    // nothing: from there the CRT sits directly behind the head.
     p: REST_POINTS[2],
-    position: new Vector3(-1.25, 1.14, 0.2),
+    position: new Vector3(-0.61, 1.44, -0.79),
     target: head,
   },
   {
