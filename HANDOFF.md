@@ -5,9 +5,15 @@
 > is owner-PASSED. The 9.2 record is `docs/qa/9.2-desktop-checklist.md`.
 >
 > **Everything is committed and green.** Working tree clean apart from
-> untracked `assets-src/`. **P1, P2 and P7 are closed, 4.1 and 4.2 are
-> built, and gate 2.4 is owner-PASSED.** Nothing is blocking: the next
-> agent can start on 4.3, 3.1, 5.1 or 6.1 without waiting for anyone.
+> untracked `assets-src/`. **P1, P2, P4, P5.1, P7 and 3.2 are done and gate
+> 2.4 is owner-PASSED.** Nothing is blocking. The remaining AFK work is
+> **3.1**, **5.2** and **P6**; after 3.1 the branch is ready for gate 3.3.
+>
+> **Session 20 was owner-attended** — 4.3, 5.1 and 3.2 were each looked at
+> in the browser and approved, and the 4.2 threads the last handoff left
+> open (the sip's tilt clamp and head dip) were confirmed "perfect". That
+> is unusual for this branch; most of what is recorded here was verified
+> offline. Say which is which when you report.
 
 ## Current Status
 
@@ -24,7 +30,11 @@
 - **Working tree is clean.** Everything below is committed; lint, `tsc` and
   `npm run build` are green at HEAD. Untracked `assets-src/` stays untracked.
 - Commits on the branch, newest first:
-  - `358e2bd` — docs (this handoff, gate 2.4 + the 4.2 wrap)
+  - `fc8a413` — **slice 3.2** (chapter 3 reframed onto the window wall)
+  - `612371b` — **slice 5.1** (cat tree, Nimbus and Ivy)
+  - `a98f694` — **slice 4.3** (mug steam; the ladder is ten rungs)
+  - `5deadce` — docs (handoff refresh)
+  - `358e2bd` — docs (gate 2.4 + the 4.2 wrap)
   - `16199d1` — **slice 4.2** (prop handle, the sip, the head tilt)
   - `657f22c` — docs (ADR-013 §2a and §10a)
   - `edab2bc` — **the three owner calls on 2.3** (boot pan, cue/SignOff
@@ -411,6 +421,87 @@ this has 54 lifts. The seeded draw order is untouched — the mug beat is
 simply ~2.3 s longer now, so the schedule after it shifts. Compare the
 draw order, not the count.
 
+### What 4.3, 5.1 and 3.2 actually did — session 20
+
+**4.3 — mug steam, and the tenth rung.** `scene/Steam.tsx`, on
+`Atmosphere`'s dust pattern. **The emitter follows the mug; the steam does
+not** — wisps are born on the coffee surface through the mug's world matrix
+(so they come off the liquid even at 28° of tilt) and from then on live in
+world space and rise, which is why a lift leaves a trail rather than
+dragging a rope. **Per-particle fade is done with vertex colours**: a
+`PointsMaterial` has one opacity for the whole cloud, but under additive
+blending a colour multiplied toward black IS a fade, so no custom shader.
+Peak sits under Bloom's 0.68 threshold on purpose — steam that blooms reads
+as smoke — and additive geometry adds no light, so the brightness contract
+is untouched.
+
+**`frustumCulled={false}` on that `Points` is load-bearing.** three computes
+a geometry's bounding sphere once, lazily, from whatever is in the position
+buffer at that moment — and this one is all zeros at first render, because
+a wisp cannot be placed until there is a mug to place it on. Result: a
+zero-radius sphere at the world origin, and the whole cloud culled the
+instant the middle of the room left the frustum. **The symptom was steam
+vanishing as you zoomed IN and returning when you zoomed out**, reported by
+the owner. `Atmosphere`'s dust escapes this only by accident — it seeds real
+positions in its memo.
+
+`sheddable.ts` gains `steam` immediately before `idleDensity`; **`LADDER` is
+now ten rungs**. Not folded into `dust`, which sheds at rung 2 (ADR-013 §7).
+
+**The §11c number, measured:** at a pinned 20 fps the static-floor offer
+arrives at **70.0 s**, up from 63.75 s at nine rungs. ADR-013 §7 estimated
+~69 s. **And a finding that sharpens §11c rather than settling it: the offer
+arrives LATER on slower hardware** — 113 s at 10 fps, 170 s at 27 fps. Grace
+is counted in FRAMES by deliberate design, so the device most in need of the
+static floor waits longest for it. That inversion is an owner call.
+
+**5.1 — the cat tree, Nimbus and Ivy.** Navy fleece platforms on a
+sisal-wrapped post against the +X wall, three of them staggered so it reads
+as a climb. Ivy on the perch, Nimbus a platform down, both facing the glass.
+Coats matched to the untracked reference photographs: Nimbus is the ginger
+with a cream muzzle; Ivy is a dilute calico — grey body, cream underside,
+ginger patch over one side of her face — and a fifth larger, which is most
+of what separates them in silhouette before any colour reads.
+
+**Placement is derived.** The window's sill numbers were locals inside
+`buildRoom` and are now an exported `WINDOW`, because the tree stands
+*against* the sill. The standoff is computed from whichever platform reaches
+furthest toward the wall, so editing the platform table cannot push a disc
+through the ledge. Moving the window moves the tree.
+
+**The room's real triangle budget is much smaller than the handoff implied.**
+The 56.6 k figure recorded in session 11 is room PLUS character; the room
+alone is **4,632** at high. The first cut of the cats came in at 10,836 —
+two background animals outweighing the desk, CRT, tower, chair and keyboard
+together by more than two to one. Coarsened to **4,800**, no change to the
+silhouette. `[room] ~N tris` is now **4,632 → 9,432** at high (ceiling
+150 k), 2,896 → 4,348 at low. **A harness counting triangles must weight
+`InstancedMesh` by `count` the way `RoomScene` does** — counting instances
+once undercounts the keyboard by two orders of magnitude.
+
+Tails hang off `tail0` / `tail1`, each with a `tailTip{n}` inside, so 5.2
+has fixed names and a second joint to curve with.
+
+**3.2 — chapter 3 onto the window wall.** The establishing wide was at
+(1.35, 1.85, 1.55): the +X side, the same wall as the window, looking away
+from it, with the glass, the shafts, the tree and both cats behind the
+camera. It is now front-left at **(-1.45, 1.95, 1.7)**, which gets the desk's
+back wall and the +X window into one frame.
+
+**The ch2→3 arc changed with it and had to.** Its mid key existed to swing
+around the figure, because ch. 3 used to finish on the far side of the room
+and a straight lerp from the ch-2 profile cut through the hair. Both ends are
+now at x ≈ -1.4, so there is no crossing left; the arc is a gentle outward
+bow instead, closest approach 1.26 m against a 0.55 m keep-out. **Keep both
+keys on the same side of the figure or the hair problem returns.**
+
+Measured by projecting the real geometry through a real `PerspectiveCamera`
+at fov 50 and 1920×1080 rather than reasoning about angles: Ivy 174×132 px,
+Nimbus 141×115 px, both fully inside frame; the figure 1.3 % off centre; the
+cats 16.7 % off centre to the right; CRT, window, shafts and dust all in
+frame. That distribution is the "reads as the room, not the cats" criterion
+made checkable — but it is a proxy, and the judgement was the owner's.
+
 ### What P7 actually did
 
 Gating logic in `ScrollHint.tsx` is **byte-for-byte unchanged** — it was never
@@ -433,9 +524,10 @@ missing capability** — the arm rig. That is why P1 gates everything. **P1 is
 closed** (1.1 rig, 1.2 driver, gate 1.3 passed). **P2 is built** (2.1 the
 scroll span and the opening frame, 2.2 the hotspot, 2.3 the press) and
 **4.1 came in early**, out of plan order, because the owner's 1.3 note lands
-inside gate 2.4's twenty seconds. **P2 is now closed too** — gate 2.4 passed
-— and 4.2 followed 4.1, so P4 is two-thirds built and only 4.3 (steam)
-remains. **P3 and P5 have not been started at all.**
+inside gate 2.4's twenty seconds. **P2 is closed** (gate 2.4 passed), **P4
+is complete** (4.1 scheduler, 4.2 the sip, 4.3 steam), **5.1 is done** and
+**3.2 is done**. What is left: **3.1**, then gate 3.3; **5.2**; and all of
+**P6**, which has never been touched.
 
 ## Decisions already made — do not re-litigate
 
@@ -515,26 +607,22 @@ silence as approval, and do not treat the pass as approval of each number:
 - **Is 90 vh the right amount of camera move** (not scroll — the pan eats
   chapter 0's span)?
 
-**New, from 4.2 — two gaps, both deliberate, neither blocking:**
+**CLOSED in session 20 — both 4.2 gaps.** The sip has now run in a browser
+and the owner called the tilt clamp and the head dip "perfect". `MAX_TILT`,
+`SIP_PITCH` and `SIP_YAW` are **settled numbers**, not placeholders — do not
+retune them without a fresh ask.
 
-- **The sip has never run in a browser.** Session 19 opened none: the
-  sequence, the carry, the clearances and the teardown paths were all proved
-  offline against the real modules, which is stronger than a 2–6 fps
-  headless render for everything *except the one thing a pure harness cannot
-  see* — that the parts are actually mounted and talking. `Figure` creating
-  the sip and `RoomScene` publishing the handle are wiring, and wiring is
-  exactly what 2.3 needed a browser for. **The cheap probe, mirroring 2.3's:
-  in `?scene=full`, `window.__armPose.goTo('L','mug',…)` moves the arm, but
-  only the scheduler starts a real sip — so watch for the mug leaving the
-  desk, or expose the driver if you want it on demand.** Behaviours are on
-  an 11–30 s seeded gap, so budget a minute of watching.
-- **Nobody has seen the sip.** The shot is composed to numbers — rim 24.8 mm
-  from the lips, 28° of tilt — and those numbers are defensible, but whether
-  it *reads* as drinking is an owner judgement that no gate currently asks
-  for. Plan-0010 has no HITL between 4.2 and gate 3.3. **The two things most
-  likely to want retuning are the tilt clamp (`MAX_TILT`) and the head dip
-  (`SIP_PITCH`/`SIP_YAW`)**, both single constants in `mugSip.ts`. Worth
-  folding into whatever the owner watches next rather than raising alone.
+`window.__sipNow(holdS?)` was added for that review and is worth keeping in
+mind: the scheduler starts a sip on an 11–30 s seeded gap with a 3-in-10
+weight, so waiting for one in a harness is a poor use of a session. It parks
+a hold time for the frame loop to consume, because `start` must be handed
+the same clock the ticks read. Dev only — behind a NODE_ENV literal, so it
+does not exist in a production build.
+
+**Left unreviewed from 4.3, not blocking:** the steam's **rise speed** is
+the constant most likely to want tuning (too fast reads as smoke off a fire
+rather than heat off coffee). The owner passed the effect without commenting
+on it either way.
 
 **New, from earlier in this branch:**
 
@@ -546,10 +634,8 @@ silence as approval, and do not treat the pass as approval of each number:
   1440×900 — and the dock is precisely what the owner signed off in
   session 13. **Not yet re-tested at all.** Slice 8.1 re-runs checklist
   §4/§17a in full; do not leave it to the end if anything feels off sooner.
-- Steam adds a **tenth rung** to the fidelity ladder, pushing the
-  static-floor offer from ~64 s to roughly ~69 s at a pinned 20 fps. Slice
-  4.3 measures the real number. Folding steam into the existing `dust` flag
-  was considered and rejected — `dust` sheds at rung 2.
+- ~~Steam adds a tenth rung…~~ **Done and measured at 4.3: 70.0 s, and it
+  is slower on slower hardware.** See "What 4.3, 5.1 and 3.2 actually did".
 
 **Carried forward from 9.2, still open, none blocking:**
 
@@ -628,6 +714,17 @@ Unchanged from session 13 except where ADR-013 amends them.
   out of the initial bundle in `out/`**. The Gallery must clear the same bar.
 - Conventions: figure faces **-Z**; `DESK_TOP_Y` 0.72; tower power button at
   world `(-0.05, 0.777, -0.518)`; `assets-src/` stays untracked and unshipped.
+- **The room's own triangle budget is small — 4,632 at high before the cats,
+  9,432 after.** The 56.6 k recorded in session 11 is room *plus* character
+  (the figure is ~52 k). Judge a new prop against the room's number, not the
+  scene's: the first cut of two cats came in at 10,836 and outweighed every
+  other object in the room put together. The 2.1 ceiling is 150 k.
+- **A CPU-driven `Points` cloud whose particles are placed at runtime needs
+  `frustumCulled={false}`.** three computes the bounding sphere once and
+  lazily, so a buffer that is still zeroed at first render yields a
+  zero-radius sphere at the world origin and the object vanishes whenever
+  the origin leaves frame. `Atmosphere` avoids this only because it seeds
+  real positions in its memo; `Steam` cannot, because it has no mug yet.
 - The painter mirrors the Win98 CSS tokens as canvas constants. **Change one,
   change both.**
 - **The static floor's cue is a separate instance** (`acts/Hero.tsx`,
@@ -685,6 +782,19 @@ Unchanged from session 13 except where ADR-013 amends them.
   cares about geometry. **Assemble the world from `RoomScene`'s placement
   literals, quoted not approximated** — the harness is only as honest as
   those.
+- **Project the real geometry through a real camera** (3.2). "Legible at
+  1920×1080" is a pixel measurement, so measure pixels: build the room,
+  point a `PerspectiveCamera` with the journey's own fov (**50**, from
+  `WorkstationCanvas.tsx`) at `sampleCameraPath(REST_POINTS[n], …)`, and
+  project each object's bounding-box corners. That turns "is the shot
+  right" into numbers — subject sizes in px, how far off centre each thing
+  sits — and catches a frame composed away from its subject, which is
+  exactly what 3.2 was fixing. **Reject any corner with view-space z > 0
+  rather than projecting it**: a point behind the lens projects to a
+  mirrored position on screen and silently reports as "in frame". Sample
+  the arc between two rest points densely and check the camera against a
+  keep-out cylinder round the figure, which is the checkable form of "does
+  not cut through the hair".
 - **Headless geometry diffing — new in session 15, and how 1.1's "visually
   identical to `main`" criterion was actually met.** The builders are pure, so
   both versions can be assembled in node and compared *numerically* instead of
@@ -806,15 +916,19 @@ Unchanged from session 13 except where ADR-013 amends them.
 
 ## Recommended Next Steps
 
-- [ ] **Slice 4.3 — mug steam.** Now unblocked: the handle exists and the
-      mug moves, and 4.3's first acceptance criterion is that steam follows
-      it through a sip. It reads the same `propHandles.mug`. Note the
-      criterion that costs real work is the **tenth ladder rung's measured
-      timing** at a pinned 20 fps, for the owner's §11c call.
+- [ ] **Slice 3.1 — chapter 2 face reveal.** The last thing between here and
+      gate 3.3, since 2.4 and 3.2 are both done. Extend ch. 2's orbit past
+      profile to a three-quarter front angle, CRT-key-lit, eye zone in
+      shadow. **No head geometry is added** — that is a settled owner
+      decision, not a shortcut. Watch the brightness contract and keep
+      `HEAD_FOCUS` the single head point.
+- [ ] **Slice 5.2 — tail wag.** `builders/catIdle.ts` in the shape of
+      `idle.ts`, driven from a thin component rather than giving the whole
+      static `RoomScene` a frame loop. The pivots are already named and
+      waiting. The owner asked for **slow**; headless cannot judge that, so
+      it is owner-verified only.
 - [ ] **P6.1 (picture pipeline)** is the independent track and still
       unblocks the cheap 6.2 owner gate. Nothing blocks it.
-- [ ] **Slice 3.1 (chapter 2 face reveal)** and **5.1 (cat tree + cats)**
-      are both unblocked and both AFK. 5.1 gates 3.2, which gates 3.3.
 - [ ] **Spot-check the dock early**, ahead of 8.1. 2.1 lengthened the runway
       and nothing has re-tested the latch since. See Unresolved Threads.
 - [ ] **Eyeball the sip once in `?scene=full`** — cheap, and it closes the
@@ -828,13 +942,14 @@ Unchanged from session 13 except where ADR-013 amends them.
   Five sessions running now: it proved 1.1's "identical to `main`", found
   three real defects in 1.2, caught two wrong "derived and fine" claims in
   2.1, replaced 4.1's three-minute observation with an hour of simulated
-  ride, timed 2.3's press to the frame, and in 4.2 caught an inherited
-  constant whose doc comment was wrong by 172 mm. **The next natural
-  candidate is 4.3's steam** — a seeded particle system with a shed flag is
-  pure by construction, and the acceptance criterion that costs real work
-  (when the static-floor offer arrives at a pinned 20 fps, now that the
-  ladder has ten rungs) is a simulation question, not a browser one.
-  See "Verification patterns" for the recipe and the two traps.
+  ride, timed 2.3's press to the frame, caught an inherited constant whose
+  doc comment was wrong by 172 mm in 4.2, measured 4.3's ladder to the
+  tenth of a second, and in 5.1 caught two cats outweighing the whole room.
+  **For 5.2 it is the wrong tool** — "is the wag slow enough" is owner's
+  eyes, and the handoff has said so since session 13. **For 3.1 the right
+  tool is 3.2's projection harness**, which can tell you whether the beard,
+  hoop and forearm are actually in frame at the ch-2 rest point before
+  anyone looks at it. See "Verification patterns".
 - `agent-browser` — isolated `--session` QA for anything visual, and the
   only way to prove *wiring* (that a driver is actually mounted and running
   in the app). Always `run_in_background` with an `EXIT=` sentinel. The
