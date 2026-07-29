@@ -157,6 +157,39 @@ click would mean lowering it again afterwards and fighting the scroll model for 
 rest of the ride. Keeping the affordance in the DOM also keeps its accessible name,
 its focus ring, and its keyboard activation for free.
 
+#### 3a. Amended (gate 3.3, session 21): the skip announces itself
+
+The any-key/any-click boot skip shipped at 2.3 as a deliberately *undiscoverable*
+escape hatch — the reasoning being that "press any key to skip" laid over "a dark
+room and one glowing button" would undo the composition §3 had just bought. That
+left the discoverability half unresolved through two gates (2.4 and 3.3 §4.3).
+
+**The owner answered it at gate 3.3: announce it, on the entry frame.** So the copy
+sits under `press power` at the bottom of the shot — muted and lower-case, the way
+out rather than the invitation — and there is still **nothing over the boot**, which
+is what the original objection was actually about. The POST and the splash play
+uncovered.
+
+That placement has one consequence worth stating, because it is a behaviour change
+and not just copy: **the key path is now live at the `idle` stage as well**, not only
+while the boot runs. Copy that promises a skip has to be true where it is read. It
+routes through the same `skip()` the returning visitor's link calls, so the
+never-pressed case was already an exercised path — including `unlockAudio()`, which
+a `keydown` satisfies as a user gesture just as a click does.
+
+Two exclusions the announcement makes necessary, both narrowing "any key":
+
+- **Enter and Space on a focused control are that control's.** The power button is
+  `autoFocus`ed, so those keys are how a keyboard visitor presses power; reading them
+  as "skip" would take the opening away from the one visitor who asked to see it.
+- **F1–F12 belong to the browser.** The 3.3 checklist itself opens DevTools on the
+  entry frame, so F12 discarding the opening is a trap rather than an intent.
+
+**The pointer half stays boot-only and stays unannounced.** Before the press the ring
+is the only thing in the frame that answers a pointer, and a stray click on the
+backdrop costing the whole opening would be a worse trade than the one §4.3 asked
+for.
+
 ### 4. The face is revealed by lighting, not by geometry
 
 Chapter 2's orbit continues past profile to a **three-quarter front angle, key-lit by

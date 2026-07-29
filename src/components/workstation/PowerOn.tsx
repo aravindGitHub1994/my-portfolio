@@ -5,7 +5,8 @@
 // Pressing it is the visitor's one deliberate gesture — it unlocks audio
 // (6.1) and starts the boot sequencer. Scroll stays parked (Lenis stopped)
 // until the desktop settles; the boot auto-plays and never scrubs.
-// Returning visitors (localStorage) get a skip affordance.
+// Returning visitors (localStorage) get a skip affordance, and as of gate
+// 3.3 §4.3 every visitor is *told* that any key skips the intro.
 //
 // The affordance is a DOM `<button>` pinned over the projected 3D button
 // rather than a raycast on the mesh: `unlockAudio()` has to run
@@ -224,10 +225,19 @@ export function PowerOn() {
   // Any key or click skips the boot (owner's call, session 18 — plan-0010
   // §2.3 lists the path but it had never existed; the only skip was the
   // returning visitor's link, and that is disabled the moment the overlay
-  // fades). Deliberately an undiscoverable escape hatch: the shot is "a
-  // dark room and one glowing button", and putting "press any key" over it
-  // for the whole boot would undo what 2.2 just bought. **Whether it should
-  // announce itself is a gate-2.4 question.**
+  // fades).
+  //
+  // **It no longer hides.** Gate 3.3 §4.3 asked whether the hatch should
+  // announce itself and the owner said yes, on the entry frame — so the
+  // copy is at the bottom of the shot below, and *not* over the boot, where
+  // a line of text would sit on top of the POST and the splash for fifteen
+  // seconds and undo what 2.2 bought.
+  //
+  // Announcing it there is what forces the key path to be live at `idle`
+  // too: copy that promises a skip has to be true where it is read. So the
+  // keys are armed from the moment the entry mounts, and the same `skip()`
+  // the returning visitor's link calls does the work — a first-time key
+  // skip is the never-pressed path that link already exercised.
   const skipRef = useRef<() => void>(() => {});
   // Assigned in an effect, not during render — `skip` closes over this
   // render's `stage`, and the compiler rules forbid mutating during render.
@@ -235,14 +245,35 @@ export function PowerOn() {
     skipRef.current = skip;
   });
   useEffect(() => {
-    if (stage !== "booting") return;
+    if (stage === "done") return;
     const onKey = (e: KeyboardEvent) => {
       // Modifiers and Tab are navigation, not intent — skipping on Tab
       // would punish the keyboard visitor for orienting themselves.
       if (e.key === "Tab" || e.altKey || e.ctrlKey || e.metaKey) return;
       if (["Shift", "Control", "Alt", "Meta"].includes(e.key)) return;
+      // F1–F12 belong to the browser. Cheap to exclude, and it saves the
+      // reviewer from their own gate: the 3.3 checklist opens DevTools on
+      // the entry frame, and F12 throwing the opening away is a trap.
+      if (/^F\d{1,2}$/.test(e.key)) return;
+      // Enter and Space on a focused control are that control's. The power
+      // button is `autoFocus`ed, so those two keys are how a keyboard
+      // visitor presses power — reading them as "skip" would take the
+      // opening away from the one person who asked to see it.
+      const target = e.target as Element | null;
+      if ((e.key === "Enter" || e.key === " ") && target?.closest("button, a"))
+        return;
       skipRef.current();
     };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [stage]);
+  // The pointer half stays boot-only, and stays unannounced. Before the
+  // press the frame is "a dark room and one glowing button" and the ring is
+  // the only thing in it that answers a pointer; a stray click on the
+  // backdrop losing the whole opening would be a worse trade than the one
+  // §4.3 asked for. Only the announced key path is live at `idle`.
+  useEffect(() => {
+    if (stage !== "booting") return;
     const onPointer = (e: PointerEvent) => {
       // The mute toggle is reachable throughout the boot by design; a
       // click on it is that control's, not a skip.
@@ -250,12 +281,8 @@ export function PowerOn() {
       if (target?.closest("button, a, [role='button']")) return;
       skipRef.current();
     };
-    window.addEventListener("keydown", onKey);
     window.addEventListener("pointerdown", onPointer);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("pointerdown", onPointer);
-    };
+    return () => window.removeEventListener("pointerdown", onPointer);
   }, [stage]);
 
   if (stage === "done") return null;
@@ -291,9 +318,20 @@ export function PowerOn() {
           bottom of the frame: they are page furniture, and letting them
           ride the projected anchor would jitter text against the scene. */}
       <div className="absolute inset-x-0 bottom-[12vh] flex flex-col items-center gap-3">
-        <p className="font-mono text-xs tracking-widest text-ink uppercase [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
-          press power
-        </p>
+        {/* The instruction and its escape hatch are one block, tighter than
+            the gap to the returning visitor's link: one thing to do, one
+            way out of it. */}
+        <div className="flex flex-col items-center gap-1.5">
+          <p className="font-mono text-xs tracking-widest text-ink uppercase [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
+            press power
+          </p>
+          {/* Gate 3.3 §4.3 — the owner's call: the skip announces itself,
+              here on the entry frame rather than over the boot. Muted and
+              lower-case so it reads as the way out, not as the invitation. */}
+          <p className="font-mono text-xs text-ink-muted [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
+            any key skips the intro
+          </p>
+        </div>
         {returning && (
           <button
             type="button"
