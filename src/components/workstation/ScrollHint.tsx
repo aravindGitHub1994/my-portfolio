@@ -27,6 +27,7 @@ import { useEffect, useRef, useState } from "react";
 import { experienceState } from "@/lib/experienceState";
 import { win98State } from "@/lib/win98State";
 import { coarsePointer } from "@/lib/shellLayout";
+import { SIGNOFF_START_P } from "./SignOff";
 
 /** Progress movement below this reads as "stopped" — smaller than a
  *  single wheel notch, larger than Lenis' settle jitter. */
@@ -36,8 +37,16 @@ const STALL_MS = 2000;
 /** …and at the journey's start, where the visitor has just watched a
  *  machine boot and has been given nothing to do next. */
 const START_STALL_MS = 900;
-/** Progress past which the ride is over and SignOff owns the frame. */
-const END_P = 0.995;
+/** Progress past which the ride is over and SignOff owns the frame.
+ *
+ *  Was 0.995 — effectively "the very end" — which put the cue's label ~30 px
+ *  under the contact links for the last stretch of chapter 5. That overlap
+ *  predates P7 by a long way; making the cue visible is simply what
+ *  revealed it. The owner's call (session 18) was to stop the cue where the
+ *  card starts rather than give the cue a SignOff term, so this is
+ *  SignOff's own derived start: by the time the contact card is fading in
+ *  there is nothing further to scroll to and the instruction is spent. */
+const END_P = SIGNOFF_START_P;
 /** Opacity fade, ms — slow enough that the cue never pops into a shot. */
 const FADE_MS = 450;
 
