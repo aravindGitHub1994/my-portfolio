@@ -16,6 +16,13 @@ export const effectsState = {
   /** 6.2 tier-2 texture sounds — clacks, drive chatter, fan bed
    *  (audio "texture" bus). Tier-1 cues are never sheddable. */
   audioTexture: true,
+  /** Mug steam (4.3). Sheds late, immediately before `idleDensity` —
+   *  **deliberately not folded into `dust`**, which would have kept the
+   *  ladder at nine rungs and cost nothing to build. `dust` sheds at rung
+   *  2; steam is a hero detail the owner asked for by name and is what
+   *  makes the desk read as occupied rather than staged, so losing it
+   *  second would be shedding the wrong thing cheaply (ADR-013 §7). */
+  steam: true,
   /** Full-rate idle animation (off = the figure's breath/sway/blink driver
    *  runs at half rate). Last visual rung before the resolution knobs —
    *  a stiller figure is the first thing that reads as "the scene broke",
@@ -34,6 +41,7 @@ export const SHED_ORDER = [
   "audioTexture",
   "castFlicker",
   "bloomRich",
+  "steam",
   "idleDensity",
 ] as const;
 

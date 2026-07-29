@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { Group, InstancedMesh, Mesh } from "three";
 import { Lighting } from "../scene/Lighting";
 import { Atmosphere } from "../scene/Atmosphere";
+import { Steam } from "../scene/Steam";
 import { Postprocessing } from "../scene/postprocessing";
 import { CrtScreen } from "../crt/CrtScreen";
 import { TowerPower } from "./TowerPower";
@@ -120,6 +121,11 @@ export function RoomScene({
     <>
       <Lighting screenPosition={[-0.22, TOWER_TOP + 0.19, -0.5]} />
       <Atmosphere detail={detail} />
+      {/* 4.3: steam off the mug. Reads `propHandles.mug` lazily each frame,
+          so it does not care that the publish happens in an effect below —
+          and it emits in world space, so the wisps stay put when the sip
+          carries the mug away. */}
+      <Steam detail={detail} />
       <Postprocessing />
       {/* 3.1: real Win98 feed on the crtScreen mesh (painter + CRT
           shader + screenLight); replaced the 2.2 ScreenTestPattern. */}

@@ -44,6 +44,11 @@ export function Figure({
   const typing = useRef<TypingUpdate | null>(null);
   const armPose = useRef<ArmPoseDriver | null>(null);
   const sip = useRef<MugSip | null>(null);
+  /** Dev-only: a hold time parked here by `window.__sipNow()`, consumed on
+   *  the next frame. It cannot be started straight from the console —
+   *  `start` has to be handed the same clock the ticks read, and only the
+   *  frame loop has it. */
+  const sipRequest = useRef(0);
 
   const figure = useMemo(() => {
     // Fallback clay (only used if a palette slot is missing).
@@ -171,6 +176,11 @@ export function Figure({
     // what makes that sentence executable.
     if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
       window.__armPose = armPose.current ?? undefined;
+      // The scheduler starts a sip on an 11–30 s seeded gap, which is a
+      // long time to sit in front of a harness waiting to look at one.
+      window.__sipNow = (holdS = 2.5) => {
+        sipRequest.current = holdS;
+      };
     }
 
     // Poly budget (1.1 acceptance: recorded, target < 60 k) — instances
@@ -199,6 +209,7 @@ export function Figure({
       armPoseRef.current = null;
       if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
         window.__armPose = undefined;
+        window.__sipNow = undefined;
       }
       root.traverse((obj) => {
         if (obj instanceof Mesh) obj.geometry.dispose();
@@ -234,6 +245,15 @@ export function Figure({
     // poses and its taps consult `busy()`, so it wants this frame's pose
     // state rather than the previous frame's.
     armPose.current?.(clock.elapsedTime, delta);
+    // Dev-only sip trigger. The whole branch is behind a NODE_ENV literal
+    // so it is eliminated from the production bundle rather than costing a
+    // comparison per frame forever.
+    if (process.env.NODE_ENV !== "production") {
+      if (sipRequest.current > 0 && sip.current && !armPose.current?.busy("L")) {
+        sip.current.start(clock.elapsedTime, sipRequest.current);
+        sipRequest.current = 0;
+      }
+    }
     typing.current?.(clock.elapsedTime);
   });
 
@@ -243,5 +263,7 @@ export function Figure({
 declare global {
   interface Window {
     __armPose?: ArmPoseDriver;
+    /** Start a mug sip on the next frame (dev only). */
+    __sipNow?: (holdS?: number) => void;
   }
 }
