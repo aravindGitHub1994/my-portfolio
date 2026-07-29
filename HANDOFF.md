@@ -14,6 +14,11 @@
 > open (the sip's tilt clamp and head dip) were confirmed "perfect". That
 > is unusual for this branch; most of what is recorded here was verified
 > offline. Say which is which when you report.
+>
+> **The one thing waiting on a human is gate 3.3**, and its checklist is
+> already written: **`docs/qa/3.3-camera-ride-checklist.md`**. Read that
+> file before anything else — the owner is filling it in, and §4 holds five
+> open questions whose answers land there rather than in this file.
 
 ## Current Status
 
@@ -907,6 +912,9 @@ Unchanged from session 13 except where ADR-013 amends them.
 - **Plan:** `docs/plans/implementation-plan-0010.md` — 25 slices, dependency
   graph, per-slice acceptance criteria, risk table. **Owner-approved as
   written.** AFK gate is always lint + build green.
+- **The live gate:** `docs/qa/3.3-camera-ride-checklist.md` — written for the
+  owner at the end of session 20, and where gate 3.3's verdict and the five
+  open questions get answered. **Check it before planning anything.**
 - **Prior gate record:** `docs/qa/9.2-desktop-checklist.md`, especially §17
   (session-13 fixes), §17b (rewritten in session 15 — the P7 record and the
   SignOff-overlap thread) and §17d (what an agent could not verify).
@@ -916,12 +924,14 @@ Unchanged from session 13 except where ADR-013 amends them.
 
 ## Recommended Next Steps
 
-- [ ] **Slice 3.1 — chapter 2 face reveal.** The last thing between here and
-      gate 3.3, since 2.4 and 3.2 are both done. Extend ch. 2's orbit past
-      profile to a three-quarter front angle, CRT-key-lit, eye zone in
-      shadow. **No head geometry is added** — that is a settled owner
-      decision, not a shortcut. Watch the brightness contract and keep
-      `HEAD_FOCUS` the single head point.
+- [ ] **GATE 3.3 is with the owner.** P3 is complete (3.1 and 3.2 both
+      landed), so the whole-ride camera gate is unblocked and is the next
+      thing that needs a human. **The checklist is written and committed:
+      `docs/qa/3.3-camera-ride-checklist.md`** — the owner runs it and fills
+      in the verdict; read that file first next session, it is where their
+      answers will be. It carries five open questions (§4) including the
+      earbud leak 3.1 saturated and the ladder's slow-hardware inversion.
+      **Do not re-ask those here; read their answers there.**
 - [ ] **Slice 5.2 — tail wag.** `builders/catIdle.ts` in the shape of
       `idle.ts`, driven from a thin component rather than giving the whole
       static `RoomScene` a frame loop. The pivots are already named and
