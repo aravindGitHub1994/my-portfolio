@@ -127,8 +127,12 @@ const POSES: Record<
 
 // --- Envelope ---------------------------------------------------------
 
-const EASE_IN_S = 0.55;
-const EASE_OUT_S = 0.7;
+/** Exported so the behaviour scheduler (4.1) can run the chest's lean over
+ *  exactly the same envelope as the arms'. Two hand-matched constants would
+ *  drift the moment either was retuned, and a torso arriving before its
+ *  arms is the kind of wrongness you feel without being able to name. */
+export const EASE_IN_S = 0.55;
+export const EASE_OUT_S = 0.7;
 /** Never straighten the elbow past this angle between the bones. A locked
  *  elbow reads as a mannequin (which is exactly what gate 1.3 is watching
  *  for), so a target beyond reach is approached to here and no further. */

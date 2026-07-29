@@ -109,7 +109,25 @@ export function Figure({
       idle.current = createIdle({ chest, head, eyelids }, seed);
     }
 
-    // Typing rig: the eight named fingers + both hands + the chest.
+    // Arm-pose driver (1.2): owns the four rig pivots 1.1 introduced. The
+    // pivots are required, not optional — without them the power press,
+    // the mouse reach and the mug sip all fail together, so a missing one
+    // is worth the same loud failure `elbowPivotL` already gets. Built
+    // before the typing rig, which needs it: 4.1's scheduler drives poses
+    // and its taps consult `busy()`.
+    const shoulderR = root.getObjectByName("shoulderPivotR");
+    const shoulderL = root.getObjectByName("shoulderPivotL");
+    const elbowR = root.getObjectByName("elbowPivotR");
+    const elbowL = root.getObjectByName("elbowPivotL");
+    if (shoulderR && shoulderL && elbowR && elbowL) {
+      armPose.current = createArmPose({ shoulderR, shoulderL, elbowR, elbowL });
+    } else {
+      console.error("[character] arm rig pivots missing — poses disabled");
+    }
+
+    // Typing rig: the eight named fingers + both hands + the chest. The
+    // finger ORDER is load-bearing — 4.1 maps indices 0–3 to the right arm
+    // and 4–7 to the left to suspend taps per arm.
     const fingers: Object3D[] = [];
     for (const side of ["R", "L"]) {
       for (let f = 0; f < 4; f++) {
@@ -121,23 +139,9 @@ export function Figure({
     const handL = root.getObjectByName("handL");
     if (chest && fingers.length === 8 && handR && handL) {
       typing.current = createTyping(
-        { fingers, hands: [handR, handL], chest },
+        { fingers, hands: [handR, handL], chest, armPose: armPose.current },
         seed,
       );
-    }
-
-    // Arm-pose driver (1.2): owns the four rig pivots 1.1 introduced. The
-    // pivots are required, not optional — without them the power press,
-    // the mouse reach and the mug sip all fail together, so a missing one
-    // is worth the same loud failure `elbowPivotL` already gets.
-    const shoulderR = root.getObjectByName("shoulderPivotR");
-    const shoulderL = root.getObjectByName("shoulderPivotL");
-    const elbowR = root.getObjectByName("elbowPivotR");
-    const elbowL = root.getObjectByName("elbowPivotL");
-    if (shoulderR && shoulderL && elbowR && elbowL) {
-      armPose.current = createArmPose({ shoulderR, shoulderL, elbowR, elbowL });
-    } else {
-      console.error("[character] arm rig pivots missing — poses disabled");
     }
 
     // Dev-only QA handle, the `__fidelity` pattern: 1.2's acceptance is
@@ -195,11 +199,15 @@ export function Figure({
     if (effectsState.idleDensity || oddFrame.current) {
       idle.current?.(clock.elapsedTime, delta);
     }
-    typing.current?.(clock.elapsedTime);
     // Poses run at full rate even when idle density is shed: a reach is a
     // deliberate movement the visitor is watching, not garnish, and
     // halving its rate would read as a dropped frame rather than as calm.
+    //
+    // Ahead of the typing rig, not after it: the rig's scheduler starts
+    // poses and its taps consult `busy()`, so it wants this frame's pose
+    // state rather than the previous frame's.
     armPose.current?.(clock.elapsedTime, delta);
+    typing.current?.(clock.elapsedTime);
   });
 
   return <primitive object={figure.root} />;
