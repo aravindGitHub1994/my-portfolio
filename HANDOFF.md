@@ -1,13 +1,13 @@
-# HANDOFF — `scene-refinement` (2026-07-29, session 18 wrap)
+# HANDOFF — `scene-refinement` (2026-07-29, session 19 wrap)
 
 > For the next agent session. **ADR-012's plan is finished and merged.**
 > `redesign-attempt2` → `main` @ `dac6de4`; every gate (1.2, 2.3, 4.3, 9.2)
 > is owner-PASSED. The 9.2 record is `docs/qa/9.2-desktop-checklist.md`.
 >
 > **Everything is committed and green.** Working tree clean apart from
-> untracked `assets-src/`. **P1, P2 and 4.1 are built and P7 is closed.**
-> The next thing that needs a human is **gate 2.4** — the first twenty
-> seconds, which nothing on this branch can self-certify.
+> untracked `assets-src/`. **P1, P2 and P7 are closed, 4.1 and 4.2 are
+> built, and gate 2.4 is owner-PASSED.** Nothing is blocking: the next
+> agent can start on 4.3, 3.1, 5.1 or 6.1 without waiting for anyone.
 
 ## Current Status
 
@@ -17,9 +17,14 @@
   committed. This unblocks everything past 1.1.
 - **Gate 1.3 PASSED** (owner, 2026-07-29) — P1 is closed. **P7 is
   owner-closed** (confirmed on the dev server; recorded in checklist §17b).
+- **Gate 2.4 PASSED** (owner, 2026-07-29, checked in the browser) — P2 is
+  closed. **Read the caveat under "Unresolved Threads": the gate was passed
+  as a whole, and the three specific questions this branch raised inside it
+  were not answered one by one.** Do not treat them as decided.
 - **Working tree is clean.** Everything below is committed; lint, `tsc` and
   `npm run build` are green at HEAD. Untracked `assets-src/` stays untracked.
 - Commits on the branch, newest first:
+  - `<this session>` — **slice 4.2** (prop handle, the sip, the head tilt)
   - `edab2bc` — **the three owner calls on 2.3** (boot pan, cue/SignOff
     gate, boot skip)
   - `d075597` — **slice 2.3** (the press)
@@ -321,6 +326,87 @@ long. That is ~3.7 minutes, longer than the observation window, and the
 holds and gaps differ throughout even where the sequence matches — so
 there is no visible cycle, only an unavoidable alphabet.
 
+### What 4.2 actually did — the mug is drunk from
+
+`scene/propHandles.ts` is the noticeboard ADR-013 §6 asks for. `RoomScene`
+publishes the mug `Group` and retracts on unmount; **`RoomScene` imports
+nothing from `character/`**, which is the acceptance criterion and the
+reason `?scene=room` is still a set that does not need a person in it.
+
+`character/mugSip.ts` is the sequence, the carry and the head tilt. Four
+legs — handle, mouth, handle, home — each its own `goTo`, advanced on the
+driver's `contact` report rather than a private timer (2.3's rule: the beat
+belongs to where the hand is, not to a clock beside it). `armPose.ts` gains
+**`HOLD_UNTIL_RELEASED`** (Infinity, so the `t >= holdS` test needs no new
+branch) because an arm that fell home between legs would set the mug down
+halfway through drinking from it. Whoever passes it owns bringing the arm
+back.
+
+**Three decisions worth not re-litigating:**
+
+1. **The mug is driven, never re-parented.** `attach()` is one line and is
+   wrong: it moves *ownership*, and `Figure` and `RoomScene` each dispose
+   their subtree by traversing their own root. A `detail` change mid-sip —
+   **which the fidelity ladder can trigger by itself** — would then dispose
+   the mug's geometry twice or never, depending on which tree it was in.
+   Driving the transform leaves the mug a child of the room for its whole
+   life, so no unmount order can go wrong. Drift is impossible by
+   construction rather than by care: the carry never integrates, and the
+   set-down copies back the exact TRS captured at the pick-up.
+2. **The tilt clamp is the wrist the rig does not have.** A mug welded to
+   the hand is tipped by however far the forearm swung. Measured across
+   every reachable target × the full ±1.6 rad of swivel: **59–136°**, with
+   59° the flattest the rig can reach — the mug arrives at the mouth
+   pouring and the coffee disc pokes out through the wall. So the prop
+   holds the last few degrees: past 28° the carry gives way, below it stays
+   **exactly rigid**, which means it does nothing at all at the grab and
+   the set-down. It costs a handle that turns slightly in the fingers at
+   the top of the lift. **Do not "fix" the tilt by moving `SIP_GRIP` — it
+   is not reachable from there.**
+3. **`MUG_GRIP` is still an authored constant, not derived from the live
+   handle.** The previous handoff expected 4.2 to replace it. It should
+   not: poses are solved **once, at driver creation** (ADR-013 §1), and
+   deriving the grip from a `Group` that mounts on its own schedule would
+   make the solve depend on mount order and re-run per room mount. The mug
+   never moves at rest, so the constant is exact. The handle earns its keep
+   by moving the mug, which is the thing a constant genuinely cannot do.
+
+**`SIP_GRIP` was solved, and the inherited one was wrong.** The working
+tree carried an unverified `SIP_GRIP` from an interrupted session whose
+doc comment asserted "rim 24 mm from the mouth, 34° tilt". Measured, that
+constant put the rim **196 mm** from the mouth at **68.6°** and dipped
+1.8 mm through the desk. The replacement comes from a sweep of 3 366
+fingertip targets × 17 swivels scored by where the **mug** ends up, not the
+hand: rim **24.8 mm** from the lips, **54.5 mm** clear of the skull,
+**305 mm** clear of the keyboard. Two things that sweep settled —
+**the lips are the front face of `buildBeard`'s mustache box** (aiming at
+the head's centre drives the rim 22 mm into the beard), and the swivel is
+nonzero here alone because the sip is the only pose whose *hand
+orientation* matters.
+
+`idle.ts` gains `headOffset` (additive pitch + yaw). The sip states an
+offset and the sway adds it, so `head.rotation` keeps exactly one writer.
+**The setter owns the easing** — nothing in `idle.ts` smooths it.
+
+Verified offline against the real modules at a simulated 60 fps, 22
+assertions, all passing: ten sips leave the mug **bit-identical** (max
+component drift 0) and the four pivots at exact identity; rim 24.7 mm at
+the hold; nothing enters the desk, the head or the keyboard; the carried
+legs never dip below the resting hand, so **gate 1.3's no-arc constraint
+holds without a via-point**; no snap into or out of the tilt (max
+0.0038 rad/frame) and the offset lands on exactly zero; the sequence still
+completes with **no mug published** and the arm still comes home exactly;
+the room unmounting mid-sip orphans the mug without further writes and
+leaves a replacement alone; `release()` from `Figure`'s cleanup restores it
+exactly; a simulated hour through the real scheduler gives **54 sips**,
+zero taps with both hands away, and the mug home at the end; 0.38 B/frame
+retained over 10 599 frames.
+
+**One number moved by design:** 4.1's ride had 48 mug behaviours an hour,
+this has 54 lifts. The seeded draw order is untouched — the mug beat is
+simply ~2.3 s longer now, so the schedule after it shifts. Compare the
+draw order, not the count.
+
 ### What P7 actually did
 
 Gating logic in `ScrollHint.tsx` is **byte-for-byte unchanged** — it was never
@@ -342,9 +428,9 @@ The structural fact worth carrying: **three of the seven requests are one
 missing capability** — the arm rig. That is why P1 gates everything. **P1 is
 closed** (1.1 rig, 1.2 driver, gate 1.3 passed). **P2 is built** (2.1 the
 scroll span and the opening frame, 2.2 the hotspot, 2.3 the press) and
-**4.1 is in early**, out of plan order, because the owner's 1.3 note lands
-inside gate 2.4's twenty seconds. The opening is now watchable end to end,
-which is exactly what 2.4 is for.
+**4.1 came in early**, out of plan order, because the owner's 1.3 note lands
+inside gate 2.4's twenty seconds. **Gate 2.4 has since passed**, and 4.2
+followed 4.1, so P4 is two-thirds built and only 4.3 (steam) remains.
 
 ## Decisions already made — do not re-litigate
 
@@ -397,26 +483,32 @@ fine. **Keep them: they bind anything built on the rig from here.**
      have. This is the one place the envelope's simplicity shows.
   3. **`MUG_GRIP` aims at the top-outside of the handle arc**, not the
      ring's centre. Chasing the centre cost 2.6 cm of reach and dragged the
-     swing 9 mm through the desk top. 4.2 replaces this constant with the
-     live prop handle anyway (ADR-013 §6) — but it should replace it with
-     the same *point on* the mug, not with the mug's origin.
-**Awaiting the owner — the only blocking item is gate 2.4.**
+     swing 9 mm through the desk top. **4.2 deliberately kept it a
+     constant** rather than deriving it from the live handle — see "What 4.2
+     actually did", decision 3.
 
-The three threads that were parked here (the SignOff/cue overlap, the
-POST playing off-camera, and the missing boot-skip path) were **all put to
-the owner at 2.3 and all answered.** Built to the answers; see "The three
-calls the owner made at 2.3" above and ADR-013 §2a/§10a. Do not reopen
-them.
+**Nothing is blocking. No item is awaiting the owner.**
 
-Two follow-ups the answers created, both for **gate 2.4**, both cheap:
+The three threads parked here before (the SignOff/cue overlap, the POST
+playing off-camera, and the missing boot-skip path) were **all put to the
+owner at 2.3 and all answered.** Built to the answers; see "The three calls
+the owner made at 2.3" above and ADR-013 §2a/§10a. Do not reopen them.
+
+**Gate 2.4 passed — but three questions inside it went unanswered.** The
+owner passed the opening as a whole, in the browser. These three were
+raised as part of that gate and were *not* answered individually, so they
+are open questions with a passing shot around them rather than settled
+calls. Raise them again only if something forces the issue; do not treat
+silence as approval, and do not treat the pass as approval of each number:
 
 - **The boot pan's two numbers are a shot.** Hold-on-the-LED and travel
-  time are expressed as fractions of the POST phase (~300 ms and ~1.2 s at
-  the current `bootScript`). Nothing offline can judge them. They are the
-  first thing to retune when the owner watches the opening.
-- **Should the boot skip announce itself?** The owner picked "any key or
-  click skips" without resolving discoverability, and it is currently a
-  hidden escape hatch on purpose. Ask at 2.4.
+  time are fractions of the POST phase (~300 ms and ~1.2 s at the current
+  `bootScript`). Nothing offline can judge them; they survived the gate as
+  they stand.
+- **Should the boot skip announce itself?** Still a deliberately
+  undiscoverable escape hatch.
+- **Is 90 vh the right amount of camera move** (not scroll — the pan eats
+  chapter 0's span)?
 
 **New, from this branch:**
 
@@ -495,6 +587,17 @@ Unchanged from session 13 except where ADR-013 amends them.
   do not give the LED its own timeline. `materials.led` is one instance
   shared by `towerLed` and `crtLed` and is **emissive only**: it adds no
   light, which is why it does not touch the brightness contract.
+- **Props and the sip (ADR-013 §6, slice 4.2):** `scene/propHandles.ts` is a
+  noticeboard, not a scene — **type-only three import**, and the dependency
+  is one-way: the room publishes, the character consumes. **`RoomScene` must
+  never import from `character/`.** A carried prop is **driven, never
+  re-parented**, so ownership never changes hands and no unmount order can
+  dispose it twice or never; putting it down restores the exact TRS captured
+  at the pick-up, so drift is impossible rather than merely unlikely.
+  `HOLD_UNTIL_RELEASED` means **the caller owns bringing the arm home** —
+  nothing else will. `headOffset` in `idle.ts` is additive and `idle.ts`
+  stays the **only** writer of `head.rotation`; **the setter owns the
+  easing**, since nothing there smooths it.
 - Lazy apps: `lazyApps.ts` → `registerNN.ts` chunks, each **verified split
   out of the initial bundle in `out/`**. The Gallery must clear the same bar.
 - Conventions: figure faces **-Z**; `DESK_TOP_Y` 0.72; tower power button at
@@ -529,6 +632,21 @@ Unchanged from session 13 except where ADR-013 amends them.
      figure does not scale with frame count (27 k frames → 18 KB, 432 k
      frames → 1.5 KB, i.e. noise).
   Same three Windows/ESM traps as the session-15 recipe below.
+- **Sweeping a constant that is baked at driver creation** (4.2). `SIP_GRIP`
+  is an exported `Vector3` and `POSES` holds a *reference* to it, so a sweep
+  can `SIP_GRIP.set(...)` and re-call `createArmPose` to drive the **real**
+  solve — no recompile, thousands of candidates in one process. The elbow
+  swivel is a private const and cannot be reached that way; there, rewrite
+  the literal in the **compiled** `dist/src/armPose.js` and re-spawn node,
+  which is far cheaper than a tsc per candidate. **Score by where the prop
+  ends up, not where the hand does** — the hand landing perfectly is the
+  easy half, and it was a 196 mm rim error that the hand-only reading hid.
+  Two modelling traps that cost real time: a **skull sphere includes the
+  face**, so "the mug stays outside it" forbids ever reaching the lips
+  (shrink it and test for driving *through* the head instead), and a
+  **minimum-clearance metric at lift-off is dominated by frame granularity**
+  — the mug is already millimetres up on its first carried frame, so that
+  number rules out scrapes but ranks nothing.
 - **Headless geometry diffing — new in session 15, and how 1.1's "visually
   identical to `main`" criterion was actually met.** The builders are pure, so
   both versions can be assembled in node and compared *numerically* instead of
@@ -650,21 +768,15 @@ Unchanged from session 13 except where ADR-013 amends them.
 
 ## Recommended Next Steps
 
-- [ ] **Gate 2.4 — the first twenty seconds. This is the blocking one.**
-      P2 is complete, so the opening can finally be watched end to end.
-      Owner runs a production build with `w98-intro-seen`, `w98-muted` and
-      `w98-fidelity-floor` cleared. The plan's questions (is the button
-      findable without instruction? does the arm sell the press?) plus the
-      three this session added: **are the boot pan's hold and travel
-      right**, **should the boot skip announce itself**, and — since the pan
-      now eats chapter 0's span — **is 90 vh the right amount of camera
-      move** rather than of scroll.
-- [ ] **Slice 4.2 — prop handle + the mug sip.** 4.1 left the mug behaviour
-      as a reach; 4.2 makes the mug follow the hand and adds the head tilt
-      via `idle.ts`'s additive offset. Nothing blocks it, and it does not
-      wait on 2.4.
-- [ ] **P6.1 (picture pipeline)** is still the other independent track and
-      still unblocks the cheap 6.2 owner gate. Nothing blocks it.
+- [ ] **Slice 4.3 — mug steam.** Now unblocked: the handle exists and the
+      mug moves, and 4.3's first acceptance criterion is that steam follows
+      it through a sip. It reads the same `propHandles.mug`. Note the
+      criterion that costs real work is the **tenth ladder rung's measured
+      timing** at a pinned 20 fps, for the owner's §11c call.
+- [ ] **P6.1 (picture pipeline)** is the independent track and still
+      unblocks the cheap 6.2 owner gate. Nothing blocks it.
+- [ ] **Slice 3.1 (chapter 2 face reveal)** and **5.1 (cat tree + cats)**
+      are both unblocked and both AFK. 5.1 gates 3.2, which gates 3.3.
 - [ ] **Spot-check the dock early**, ahead of 8.1. 2.1 lengthened the runway
       and nothing has re-tested the latch since. See Unresolved Threads.
 
