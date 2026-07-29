@@ -12,14 +12,22 @@
 > **Everything is committed and green.** `assets-src/` is now **gitignored**
 > rather than merely untracked, so the working tree is genuinely clean.
 > **P1, P2, P3, P4, P5 and P7 are all done**, gates 1.3, 2.4 and 3.3 are
-> owner-PASSED, and **P6 is started** — 6.1 (the picture pipeline, 29
-> photographs at 4.34 MB) and 6.3 (the Gallery glyph) both landed.
+> owner-PASSED, and **P6 is most of the way** — 6.1 (the picture pipeline),
+> 6.3 (the Gallery glyph) and now **6.2 (the owner's picture-and-caption
+> review) are all landed.**
 >
-> **ONE THING BLOCKS THE BRANCH: gate 6.2**, the owner's photo-and-caption
-> review. 6.4 needs it and 6.5 needs 6.4, so it is the entire critical path.
-> Its checklist is written and committed: **`docs/qa/6.2-picture-review.md`**.
-> Read that before planning anything, and note that **captions do not exist
-> yet by decision** — they are the owner's voice about his own life.
+> **GATE 6.2 IS ANSWERED, and it changed the set: 29 photographs → 23.** The
+> owner pulled six, renamed two ids and set the caption register; all 23
+> captions are drafted and in the gate document. **`6a56d7f` carries it.**
+> `docs/qa/6.2-picture-review.md` is the record — read §2 for the caption
+> strings, §3c for grid order, §3a/§3b for what the pulls and renames did.
+> **6.4 is unblocked** apart from the owner ticking the verdict box.
+>
+> **THE ONE THING TO KNOW BEFORE TOUCHING P6: "all 29 photographs ship" is
+> DEAD.** It is recorded as settled in ADR-013, in this file's own
+> "do not re-litigate" list, and in the §9 budget — and the gate that existed
+> to review it cut six. **Do not restore them on the ADR's authority.**
+> Correcting those documents is now the first item in **8.2**.
 >
 > **Four of the five 3.3 §4 answers were "leave it",** which promotes a set of
 > numbers from open threads to settled ones — see "Settled by gate 3.3"
@@ -52,7 +60,15 @@
   were not answered one by one.** Do not treat them as decided.
 - **Working tree is clean.** Everything below is committed; lint, `tsc` and
   `npm run build` are green at HEAD. Untracked `assets-src/` stays untracked.
+- **Gate 6.2 ANSWERED** (owner, 2026-07-30) — the set is **23 photographs at
+  3.39 MB**, two ids corrected, 23 captions drafted and three of them rewritten
+  to the owner's corrections. Record: `docs/qa/6.2-picture-review.md`. **The
+  verdict box is still unticked** — everything it asks is answered, but the mark
+  itself is the owner's.
 - Commits on the branch, newest first:
+  - `6a56d7f` — **gate 6.2** (six photographs pulled, two ids renamed, 23
+    captions; supersedes "all 29 ship")
+  - `5e7facc` — docs (the dock spot-check)
   - `c1e9e2e` — **slice 6.3** (the Gallery glyph, in both renderers)
   - `5e16fb5` — **slice 6.1** (the picture pipeline; 29 photographs, 4.34 MB)
   - `d0b6e28` — **slice 5.2** (the tail wag and the ear flick)
@@ -680,7 +696,9 @@ acceptance criterion is that it stays unshipped and it was one `git add -A`
 from committing 27 MB including the tattoo references. **The memory note
 claiming it was already gitignored was wrong** — it never was.
 
-**What inspection actually found, and it is the reason 6.2 matters:**
+**What inspection actually found, and it is the reason 6.2 matters** *(and where
+it was incomplete — 6.2 found a third such photograph, `cat-02-nimbus`; the
+account below says "two" and that number is wrong)***:**
 `guitar-01` and `workspace-01` **show the owner's tattooed forearms**, which
 breaches plan-0009's literal wording ("no image file under `public/` contains
 tattoo photography"). They ship, on three grounds, with the call put back to
@@ -693,9 +711,10 @@ other identifiable people close up, and `workspace-01` has a work laptop in
 frame (upscaled from the original the screen is thoroughly illegible — no
 client material, but it deserves a conscious yes).
 
-**Captions are deliberately unwritten.** They are the owner's voice about his
-own life; a plausible-sounding fabrication is worse than a blank. §1.3 of the
-review offers them two ways to settle it.
+**Captions were deliberately unwritten at 6.1** — the owner's voice about his own
+life, where a plausible-sounding fabrication is worse than a blank. **Settled at
+6.2:** the owner took §1.3's option 2 (name the register, get 29 drafts to
+correct) and chose *playful, always shown*. See "What gate 6.2 actually did".
 
 **6.3 — the Gallery glyph.** `"gallery"` in `IconGlyph`, original 16×16 art in
 `pixelIcons.tsx` GLYPHS, and a mirrored `case "gallery":` in `painter.ts`'s
@@ -715,6 +734,91 @@ programmatically rather than by eye: 5 colours, 12 rectangles, identical.
 Remember which of the two is compile-forced: `pixelIcons.tsx` is a
 `Record<IconGlyph, …>` so a missing glyph fails the build, while the painter's
 `switch` is non-exhaustive and will **silently draw nothing** on the CRT.
+
+### What gate 6.2 actually did — the set shrank, and the words exist
+
+**The owner answered every question in the checklist, and the answers cost six
+photographs.** `!` in the keep column meant *don't include* — so `cat-04-nimbus`,
+`ride-04-maharashtra`, `ride-05-hogenakkal`, `ride-06-tamil-nadu`,
+`ride-10-west-coast` and `ride-13-kashmir` are out of the allow-list and out of
+`public/pictures/`. **29 → 23, 4.34 MB → 3.39 MB.** The script removed all 16
+stale files itself across the two runs; `--dry` was run first both times and
+matched.
+
+**Two ids were corrected, and neither source moved:**
+
+- `hike-04-goa` → **`hike-05-goa`**, resolving the duplicate `hike-04` on the
+  owner's "make anyone 05".
+- `ride-07-pondicherry` → **`ride-07-goa`**, because the owner identified the
+  photograph as a Goa run. The frame agrees — a wet ghat road under tree cover,
+  nothing coastal in it.
+
+Their **source filenames still read `hike-04-goa.jpg` and
+`ride-07-pondicherry.jpg`**, which is the allow-list working as designed rather
+than an oversight: ids are authored, never derived, so renaming a source cannot
+change a URL and correcting a URL cannot require touching `assets-src/`. Git
+recorded both as 100 % renames — which is 6.1's deterministic encoding quietly
+proving itself again.
+
+**Captions: 23, playful, always shown**, with the id's place name as the fallback
+where a line is struck. Two rules held even after the owner loosened the register
+from description to wit, and they are the reusable part:
+
+- **A caption may only joke about what is visible in its own photograph** — no
+  dates, no invented durations, no weather that isn't in frame, nothing about what
+  anyone was feeling. Wit comes from framing what is there, not from adding
+  events.
+- **Nothing is asserted about other people in frame.** `guitar-01` has two
+  identifiable faces in it, and the owner's instruction was explicit: don't talk
+  about them. Its caption is therefore built from **`src/lib/aboutMe.ts`**
+  ("somewhere between Carnatic and metal") rather than from the photograph — the
+  one line in the set sourced from copy instead of from the image. Side effect
+  worth knowing: **the site now says "Carnatic and metal" in two places.**
+
+**Four drafts asserted something unverifiable and all four are resolved** — the
+owner approved one (`cat-07-both`), corrected two (there was no dog on the Kalga
+trek; `ride-07` is Goa) and redirected one (`guitar-01`). **No caption carries an
+unverified claim now.** `cat-07-both`'s is the only one that breaks the fourth
+wall — *"That cat tree is in this room. They had it first."* — and it is
+owner-approved, which puts a constraint on 6.4: **the visitor must reach the
+Gallery from inside the room, or the line stops making sense.**
+
+**What captioning found that the pipeline's own inspection had not.** 6.1 flagged
+three things by inspecting the three photographs it suspected; opening all 29
+turned up three more, all now owner-cleared:
+
+- **`cat-02-nimbus` is a third tattoo photograph** — face and both forearms,
+  asleep, at arm's length. 6.1's "these are the two to pull" was an incomplete
+  list, so the tattoo decision actually stands at three photographs.
+- **Two more laptop screens are in frame.** `cat-01-nimbus` has a **Google Tag
+  Manager console** open. Its container-name dropdown **does not resolve into
+  letters at 10× with sharpening** — nor do the tabs or the URL bar — and
+  `cat-05-nimbus`'s chat client is illegible at 8×. Nothing readable ships. The
+  owner cleared both **knowing what that container was called**, which is the
+  part no agent can decide.
+- **Every visible number plate was already blacked out by hand in the sources.**
+  `ride-09`, `ride-11` and the KTM in `ride-12` carry manual redactions.
+  **The pipeline does not redact plates** — a photograph added later needs the
+  same hand.
+
+**One correction to the checklist itself, worth carrying because it is the kind
+of error that survives review:** §1.2 attributed a "Shot on OnePlus" watermark to
+`ride-01-kerala`, which has none. The watermarked photograph was
+**`ride-06-tamil-nadu`**, and the mark was two lines — "Shot on OnePlus" over
+**"By Chisty"**, a personal name, legible at the shipped size. The owner's
+"leave it" had therefore been given about a photograph that did not contain the
+thing. It is moot now — `ride-06` was one of the six pulls, so **nothing shipped
+carries a watermark or that name.**
+
+**One number the cut reopened, deliberately left open:** quality is `q84`, chosen
+by measurement because it put *29* photographs at 4.31 MB inside ADR-013 §9's
+4–5 MB band. At 23 the same setting spends **3.39 MB, under the band**. `q88`
+measured 5.03 MB for 29, so it would now land mid-band and every survivor would
+look slightly better. **Not changed** — it re-encodes all 23 files and it is
+taste, not a defect. It is the only open call on the gate.
+
+**Grid order, for 6.4: `cats` → `journey` → `desk` → `portrait`** (owner). Cats
+first reads warmest, and it puts the fourth-wall caption near the top.
 
 ### What P7 actually did
 
@@ -743,12 +847,12 @@ reveal, 3.2 the room wide, gate 3.3 passed). **P4 is complete** (4.1
 scheduler, 4.2 the sip, 4.3 steam). **P5 is complete** (5.1 the cat tree and
 the cats, 5.2 the tail wag).
 
-**What is left is the back half of P6, and P8.** **P6 is started** — 6.1 (the
-picture pipeline) and 6.3 (the glyph) are done, which leaves **6.2 (the owner's
-review, and the only blocker on the branch)**, then 6.4 (the app) and 6.5 (the
-painter's thumbnail-grid suggestion). P8 is 8.1 (the dock sweep — **spot-checked
-in session 21 and smaller than three handoffs implied**) and 8.2 (close-out
-docs).
+**What is left is the back half of P6, and P8.** 6.1 (the picture pipeline), 6.3
+(the glyph) and **6.2 (the owner's review — answered, `6a56d7f`)** are done, which
+leaves **6.4 (the Gallery app)** and 6.5 (the painter's thumbnail-grid
+suggestion). P8 is 8.1 (the dock sweep — **spot-checked in session 21 and smaller
+than three handoffs implied**) and 8.2 (close-out docs, and **now carrying a real
+punch list** — see "Slice 8.2 has content now").
 
 ## Decisions already made — do not re-litigate
 
@@ -763,8 +867,14 @@ Resolved with the owner (ADR-013 records the reasoning):
   singleton across the `RoomScene` → `Figure` boundary.
 - **The opening frame is a macro on the tower's power button with no person
   in it.** The forearm enters on click. Chapter 2 keeps its reveal.
-- **All 29 photographs ship** — cats, rides/hikes, workspace, guitar, and the
-  two existing portraits.
+- ~~**All 29 photographs ship**~~ — **SUPERSEDED by gate 6.2 (2026-07-30).**
+  The owner pulled six at the review: `cat-04-nimbus`, `ride-04-maharashtra`,
+  `ride-05-hogenakkal`, `ride-06-tamil-nadu`, `ride-10-west-coast`,
+  `ride-13-kashmir`. **23 ship** — cats, rides/hikes, workspace, guitar and the
+  two existing portraits. This entry is left visible rather than deleted because
+  three documents still assert the old number; **8.2 fixes them.** Sources are
+  untouched under `assets-src/`, so a pull is one allow-list line to reverse —
+  but reversing one needs the owner, not an agent reading ADR-013.
 - **The entry gesture stays a DOM button**, pinned over the projected 3D
   button. `unlockAudio()` must run synchronously in a real user gesture, and
   the canvas is `fixed inset-0 -z-10` so clicks never reach it.
@@ -870,9 +980,43 @@ untested rather than approved.
 
 **New, from earlier in this branch:**
 
-- **Gate 6.2 should still be pulled forward** — it is cheap and it gates
-  expensive work (6.4, the Gallery app). Nothing blocks 6.1 today, and with
-  P3 and P5 closed **P6 is the only package left with build work in it.**
+**SLICE 8.2 HAS CONTENT NOW — it is no longer just "close-out docs".** Gate 6.2
+falsified a decision three documents record as settled, and documentation that
+contradicts the shipped set is worse than none. In rough order of how badly each
+one misleads a reader:
+
+1. **ADR-013 §9 says all 29 ship and budgets 4–5 MB.** Both are now wrong: 23
+   ship, and the directory is 3.39 MB, *under* the band. Record the pull and the
+   six ids, and decide whether the band moves down or the quality moves up (the
+   `q84`/`q88` call — the owner has not answered it).
+2. **This file's "Decisions already made" carried "all 29 photographs ship."**
+   Already struck through in place, with the reason left visible on purpose.
+   Whoever writes 8.2 should decide whether the strikethrough stays as history or
+   the entry is rewritten outright.
+3. **Plan-0009's acceptance criterion — "no image file under `public/` contains
+   tattoo photography" — is still literally false and always was.** `aravind-2.jpg`
+   has shipped since long before this branch, and the owner has now approved
+   **three** photographs showing tattooed forearms (`guitar-01`, `workspace-01`
+   and `cat-02-nimbus`; 6.1's write-up said two). The criterion means *no tattoo
+   **reference** photography*, which is what ADR-013 §9's heading actually says.
+   **Fix the wording so the next agent does not re-flag it as a breach** — this is
+   the third session in a row it has come up.
+4. **The pipeline does not redact number plates**, and every plate currently
+   shipping was redacted by hand in the source. That is a standing constraint on
+   adding photographs, and it is written down nowhere but the 6.2 record.
+5. **ADR-012 §10 / the confidentiality rule are unaffected** — no client material,
+   no readable client name, no watermark, no metadata in the 23. Say so
+   explicitly at close-out rather than leaving it inferred.
+
+**One thing 8.2 should NOT do: reopen the six pulls.** They are the owner's call
+at a gate written for exactly that purpose.
+
+- **Gate 6.2 is answered** (2026-07-30) — pulled forward as this thread kept
+  recommending, and it earned it: it cut six photographs and rewrote three
+  captions before 6.4 could hard-code any of them. **P6 is still the only package
+  left with build work in it — and 6.4 is now that work.** The one thing the gate
+  did not settle is `q84` vs `q88`; the one thing it did not *ask* is the owner's
+  tick in the verdict box.
 - **The dock: spot-checked in session 21, and the recorded risk was
   overstated.** Three handoffs have called 2.1's runway change (660 →
   **750 vh**) this branch's biggest regression risk, because `ENGAGE_EPS`
@@ -1223,11 +1367,13 @@ Unchanged from session 13 except where ADR-013 amends them.
   transcription of the owner's five calls, and §7 carries the verdict and the
   one thing the pass did not cover. **Read it before planning anything that
   touches the opening or the camera.**
-- **The live gate:** `docs/qa/6.2-picture-review.md` — **the only thing
-  blocking the branch.** Written for the owner at the end of session 21; a
-  reading task, not a QA pass. §1.1 names what inspection found rather than
-  asking a blank question, §1.2 carries the three naming problems, and §1.3 is
-  where the captions get settled. **Check it before planning anything in P6.**
+- **The 6.2 gate record:** `docs/qa/6.2-picture-review.md` — **answered, and the
+  authoritative source for the picture set.** **Read it before planning anything
+  in P6.** §2 is the 23 ids and their caption strings (6.4 transcribes from here);
+  §3a/§3b record the six pulls and the two id renames; §3c fixes grid order;
+  §1.1a carries three privacy findings the pipeline's own inspection missed, all
+  owner-cleared; §4 has the record and the one open call (`q84`/`q88`). The
+  verdict box is unticked — that is the owner's mark, not a missing answer.
 - **Prior gate record:** `docs/qa/9.2-desktop-checklist.md`, especially §17
   (session-13 fixes), §17b (rewritten in session 15 — the P7 record and the
   SignOff-overlap thread) and §17d (what an agent could not verify).
@@ -1246,18 +1392,20 @@ Unchanged from session 13 except where ADR-013 amends them.
       is fine"* (2026-07-30). P5 is complete.
 - [x] ~~**P6.1 (picture pipeline)**~~ and ~~**6.3 (the glyph)**~~ **both done**
       this session. See "What 6.1 and 6.3 actually did".
-- [ ] **GATE 6.2 IS THE ONLY THING BLOCKING ANYTHING.** 6.4 (the Gallery app)
-      needs it and 6.5 needs 6.4, so the owner's photo-and-caption review is
-      the whole critical path. **The checklist is written and committed:
-      `docs/qa/6.2-picture-review.md`.** It is a reading task, no dev server.
-      Three questions, and **§1.1 is not a blank box** — it names what
-      inspection found (the two photographs showing tattooed forearms, the two
-      identifiable third parties in `guitar-01`, the work laptop in
-      `workspace-01`). **Captions do not exist yet, on purpose**; §1.3 offers
-      the owner two ways to settle them, one of which is "tell me the register
-      and I will draft 29".
-- [ ] **After 6.2: slice 6.4**, the Gallery app itself. Blockers are 6.2 and
-      6.3, and 6.3 is done. `src/lib/pictures.ts` for content (dimensions are
+- [x] ~~**GATE 6.2 IS THE ONLY THING BLOCKING ANYTHING.**~~ **ANSWERED**
+      (2026-07-30, `6a56d7f`). It cost six photographs — **29 → 23** — plus two
+      id corrections and three rewritten captions. See "What gate 6.2 actually
+      did". **The set and the caption strings now live in
+      `docs/qa/6.2-picture-review.md` §2, and that document outranks ADR-013 on
+      what ships.** One call left open (`q84` → `q88`?) and the verdict box
+      itself still wants the owner's tick.
+- [ ] **SLICE 6.4 IS THE WORK — nothing blocks it.** The Gallery app itself.
+      **Transcribe the 23 ids and captions from the 6.2 record's §2**, order the
+      groups `cats → journey → desk → portrait` (§3c), and note that
+      `cat-07-both`'s approved caption breaks the fourth wall — *"That cat tree
+      is in this room. They had it first."* — so **the Gallery must be something
+      the visitor opens from inside the room**, or the line stops making sense.
+      `src/lib/pictures.ts` for content (dimensions are
       in `scripts/pictures-manifest.tsv` — do not transcribe them by hand),
       a `DEFAULT_ICONS` entry at **col 0 row 5** (free, and the glyph was
       already proved rendering there in both renderers), an `APP_DEFS` entry,
@@ -1300,4 +1448,7 @@ Unchanged from session 13 except where ADR-013 amends them.
   only way to prove *wiring* (that a driver is actually mounted and running
   in the app). Always `run_in_background` with an `EXIT=` sentinel. The
   owner's headed session only for owner-angle checks; ask before reloads.
-- `documentation-and-adrs` at close-out for slice 8.2.
+- `documentation-and-adrs` at close-out for slice 8.2 — **and it now has a
+  concrete punch list rather than a vague brief.** Gate 6.2 falsified "all 29
+  photographs ship" in three documents; see "SLICE 8.2 HAS CONTENT NOW" under
+  Unresolved Threads before writing anything.
