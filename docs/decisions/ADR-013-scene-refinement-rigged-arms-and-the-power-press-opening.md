@@ -113,6 +113,33 @@ of `REST_POINTS`, `DOCK_REST_INDEX` is an index not a value, and
 (0.012 of the runway) covers a different pixel distance than the one the owner
 signed off in session 13. The dock's latch needs a fresh pass at gate re-QA.
 
+#### 2a. Amended (session 18): the camera *does* move during the boot
+
+Built as written above, 2.1 and 2.3 exposed what the paragraph actually costs: with
+the camera pinned to the button macro for the whole boot, the CRT is out of frame,
+so the POST lines, the drive-chatter listing and the Win98 splash all play where the
+visitor cannot see them. What is left is the LED, the sounds, and the screen's light
+washing the tower face. That may be the better film — but it was never an explicit
+decision, and it throws away a beat P3 built.
+
+**Put to the owner at 2.3; they chose to see the POST.** So the camera now holds a
+beat on the lit LED and then pans off the button onto the glass while the lines run.
+
+This narrows §2's claim rather than reversing it. **The boot still never *scrubs*** —
+Lenis is stopped for its whole duration and the visitor cannot drive. What moves is
+an auto-play: `PowerOn` calls `lenis.scrollTo(REST_POINTS[0]px, { force: true })`,
+which by design bypasses the stop guard, and ScrollTrigger then publishes progress
+through the ordinary path. No new mechanism, and scroll is handed back with the page
+genuinely parked at chapter 0's rest point rather than at a position the camera has
+been faking away from.
+
+**What this does cost:** the pan consumes chapter 0's 90 vh. The visitor's first
+wheel notch now begins chapter 1. Gate 2.4's question changes shape with it — from
+"is 90 vh the right amount of *scroll* between the button and the glass" to "is it
+the right amount of *camera move*". The hold and the travel are expressed as
+fractions of the POST phase so the shot keeps its proportions if `bootScript` grows,
+but they are a shot, and they want the owner's eye.
+
 ### 3. The entry gesture stays in the DOM, but as a hotspot over the 3D button
 
 The visitor must still click something: `unlockAudio()` has to run synchronously
@@ -269,6 +296,21 @@ Three compounding causes, all cosmetic:
 The fix is a legibility pass — a scrim behind the mark so it survives a bright
 backdrop, brighter values chosen against the *scene* rather than the floor, and a
 pulse that is visible for more of its cycle. The gating logic is untouched.
+
+#### 10a. Amended (session 18): one gate change, made deliberately
+
+"Contrast, not new logic" held for P7 itself — `ScrollHint`'s gating is still
+byte-for-byte what it was. But P7 made the cue visible and thereby exposed a
+long-standing overlap: at p ≈ 0.94 the "Scroll" label sits ~30 px under the SignOff
+card's contact links and competes with them. The cue has always run to `END_P`
+0.995; the overlap was simply invisible before.
+
+Closing it means moving a gate, which is what §10 put out of scope. **Put to the
+owner at 2.3; they chose to drop `END_P` below SignOff's start** rather than teach
+the cue a SignOff term. `END_P` is now `SIGNOFF_START_P`, exported from `SignOff.tsx`
+and derived from the same two constants that place its fade — so retuning
+`FADE_START` moves both and they cannot drift. By the time the contact card is
+fading in there is nothing further to scroll to and the instruction is spent.
 
 While here, one doc/code drift is corrected in the QA record rather than the code:
 checklist §17b says the cue "fades in ~0.9 s after the desktop settles", but

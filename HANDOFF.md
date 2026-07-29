@@ -1,11 +1,13 @@
-# HANDOFF — `scene-refinement` (2026-07-29, session 17 wrap)
+# HANDOFF — `scene-refinement` (2026-07-29, session 18 wrap)
 
 > For the next agent session. **ADR-012's plan is finished and merged.**
 > `redesign-attempt2` → `main` @ `dac6de4`; every gate (1.2, 2.3, 4.3, 9.2)
 > is owner-PASSED. The 9.2 record is `docs/qa/9.2-desktop-checklist.md`.
 >
 > **Everything is committed and green.** Working tree clean apart from
-> untracked `assets-src/`. P1, P4.1 and P7 are done; P2 needs only 2.3.
+> untracked `assets-src/`. **P1, P2 and 4.1 are built and P7 is closed.**
+> The next thing that needs a human is **gate 2.4** — the first twenty
+> seconds, which nothing on this branch can self-certify.
 
 ## Current Status
 
@@ -18,18 +20,156 @@
 - **Working tree is clean.** Everything below is committed; lint, `tsc` and
   `npm run build` are green at HEAD. Untracked `assets-src/` stays untracked.
 - Commits on the branch, newest first:
-  - `53776f6` — docs: 4.1 + the P7 confirmation session 16 left loose
+  - `edab2bc` — **the three owner calls on 2.3** (boot pan, cue/SignOff
+    gate, boot skip)
+  - `d075597` — **slice 2.3** (the press)
+  - `bd95003` / `53776f6` / `3b87f43` / `cd9abc5` — docs
   - `dc3c6bb` — **slice 4.1** (behaviour scheduler; taps suspend per arm)
-  - `3b87f43` — docs: session-17 handoff
   - `e02de5c` — **slice 2.2** (power hotspot pinned over the 3D button)
   - `f6cd25b` — **slice 2.1** (chapter 0 gains scroll span; opening frame)
   - `d10aac6` — **slice 1.2** (`armPose.ts`, the driver that moves the rig)
-  - `cd9abc5` — docs: session-16 handoff refresh
   - `7f1722c` — **P7 complete** (7.1 scroll-cue contrast + 7.2 QA-record fix)
   - `0784e3d` — **slice 1.1** (two-bone arm rig)
   - `28410fc` — ADR-013 + plan-0010
-- A dev server is running on **3004** and was used for session-17 QA.
+- A dev server is running on **3004** and was used for session-18 QA.
   `EADDRINUSE` → use theirs. Ask before stopping it.
+
+### What 2.3 actually did — the press
+
+`src/lib/powerPress.ts` is the ordering, and it is **pure**: no DOM, no
+three.js, no timer of its own. It is ticked with a delta and the rig's
+contact flag and reaches the world through two hooks — one from the
+in-Canvas rig (how to move an arm it cannot see), one from `PowerOn`
+(what to do when the finger lands, i.e. start the boot). That split puts
+click → reach → contact → depress → LED → thunk in one readable file
+while leaving the boot controller's lifetime with the component that
+mounts it.
+
+**The load-bearing beat: nothing happens on the click except the arm
+starting to move.** The boot sequencer — and with it the degauss thunk,
+the POST and the LED, all of which hang off `win98State`'s phase — starts
+on CONTACT, ~0.55 s later. Sound landing on the click instead of on the
+fingertip is the one thing that would make this read as a UI button
+rather than as a hand pressing a switch.
+
+`builders/TowerPower.tsx` is the scene half **and the machine's only
+ticker**. Two signals, deliberately separate:
+
+- **The button** follows `powerPressState.depress` — the fingertip. 2 mm.
+- **The LED** follows `win98State.phase` — the machine, not the finger.
+  That is the honest source, and it means the lamp and the thunk cannot
+  drift apart, because `attachShellCues` already hangs the thunk off the
+  same phase change. There is no second timeline to keep in sync, and an
+  auto-booting harness lights its LED for free.
+
+The tower had no LED at all; the CRT's was `materials.metal` and had
+**never lit** — a grey dot beside a glowing tube that chapter 1's close-up
+sits right on. Both now share one `materials.led` instance, emissive only,
+above Bloom's 0.68 threshold so the dark-to-green pop reads in a dark
+room. **Emissive adds no light to the room**, so the gate-2.3 brightness
+contract is untouched. Split the instance if the two lamps ever need to
+disagree.
+
+`armPoseRef` (in `armPose.ts`, published by `Figure`) is how a component
+in the RoomScene subtree moves an arm the character owns — the
+`experienceState` pattern, read **lazily** so mount order does not matter.
+
+`typing.ts` gained the gate the last handoff asked for. `busy()` stopped
+behaviours *overlapping* the press; nothing stopped one starting a second
+*before* it. The entry gesture now holds the whole figure from `PowerOn`
+mounting until the desktop settles — no behaviours, **and no keystrokes**,
+because nobody types on a machine that is off (and since 6.2's clacks ride
+taps, that is also what keeps the keyboard silent under the POST). It is a
+*hold*, not a block: `nextBehaviourAt` rides the frozen clock, so the
+seeded first gap is measured from the desktop settling rather than burned
+on the entry screen.
+
+`PowerOn` keeps a 3 s watchdog on `forcePowerContact`. The machine ticks
+from inside the Canvas, so a room that failed to mount would leave a click
+doing nothing at all — the worst failure this page has.
+
+### The three calls the owner made at 2.3
+
+**1. The POST is seen, not just heard** (amends ADR-013 §2 — written up as
+the new §2a). The camera holds a beat on the lit LED, then pans off the
+button onto the glass while the lines run. **The boot still never
+*scrubs***: Lenis is stopped throughout and the visitor cannot drive. What
+moves is an auto-play — `lenis.scrollTo(REST_POINTS[0]px, { force: true })`,
+which bypasses the stop guard by design; ScrollTrigger then publishes
+progress through the ordinary path. **No new mechanism.** Verified in the
+Lenis source rather than its type docs: the guard is
+`(isStopped || isLocked) && !force`, and `raf()` advances the animation
+with no `isStopped` check at all.
+
+**This consumes chapter 0's 90 vh.** The visitor's first wheel notch now
+begins chapter 1, so 2.4's question changes shape: not "is 90 vh the right
+amount of *scroll* between the button and the glass" but "…the right
+amount of *camera move*". The hold and travel are fractions of the POST
+phase so the shot keeps its proportions if `bootScript` grows — **but they
+are a shot, and they are the first thing to retune at 2.4.**
+
+**2. The scroll cue stops where SignOff starts.** `END_P` was 0.995; it is
+now `SIGNOFF_START_P`, exported from `SignOff.tsx` and derived from the
+same two constants that place its fade, so retuning `FADE_START` moves
+both and they cannot drift. Closes the overlap P7 exposed. (ADR-013 §10a.)
+
+**3. Any key or click skips the boot.** Plan-0010 §2.3 lists this path but
+it had never existed — the only skip was the returning visitor's link, and
+that is disabled the moment the overlay fades. Now global while the boot
+runs, first-time visitors included, landing the page at `REST_POINTS[0]`
+so a mid-pan skip does not hand scroll back at a frame nobody composed.
+Tab and the modifier keys are excluded (orientation, not intent), as is a
+pointerdown on any button or link (the mute toggle is reachable throughout
+the boot by design).
+
+**It is an undiscoverable escape hatch.** "Press any key to skip" sitting
+over "a dark room and one glowing button" would undo what 2.2 bought.
+**Whether it should announce itself is a 2.4 question** — the owner picked
+the behaviour without resolving the discoverability half.
+
+### How 2.3 was verified
+
+**Offline first** (the 1.2/4.1 pattern — a browser at 2–6 fps is the worst
+instrument for beats 70–550 ms apart). The real machine, the real
+`createArmPose` on the real `buildBody` rig and the real scheduler, at a
+simulated 60 fps:
+
+- the click alone does nothing but start the arm; boot is **+0.567 s**
+  (one ease-in plus one frame), never 0;
+- contact and boot are the **same frame**, and the fingertip is **0.00 mm**
+  from `POWER_BUTTON` when they fire;
+- the button never sinks before the machine wakes; full travel at
+  +0.083 s; springs back at +0.550 s, after the 0.45 s hold;
+- 30 s parked on the entry screen — past the scheduler's 18–38 s first gap
+  — produces **zero taps and zero behaviours**; the first behaviour after
+  release lands at +30.7 s;
+- skip mid-reach returns the arm to **bit-exact** rest and releases the
+  figure;
+- with **no figure at all** the press still boots the machine, at the 1.4 s
+  reach timeout;
+- a **mouse** reach's `contact` cannot trip the press (the flag is
+  qualified by pose);
+- nothing retained over 200 k frames.
+
+**Then wiring, headless at 1440×900** — the one thing a pure harness cannot
+prove, namely that the parts are mounted and talking:
+
+- `busy("R")` goes true **1.28 s after the click**, which exercises the
+  whole chain end to end: PowerOn → `requestPowerPress` → `attachPowerArm`
+  (so `TowerPower` is mounted) → `armPoseRef` (so `Figure` published it) →
+  `goTo`;
+- progress runs 0 → **0.12** and scrollY 0 → **702 px** during the boot —
+  the pan landed exactly on `REST_POINTS[0]` (0.12 × 5850);
+- the entry unmounts and scroll is released with the page parked there.
+
+**Two harness notes worth carrying.** (a) The `heapUsed` trap bit again:
+the allocation check read **−457 KB** and failed a `Math.abs` assertion —
+memory *freed*, not leaked. Assert growth only. (b) The 4.1 ride figures
+recorded above (141 — mouse 57, mug 48, lean 36) are **session 17's
+counting method**. A pose-transition-edge counter gives 138 / 56 / 47 / 35.
+Running the same script against `HEAD`'s `typing.ts` and the new one gave
+**identical** numbers and 54 436 taps both ways — which is the check that
+actually matters. **Compare old-vs-new; do not chase the absolute.**
 
 ### What 1.1 actually did
 
@@ -200,10 +340,11 @@ dependency graph are in **plan-0010**. Not repeated here.
 
 The structural fact worth carrying: **three of the seven requests are one
 missing capability** — the arm rig. That is why P1 gates everything. **P1 is
-closed** (1.1 rig, 1.2 driver, gate 1.3 passed). **P2 is two thirds built**
-(2.1 the scroll span and the opening frame, 2.2 the hotspot) and **4.1 is in
-early**, out of plan order, because the owner's 1.3 note lands inside gate
-2.4's twenty seconds. What is left of the opening is 2.3, the press itself.
+closed** (1.1 rig, 1.2 driver, gate 1.3 passed). **P2 is built** (2.1 the
+scroll span and the opening frame, 2.2 the hotspot, 2.3 the press) and
+**4.1 is in early**, out of plan order, because the owner's 1.3 note lands
+inside gate 2.4's twenty seconds. The opening is now watchable end to end,
+which is exactly what 2.4 is for.
 
 ## Decisions already made — do not re-litigate
 
@@ -259,31 +400,23 @@ fine. **Keep them: they bind anything built on the rig from here.**
      swing 9 mm through the desk top. 4.2 replaces this constant with the
      live prop handle anyway (ADR-013 §6) — but it should replace it with
      the same *point on* the mug, not with the mug's origin.
-**Awaiting the owner, asked and not yet answered:**
+**Awaiting the owner — the only blocking item is gate 2.4.**
 
-- **The scroll cue now overlaps the SignOff card.** Newly *exposed* by P7, not
-  caused by it: at p ≈ 0.94 the "Scroll" label sits ~30 px below the contact
-  links and competes with them. The cue has always run to `END_P` (0.995) and
-  SignOff has always started at `REST_POINTS[4]`; the overlap was invisible
-  before because the cue was. Closing it means moving the gate, which ADR-013
-  §10 explicitly puts out of scope for a contrast pass. Options recorded in
-  checklist §17b: drop `END_P` below SignOff's start, or add a SignOff term to
-  `wanted`. **Owner's call — do not just fix it.**
+The three threads that were parked here (the SignOff/cue overlap, the
+POST playing off-camera, and the missing boot-skip path) were **all put to
+the owner at 2.3 and all answered.** Built to the answers; see "The three
+calls the owner made at 2.3" above and ADR-013 §2a/§10a. Do not reopen
+them.
 
-**New, from 2.1 — put this to the owner at gate 2.4:**
+Two follow-ups the answers created, both for **gate 2.4**, both cheap:
 
-- **The POST plays where the visitor cannot see it.** ADR-013 §2 is explicit
-  that the boot never scrubs and chapter 0's span is scrolled only *after*
-  the desktop settles. Taken literally that means the camera holds the
-  power-button macro for the whole boot — and the CRT is out of frame there,
-  so the POST lines, the drive chatter listing and the Win98 splash all
-  happen off-camera. What the visitor gets is the LED, the sound, and the
-  screen's light washing the tower face. That may well be the better film
-  (a machine waking up in the dark, heard not read), but it was not an
-  explicit decision, and it throws away a beat P3 built. **Built as
-  specified; flag it at 2.4.** The alternatives if the owner wants the POST
-  seen: an auto-play camera move during boot (contradicts "chapter 0 never
-  scrubs during the boot"), or a shorter hold before scroll releases.
+- **The boot pan's two numbers are a shot.** Hold-on-the-LED and travel
+  time are expressed as fractions of the POST phase (~300 ms and ~1.2 s at
+  the current `bootScript`). Nothing offline can judge them. They are the
+  first thing to retune when the owner watches the opening.
+- **Should the boot skip announce itself?** The owner picked "any key or
+  click skips" without resolving discoverability, and it is currently a
+  hidden escape hatch on purpose. Ask at 2.4.
 
 **New, from this branch:**
 
@@ -295,9 +428,6 @@ fine. **Keep them: they bind anything built on the rig from here.**
   1440×900 — and the dock is precisely what the owner signed off in
   session 13. **Not yet re-tested at all.** Slice 8.1 re-runs checklist
   §4/§17a in full; do not leave it to the end if anything feels off sooner.
-- **Nothing gates the scheduler during boot.** 4.1's `busy()` stops
-  behaviours overlapping once a pose has started, but a mouse reach can
-  still fire a second *before* 2.3's press. 2.3 has to close that.
 - Steam adds a **tenth rung** to the fidelity ladder, pushing the
   static-floor offer from ~64 s to roughly ~69 s at a pinned 20 fps. Slice
   4.3 measures the real number. Folding steam into the existing `dust` flag
@@ -356,6 +486,15 @@ Unchanged from session 13 except where ADR-013 amends them.
   path solves anything. `armPointLocal` in `buildBody.ts` is the single
   source of truth for where the hand's palm and fingertips are — the solve
   and the mesh must never carry separate copies of those offsets.
+- **The press (ADR-013 §2/§3, slice 2.3):** `src/lib/powerPress.ts` is
+  **pure** — no DOM, no three.js, no timer of its own — and is ticked from
+  exactly one place, `TowerPower`. Keep both properties. The click starts a
+  reach and **nothing else**; the boot, and therefore the thunk, the POST
+  and the LED, start on **contact**. The LED is driven by `win98State.phase`
+  and never by the press machine, so the lamp and the thunk cannot drift —
+  do not give the LED its own timeline. `materials.led` is one instance
+  shared by `towerLed` and `crtLed` and is **emissive only**: it adds no
+  light, which is why it does not touch the brightness contract.
 - Lazy apps: `lazyApps.ts` → `registerNN.ts` chunks, each **verified split
   out of the initial bundle in `out/`**. The Gallery must clear the same bar.
 - Conventions: figure faces **-Z**; `DESK_TOP_Y` 0.72; tower power button at
@@ -463,16 +602,34 @@ Unchanged from session 13 except where ADR-013 amends them.
 - **The container around it is `pointer-events-none`** with
   `pointer-events-auto` on the button itself. A programmatic `.click()`
   ignores that, so it is not evidence a real pointer lands — hit-test with
-  `document.elementFromPoint(x, y)` and check it resolves to the button.
+  `document.elementFromPoint(x, y)`. As of 2.2 it resolves to the ring
+  `<span>` *inside* the button, not the button: that is still correct (the
+  span inherits `pointer-events-auto` and the click bubbles), so assert on
+  it being inside the button rather than on it being the button.
 - The full journey needs the power button *clicked* before stepping moves
   progress. Budget **~30–40 s** for the boot in a headless session, not the
   ~15 s it takes on real hardware — the sequencer is wall-clock driven but
-  the page runs at 2–6 fps on software GL. A 25 s wait is not enough and
-  looks exactly like a hang. **The press changes again in slice 2.3** —
-  update the QA scripts when it does.
-- **Scroll is parked (Lenis stopped) for the whole boot**, so `scrollTo`
-  does nothing until the desktop settles. Check
-  `document.querySelector('.power-ring')` is gone before scrubbing.
+  the main thread is saturated at 2–6 fps, so every chained boot timer
+  overruns. Measured in session 18: a `setInterval(250)` fired at ~1.2 s
+  intervals and `.power-ring` was still up at 15.6 s. A 25 s wait is not
+  enough and looks exactly like a hang.
+- **As of 2.3 the click does not boot the machine** — it starts a reach,
+  and the boot lands on contact ~0.55 s later. A script that clicks and
+  immediately asserts on `win98State` will see "off". The cheapest single
+  probe that the whole press is wired is
+  `window.__armPose.busy('R')` going true ~0.6–1.3 s after the click: it
+  exercises PowerOn → `powerPress` → `TowerPower`'s `attachPowerArm` →
+  `armPoseRef` → `Figure` in one read.
+- **Scroll is parked (Lenis stopped) for the whole boot, but the page still
+  moves** (ADR-013 §2a): the boot pan drives scroll to `REST_POINTS[0]`
+  with Lenis' `force`. So progress running 0 → 0.12 during the boot is
+  correct, not a stray scrub, and a first-run session ends parked at
+  **y = 702 px** at 1440×900 rather than at 0. Check
+  `document.querySelector('.power-ring')` is gone before scrubbing further.
+- **Any key or click now skips the boot** (2.3). A QA script that presses a
+  key or clicks empty space during the boot will skip the intro instead of
+  doing nothing. Clicks on buttons and links are excluded, as are Tab and
+  the modifier keys.
 - Reset before any first-run test: `w98-intro-seen`, `w98-muted`,
   `w98-fidelity-floor`.
 
@@ -493,24 +650,19 @@ Unchanged from session 13 except where ADR-013 amends them.
 
 ## Recommended Next Steps
 
-- [ ] **Slice 2.3 — the press.** Everything it needs is in place:
-      `armPose.goTo("R", "power")`, `armPoseState.R.contact` for the timing
-      (true only during the hold, so the depress, the LED and the thunk all
-      land on contact rather than on click), the `towerPower` mesh to
-      depress, and `POWER_BUTTON_LOCAL` to place the new emissive LED beside
-      it. Note the existing LED is on the **CRT** (`builders/crt.ts:57`,
-      `materials.metal`) and has never lit; the tower has none at all.
-      One thing to decide while building it: the scheduler must not fire a
-      behaviour during the boot, or the figure will reach for the mouse
-      mid-press. `busy()` already stops overlap once the press has started,
-      but nothing stops a mouse reach a second *before* it.
+- [ ] **Gate 2.4 — the first twenty seconds. This is the blocking one.**
+      P2 is complete, so the opening can finally be watched end to end.
+      Owner runs a production build with `w98-intro-seen`, `w98-muted` and
+      `w98-fidelity-floor` cleared. The plan's questions (is the button
+      findable without instruction? does the arm sell the press?) plus the
+      three this session added: **are the boot pan's hold and travel
+      right**, **should the boot skip announce itself**, and — since the pan
+      now eats chapter 0's span — **is 90 vh the right amount of camera
+      move** rather than of scroll.
 - [ ] **Slice 4.2 — prop handle + the mug sip.** 4.1 left the mug behaviour
       as a reach; 4.2 makes the mug follow the hand and adds the head tilt
-      via `idle.ts`'s additive offset.
-- [ ] **Gate 2.4** once 2.3 lands — and put the POST-visibility thread
-      (above) to the owner in the same pass.
-- [ ] **Raise the SignOff/scroll-cue overlap with the owner** and act on their
-      answer — it is a one-line change either way, but it is a gate change.
+      via `idle.ts`'s additive offset. Nothing blocks it, and it does not
+      wait on 2.4.
 - [ ] **P6.1 (picture pipeline)** is still the other independent track and
       still unblocks the cheap 6.2 owner gate. Nothing blocks it.
 - [ ] **Spot-check the dock early**, ahead of 8.1. 2.1 lengthened the runway
