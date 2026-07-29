@@ -1,16 +1,28 @@
 "use client";
 
-// Chapter 0 entry overlay (plan-0009 §4.1, ADR-012 §5): the site opens
-// dark; pressing the glowing power button is the visitor's one deliberate
-// gesture — it unlocks audio (6.1) and starts the boot
-// sequencer. Scroll stays parked (Lenis stopped) until the desktop
-// settles; ch. 0 auto-plays and never scrubs. Returning visitors
-// (localStorage) get a skip affordance.
+// Chapter 0 entry (plan-0009 §4.1, ADR-012 §5; recomposed by ADR-013 §3).
+// The film opens on a macro of the tower's power button in a dark room.
+// Pressing it is the visitor's one deliberate gesture — it unlocks audio
+// (6.1) and starts the boot sequencer. Scroll stays parked (Lenis stopped)
+// until the desktop settles; the boot auto-plays and never scrubs.
+// Returning visitors (localStorage) get a skip affordance.
+//
+// The affordance is a DOM `<button>` pinned over the projected 3D button
+// rather than a raycast on the mesh: `unlockAudio()` has to run
+// synchronously inside a real user gesture or the autoplay policy refuses
+// the AudioContext, and the canvas sits at `-z-10` so clicks never reach
+// it anyway. Keeping it in the DOM also keeps the accessible name, the
+// focus ring and Enter/Space activation for free.
+//
+// There is no scrim any more. "A dark room and one glowing button" is the
+// shot; covering it with 95 % opaque page background was the old
+// composition, from when the camera opened on the glass instead.
 
 import { useEffect, useRef, useState } from "react";
 import { useLenisRef } from "@/components/LenisProvider";
 import { startBoot, type BootController } from "@/lib/bootSequencer";
 import { unlockAudio } from "@/lib/audio";
+import { experienceState } from "@/lib/experienceState";
 
 const SEEN_KEY = "w98-intro-seen";
 
@@ -23,6 +35,7 @@ export function PowerOn() {
     () => window.localStorage.getItem(SEEN_KEY) === "1",
   );
   const boot = useRef<BootController | null>(null);
+  const ring = useRef<HTMLButtonElement>(null);
 
   // Park scroll at the top while the entry owns the frame.
   useEffect(() => {
@@ -32,6 +45,30 @@ export function PowerOn() {
     lenis?.stop();
     return () => lenis?.start();
   }, [lenisRef, stage]);
+
+  // Follow the projected button. A rAF writing `transform` straight to the
+  // element, the TitleBeats/ScrollHint pattern — the anchor changes every
+  // frame the camera moves, and re-rendering to place a ring would be
+  // sixty renders a second for one CSS property.
+  useEffect(() => {
+    if (stage === "done") return;
+    let raf = 0;
+    const tick = () => {
+      const node = ring.current;
+      if (node) {
+        const anchor = experienceState.powerAnchor;
+        node.style.transform = `translate(${anchor.x * window.innerWidth}px, ${
+          anchor.y * window.innerHeight
+        }px) translate(-50%, -50%)`;
+        // Scroll is parked, so the button cannot leave the frame before it
+        // is pressed; this is a guard, not a behaviour.
+        node.style.opacity = anchor.onScreen ? "1" : "0";
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [stage]);
 
   useEffect(() => {
     return () => boot.current?.cancel();
@@ -65,41 +102,46 @@ export function PowerOn() {
 
   if (stage === "done") return null;
 
+  const fading = stage === "booting";
+
   return (
     <div
-      className={`fixed inset-0 z-40 flex items-center justify-center transition-opacity duration-700 ${
-        stage === "booting" ? "pointer-events-none opacity-0" : "bg-bg/95"
+      className={`pointer-events-none fixed inset-0 z-40 transition-opacity duration-700 ${
+        fading ? "opacity-0" : "opacity-100"
       }`}
     >
-      <div className="flex flex-col items-center gap-6">
-        <button
-          type="button"
-          autoFocus
-          onClick={press}
-          aria-label="Press power"
-          className="group flex h-24 w-24 items-center justify-center rounded-full border border-line-strong bg-surface transition-shadow duration-500 hover:shadow-[0_0_45px_var(--color-glow)] focus-visible:shadow-[0_0_45px_var(--color-glow)]"
-        >
-          {/* Power glyph — ring + stem. */}
-          <svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
-            <g
-              fill="none"
-              stroke="var(--color-accent-bright)"
-              strokeWidth="2"
-              strokeLinecap="round"
-            >
-              <path d="M12 3v8" />
-              <path d="M6.6 6.2a8 8 0 1 0 10.8 0" />
-            </g>
-          </svg>
-        </button>
-        <p className="font-mono text-xs tracking-widest text-ink-subtle uppercase">
+      <button
+        ref={ring}
+        type="button"
+        autoFocus
+        onClick={press}
+        aria-label="Press power"
+        disabled={fading}
+        // `left-0 top-0` + a transform is what lets the rAF place it
+        // without touching layout. 96 px keeps the touch target well over
+        // the 44 px floor even though the ring reads smaller.
+        className="group pointer-events-auto absolute top-0 left-0 flex h-24 w-24 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-bright"
+      >
+        {/* The ring itself — a halo over the 3D button, not a panel. */}
+        <span
+          aria-hidden="true"
+          className="power-ring block h-14 w-14 rounded-full border-2 border-accent-bright/80"
+        />
+      </button>
+
+      {/* Instruction and the returning-visitor skip stay parked at the
+          bottom of the frame: they are page furniture, and letting them
+          ride the projected anchor would jitter text against the scene. */}
+      <div className="absolute inset-x-0 bottom-[12vh] flex flex-col items-center gap-3">
+        <p className="font-mono text-xs tracking-widest text-ink uppercase [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
           press power
         </p>
         {returning && (
           <button
             type="button"
             onClick={skip}
-            className="font-mono text-xs text-ink-muted underline underline-offset-4 hover:text-ink"
+            disabled={fading}
+            className="pointer-events-auto font-mono text-xs text-ink-muted underline underline-offset-4 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] hover:text-ink"
           >
             skip intro
           </button>

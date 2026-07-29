@@ -27,6 +27,15 @@ export const experienceState = {
   runwaySpan: 0,
   /** Mirrored from WorkstationRoot's tier detection; "pending" pre-detect. */
   fidelityTier: "pending" as FidelityTier | "pending",
+  /**
+   * The tower's power button, projected to normalized viewport coordinates
+   * (0..1 from the top-left) by `PowerButtonAnchor` each frame. `PowerOn`'s
+   * DOM button pins itself here, so the affordance sits over the 3D thing
+   * it operates at any window size without a hard-coded offset (ADR-013
+   * §3). `onScreen` is false when the button is behind the camera or well
+   * outside the frustum.
+   */
+  powerAnchor: { x: 0.5, y: 0.5, onScreen: false },
   /** Dev-only perf readout (§7.2's recorded budgets). Written by
    *  `PerfCounter` each second in development and left at zero in
    *  production, where that component never mounts. */

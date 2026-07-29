@@ -147,6 +147,38 @@
   text-shadow: 0 1px 3px color-mix(in srgb, var(--color-bg) 88%, transparent);
 }
 
+/* ---- Power-button hotspot (ADR-013 §3) ----
+   The entry affordance, pinned by PowerOn over the projected 3D button.
+   It has to read as "press this" against a dark room WITHOUT becoming a
+   UI panel sitting on the shot — the frame is a macro of a real button,
+   and a chrome widget over it would break the one thing the opening is
+   trying to say. So: a thin accent ring with a soft outward glow, breathing
+   slowly. No fill, no label, no plate. */
+.power-ring {
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--color-accent-bright) 12%, transparent),
+    0 0 22px 4px var(--color-glow),
+    inset 0 0 12px color-mix(in srgb, var(--color-accent-bright) 35%, transparent);
+  animation: power-ring-breathe 2.6s ease-in-out infinite;
+}
+
+/* Slower and shallower than a notification pulse: this is a light left on
+   in a dark room, not an alert. */
+@keyframes power-ring-breathe {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+
+.group:hover .power-ring,
+.group:focus-visible .power-ring {
+  animation-duration: 1.3s;
+  border-color: var(--color-accent-bright);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .power-ring { animation: none; opacity: 1; }
+}
+
 /* While the Workstation experience is mounted (WorkstationRoot stamps
    data-experience on <html>), the static floor and footer leave the flow so
    the runway owns the page's scroll height. The prerendered HTML always
