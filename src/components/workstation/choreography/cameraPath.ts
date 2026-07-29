@@ -6,7 +6,7 @@
 
 import { Vector3 } from "three";
 import { DESK_TOP_Y } from "../builders/desk";
-import { TOWER_SIZE } from "../builders/tower";
+import { TOWER_SIZE, POWER_BUTTON_LOCAL } from "../builders/tower";
 import { REST_POINTS } from "@/lib/chapters";
 
 /** CRT screen centre in world space (RoomScene layout + crt.ts locals). */
@@ -14,6 +14,16 @@ export const SCREEN_WORLD = new Vector3(
   -0.22,
   DESK_TOP_Y + TOWER_SIZE.height + 0.008 + 0.217,
   -0.7 + 0.131,
+);
+
+/** Tower power button in world space — the film's first frame (ADR-013
+ *  §2). Derived from the room's tower placement rather than typed, so the
+ *  opening shot, the DOM hotspot and the press all move together if the
+ *  desk is ever rearranged. */
+export const POWER_WORLD = new Vector3(
+  -0.22 + POWER_BUTTON_LOCAL.x,
+  DESK_TOP_Y + POWER_BUTTON_LOCAL.y,
+  -0.72 + POWER_BUTTON_LOCAL.z,
 );
 
 /** Square-on dock distance: screen height 0.24 fills a 50° fov frame. */
@@ -31,12 +41,23 @@ interface CameraKey {
 export const HEAD_FOCUS = new Vector3(0, 1.22, -0.06);
 const head = HEAD_FOCUS;
 
-/** Chapter beats (ADR-012 §5 table). REST_POINTS index: 1 glow, 2 man,
- *  3 room, 4 dock, 5 sign-off. */
+/** Chapter beats (ADR-012 §5 table, as amended by ADR-013 §2). REST_POINTS
+ *  index: 0 power-on, 1 glow, 2 man, 3 room, 4 dock, 5 sign-off. */
 const KEYS: CameraKey[] = [
   {
-    // Ch. 1 opens on phosphor glass — extreme close-up.
+    // Ch. 0 opens on the tower's power button — macro, ~165 mm out, the
+    // button just below frame centre and about a tenth of the frame wide.
+    // The camera sits in front of the tower and BEHIND the figure's hands,
+    // so the right forearm enters from frame right on the press and no
+    // torso or face is ever in shot (ADR-013 §4 keeps the reveal for ch. 2).
     p: 0,
+    position: new Vector3(0.03, 0.825, -0.375),
+    target: new Vector3(POWER_WORLD.x + 0.005, POWER_WORLD.y + 0.013, POWER_WORLD.z),
+  },
+  {
+    // Ch. 0 rest: pull up and left off the button onto phosphor glass —
+    // the extreme close-up that used to be the film's first frame.
+    p: REST_POINTS[0],
     position: new Vector3(SCREEN_WORLD.x, SCREEN_WORLD.y, SCREEN_WORLD.z + 0.21),
     target: SCREEN_WORLD,
   },

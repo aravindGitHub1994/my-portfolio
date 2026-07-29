@@ -8,8 +8,10 @@ import type { FidelityTier } from "@/lib/gpuTier";
 export const experienceState = {
   /** Normalized scrub progress 0..1 across the whole chapter runway. */
   scrollProgress: 0,
-  /** Index into CHAPTERS of the chapter the scrub is currently inside. */
-  chapterIndex: 1,
+  /** Index into CHAPTERS of the chapter the scrub is currently inside.
+   *  Starts at 0 — chapter 0 owns real span as of ADR-013 §2, so progress
+   *  0 genuinely is inside it. */
+  chapterIndex: 0,
   /** True while chapter 4's dock is active — scroll suspended, DOM shell
    *  live (lands in slice 4.2). */
   docked: false,

@@ -19,7 +19,13 @@ export function TitleBeats() {
       const node = el.current;
       if (node) {
         // Fade in early in ch. 1, hold, fade before the ch. 1 rest.
-        const p = experienceState.scrollProgress / REST_POINTS[1];
+        // Normalized across ch. 1's OWN span, not from progress 0: chapter
+        // 0 now owns scroll span (ADR-013 §2) and the titles must not
+        // creep in over the power-button macro. This read correct before
+        // only because REST_POINTS[0] happened to be 0.
+        const start = REST_POINTS[0];
+        const p =
+          (experienceState.scrollProgress - start) / (REST_POINTS[1] - start);
         const opacity =
           p < 0.12
             ? p / 0.12
