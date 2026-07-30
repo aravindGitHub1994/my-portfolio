@@ -204,17 +204,43 @@ Two constants that look like belt-and-braces and are not:
   mount-time shader-compile frames into the EMA leaves it near 200 ms when grace
   expires, which sheds four rungs off a machine that was never slow.
 
-`GRACE_FRAMES` and `EMA_ALPHA` are the two knobs that change ladder *pacing*
-(a device pinned at 20 fps walks all ten rungs to the offer in **70.0 s**,
-measured at slice 4.3 — it was ~64 s at nine rungs).
+`GRACE_FRAMES` and `EMA_ALPHA` pace the *garnish* rungs, and they still count
+frames — that is what makes the mount-time reseed above correct, and changing
+them to wall-clock would reintroduce the four-rung false shed.
 
-**Grace counts frames, not seconds, so the offer arrives LATER on slower
-hardware** — 70.0 s at 20 fps but **113 s at 10 fps** and 170 s at 27 fps. The
-device most in need of the static floor waits longest for it. The owner was shown
-this inversion at gate 3.3 and chose to leave it (*"leave it"*, 2026-07-30), so
-it is accepted behaviour rather than an open defect. Frame-counted grace is what
-makes the mount-time reseed above correct; changing it to wall-clock would
-reintroduce the four-rung false shed.
+**The terminal rung does not wait for the walk.** `OFFER_AFTER_MS` (30 000) is a
+deadline in milliseconds: at the first shed decision past it, every remaining
+rung is applied at once and the visitor is offered the static floor.
+
+| | offer arrives | |
+|---|---|---|
+| | **before** (walk only) | **now** (deadline) |
+| 20 fps | 70.0 s | **32.5 s** |
+| 10 fps | 113 s | **34.6 s** |
+| 27 fps | 170 s | **38.4 s** |
+
+**This is the owner's number** — gate 10.1 §8.3, *"70 seconds is too long make it
+30 seconds"* (2026-07-30). It is a separate deadline rather than a faster ladder
+because the walk **cannot** reach 30 s: `MOUNT_GRACE_FRAMES` is 12 s at 20 fps
+and the ten EMA re-crossings are 17.5 s more, so the walk costs 29.5 s with
+`GRACE_FRAMES` at *zero*. Two consequences worth knowing:
+
+- **The slow-hardware inversion is all but closed** as a side effect — a 5.9 s
+  spread across 10–27 fps against 57 s before, because a millisecond deadline does
+  not care how many frames the device drew. The inversion the owner accepted at
+  gate 3.3 is no longer worth the paragraph it used to need.
+- **On the slowest hardware the shedding is less gradual, not more.** At 10 and
+  27 fps only two garnish rungs walk before the deadline and the other eight land
+  together. That is the trade the 30 s asks for.
+
+The deadline is consulted **only at a shed decision point** — proof the device is
+slow *right now*. A device that recovers stops reaching decision points, so it is
+never offered the floor no matter how long it stays open (verified: 15 minutes at
+60 fps after a bad start, no offer). The clock alone must never trigger it.
+Shedding the remaining rungs *before* asking is what makes a **decline** safe:
+`declineFloor` ends the ladder for the session, so a visitor who says no would
+otherwise be stranded on a struggling device with the garnish still burning
+frames and no path left to shed it.
 
 The canvas is `aria-hidden`; the loader is dismissed with a failsafe timeout so
 WebGL failure never locks the page.

@@ -253,6 +253,44 @@ walk-down to the static-floor offer moves from ~64 s to roughly ~69 s. Checklist
 §11c already asks whether 64 s is too patient; this makes that question slightly more
 pressing rather than less, and it is an owner call at re-QA, not an agent guess.
 
+#### 7a. Amended (gate 10.1, session 24): the offer gets its own clock
+
+§7 left the pacing question to the owner at re-QA, and gate 10.1 §8.3 is where they
+answered it: **"70 seconds is too long make it 30 seconds."** (The question had to be
+re-asked in plain language first — the original phrasing was too technical to act on,
+which is worth remembering the next time a gate question comes back unanswered.)
+
+**The walk cannot be compressed to 30 s, so the terminal rung was decoupled from it.**
+`MOUNT_GRACE_FRAMES` costs 12 s at 20 fps and the ten EMA re-crossings another 17.5 s,
+which is 29.5 s with `GRACE_FRAMES` at *zero* — the number is unreachable by tuning
+the two pacing knobs, and buying it by shrinking the mount grace or quickening
+`EMA_ALPHA` would reintroduce the four-rung false shed those constants exist to
+prevent. So `fidelity.ts` gains **`OFFER_AFTER_MS` (30 000)**: at the first shed
+decision past that deadline, every remaining rung is applied at once and the floor is
+offered. Measured against the real module — 32.5 s at 20 fps, 34.6 s at 10, 38.4 s at
+27, against 70/113/170 before.
+
+Three properties are load-bearing and must survive any later edit:
+
+1. **The deadline is only ever consulted at a shed decision point**, which is proof
+   the device is slow *right now* (post-grace, EMA past the dead band). A device that
+   recovers stops reaching decision points and is therefore never asked, however long
+   it stays open. **The clock alone must never trigger the offer.**
+2. **The remaining rungs are shed *before* the offer, not skipped.** `declineFloor`
+   ends the ladder for the session, so a visitor who declines at 30 s would otherwise
+   be stranded on a struggling device with the garnish still running and no path left
+   to shed it. The offer stays the last resort; it just stops being last in a queue.
+3. **Garnish pacing is untouched** — frame-counted, first rung still at 13.75 s, still
+   6.25 s apart. Only the terminal rung changed.
+
+**Two knock-on effects, one welcome and one a real trade.** The slow-hardware
+inversion §7 and gate 3.3 both recorded — the device most needing the floor waiting
+longest for it — is all but closed as a side effect (5.9 s spread across 10–27 fps,
+against 57 s), because a millisecond deadline does not care how many frames were
+drawn. But on the slowest hardware the shedding is now **less** gradual: at 10 and
+27 fps only two garnish rungs walk before the deadline and the other eight land
+together. That is what asking for 30 s buys, and it was the owner's call to make.
+
 ### 8. Two cats on a cat tree, animated by the room's own idle driver
 
 A procedural cat tree (`builders/catTree.ts`) stands against the +X wall beside the

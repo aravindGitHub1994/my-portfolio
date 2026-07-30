@@ -82,10 +82,16 @@ new branch off `main` for them; **don't re-open gate 10.1**.
    390×844 only — no tablet size was ever in that set, and no real touch, iOS
    Safari dynamic viewport, or in-app webview). **Start by reproducing at iPad
    viewports before changing anything.** Highest value of the six.
-6. **Answer the rephrased §8.3 question** — how long a struggling visitor should
-   wait before being offered the still image. It is one number (today ~70 s) and
-   the checklist now asks it in plain words, with the original technical wording
-   folded underneath. No code until the owner answers.
+6. ~~**Answer the rephrased §8.3 question**~~ — **DONE, on branch
+   `ladder-pacing`.** The owner answered "70 seconds is too long make it 30
+   seconds", and it turned out not to be a one-knob change: the ladder's walk
+   costs 29.5 s at 20 fps with `GRACE_FRAMES` at *zero*, so the terminal rung got
+   its own `OFFER_AFTER_MS` deadline instead of the ladder getting faster. See
+   **ADR-013 §7a** for the three properties that must survive later edits, and
+   `docs/design-system.md` for the before/after table. Offer now lands at 32.5 s
+   (20 fps) / 34.6 s (10) / 38.4 s (27). **Branch is unmerged** — lint, build and
+   a 20-assertion simulation are green, but nobody has *sat through* the new
+   pacing on real slow hardware, which is the whole point of the number.
 
 ## Standing rules, in precedence order
 
