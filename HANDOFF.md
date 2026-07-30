@@ -15,12 +15,8 @@
 > **6.4 (the Gallery app) are all landed**, leaving only 6.5 (the painter's
 > thumbnail-grid suggestion).
 >
-> **SLICE 6.4 IS BUILT AND IS *NOT YET COMMITTED*.** Lint, `tsc` and
-> `npm run build` are green, and it is verified in a browser both in
-> `?scene=shell` and **docked on the production export** — but it sits in the
-> working tree, so `git status` is dirty and the newest commit is still
-> `ea80f00`. Committing it is the first thing to do. See "What 6.4 actually
-> did".
+> **SLICE 6.4 IS COMMITTED (`68631c0`) AND OWNER-APPROVED** — *"gallery app
+> works fine"* (2026-07-30). See "What 6.4 actually did".
 >
 > **GATE 6.2 IS ANSWERED, and it changed the set: 29 photographs → 23.** The
 > owner pulled six, renamed two ids and set the caption register; all 23
@@ -40,12 +36,13 @@
 > numbers from open threads to settled ones — see "Settled by gate 3.3"
 > under Unresolved Threads before retuning anything in the opening.
 >
-> **Owner-closed since:** 5.2's tail wag (*"the tail wag is fine"*). **Still
-> owner-unseen:** 4.3's announced boot skip, built after their ride, so the
-> entry frame they passed is not quite the one that ships — and now **the whole
-> Gallery**, whose *words* the owner set and approved at gate 6.2 but whose
-> *app* nobody has looked at. Everything else recorded here from sessions 20–21
-> was either owner-approved in the browser or proved offline; say which is which
+> **NOTHING IS OWNER-UNSEEN ANY MORE.** 5.2's tail wag (*"the tail wag is
+> fine"*), **4.3's announced boot skip** (*"4.3 — good"*) and **the Gallery
+> app plus its picture quality** (*"gallery app works fine. quality is also
+> fine."*) are all owner-approved as of 2026-07-30. That empties the
+> "owner-eyes work" list under Unresolved Threads and closes the last open
+> number on gate 6.2. Everything else recorded here from sessions 20–22 was
+> either owner-approved in the browser or proved offline; say which is which
 > when you report.
 >
 > **The dock's recorded risk was overstated** and is now spot-checked — see
@@ -73,11 +70,11 @@
   `src/lib/pictures.ts` and `src/components/win98/apps/Gallery.tsx` +
   `register54.ts` (new), and edits to `lazyApps.ts`, `shell/appDefs.ts`,
   `src/lib/win98State.ts` and `scripts/build-pictures.mjs`.
-- **Gate 6.2 ANSWERED** (owner, 2026-07-30) — the set is **23 photographs at
+- **Gate 6.2 PASSED** (owner, 2026-07-30) — the set is **23 photographs at
   3.39 MB**, two ids corrected, 23 captions drafted and three of them rewritten
-  to the owner's corrections. Record: `docs/qa/6.2-picture-review.md`. **The
-  verdict box is still unticked** — everything it asks is answered, but the mark
-  itself is the owner's.
+  to the owner's corrections. Record: `docs/qa/6.2-picture-review.md`, verdict at
+  §4 and the `q84` call at §4a. **The box is ticked and nothing on the gate is
+  open**; the owner passed it after seeing the built Gallery, not just the record.
 - Commits on the branch, newest first:
   - `6a56d7f` — **gate 6.2** (six photographs pulled, two ids renamed, 23
     captions; supersedes "all 29 ship")
@@ -1067,12 +1064,28 @@ retune them without a fresh ask. The **ear flick** was not commented on
 either way; at 14–40 s apart it is unlikely to have been seen, so treat it as
 untested rather than approved.
 
+**CLOSED by the owner (2026-07-30) — 4.3's announced skip.** *"4.3 — good."*
+The entry frame that ships is now the one the owner has approved, so the gap
+gate 3.3 left (they passed a ride whose entry frame predated the announcement)
+is closed. **The three-lines-for-returning-visitors overlap was put to them in
+the same breath and drew the same answer: leave it.** One honest caveat for
+whoever revisits it — the third line only appears once `w98-intro-seen` is set,
+so it is possible the owner approved the first-time frame and not the returning
+one. It is a cosmetic overlap either way; **do not cut the `skip intro` link
+without a fresh ask.**
+
+**CLOSED by the owner (2026-07-30) — the Gallery, and the `q84` call.**
+*"Gallery app works fine. Quality is also fine."* That is 6.4 seen and approved
+in a browser by the owner, the **gate-6.2 verdict box ticked** (PASS, recorded
+in `docs/qa/6.2-picture-review.md` §4), and the one open number on that gate
+settled: **`q84` stays**, `public/pictures/` stays at 3.39 MB, and the 23
+dimension rows in `src/lib/pictures.ts` are not rewritten. The consequence for
+8.2 is that **ADR-013 §9's 4–5 MB band moves down to match what ships** — the
+band is now the stale number, not the directory.
+
 **OPEN, and owner-eyes work rather than a defect:**
 
-- **4.3's announced skip has never been seen** — it landed after the owner's
-  ride, so the entry frame they passed is not quite the one that ships. One
-  muted line; wants a glance, not a sitting. The three-lines-for-returning-
-  visitors overlap noted above is the specific thing to look at.
+- *(Nothing. Every item that was in this list has been answered.)*
 
 **New, from earlier in this branch:**
 
@@ -1083,8 +1096,9 @@ one misleads a reader:
 
 1. **ADR-013 §9 says all 29 ship and budgets 4–5 MB.** Both are now wrong: 23
    ship, and the directory is 3.39 MB, *under* the band. Record the pull and the
-   six ids, and decide whether the band moves down or the quality moves up (the
-   `q84`/`q88` call — the owner has not answered it).
+   six ids, and **move the band down** — the owner answered the `q84`/`q88` call
+   on 2026-07-30 (*"quality is also fine"*), so the quality does not rise to fill
+   the band and the band is the number that is stale.
 2. **This file's "Decisions already made" carried "all 29 photographs ship."**
    Already struck through in place, with the reason left visible on purpose.
    Whoever writes 8.2 should decide whether the strikethrough stays as history or
