@@ -63,17 +63,19 @@ starting candidate: headless renders this scene at 2–6 fps and cannot judge a 
 `docs/qa/11.1-opening-and-fit-checklist.md`; §0 already holds everything proved
 offline, so do not re-run those.
 
-## Two things owed before gate 2.4, and not claimed
+## One thing owed before gate 2.4, and not claimed
 
-Both need a real render, and both were left because **P4 changes the backdrop they
-would be measured against**:
+**The opening as a composition.** §2.1 turns four of its properties into numbers and
+every one of them can pass on a frame that is simply bad. Gate 2.4 is the real
+acceptance, and plan-0011 risk 1 budgets for a second pass.
 
-1. **The title card's contrast over the actual chapter-0 frame** (plan-0011 §3.2).
-   ADR-014 §9 says measured, not assumed — the window shaft and now the lamp are both
-   behind that text. Screenshots at 2 fps are valid for this.
-2. **The opening as a composition.** 2.1 turns four of its properties into numbers and
-   every one of them can pass on a frame that is simply bad. Gate 2.4 is the real
-   acceptance.
+The other item that was owed — **the title card's contrast over the real backdrop** —
+is now measured and is in `11.1-…-checklist.md` §0.6. `SITE.name` clears AA on every
+pixel (worst 9.69:1). `SITE.role` clears AA on 95 % and AA-large on all of it; its
+99 sub-threshold pixels are all at x 529–541, where the line's first characters cross
+**the corner lamp's bloom** — the exact interaction ADR-014 §9 named in advance, and
+the reason the measurement waited for P4. Not retuned: the levers are the lamp's
+brightness (gate 4.3) and the card's position (gate 2.4), and both are the owner's.
 
 ## What the numbers already say, so nobody re-derives them
 
