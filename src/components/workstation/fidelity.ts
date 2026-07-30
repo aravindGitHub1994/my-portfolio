@@ -57,15 +57,46 @@ const EMA_ALPHA = 0.0065;
  *
  *  Counted in FRAMES, not seconds, because its job is to guarantee the
  *  average has enough samples to mean anything; a fixed time window would
- *  judge a very slow device on very few frames. The cost of that choice
- *  is that pacing stretches on slow hardware — a device pinned at 20 fps
- *  walks the whole ladder in ~64 s (measured, not estimated). That is
- *  deliberate at the top (garnish should not vanish the instant someone
- *  scrolls past a heavy beat) but it does mean the static-floor offer
- *  arrives about a minute in. Whether that is too patient is an ear-and-
- *  eyes question, i.e. **owner calibration at 9.2**, not an agent guess:
- *  this and GRACE_FRAMES are the two knobs that move it. */
+ *  judge a very slow device on very few frames. The cost of that choice is
+ *  that pacing stretches on slow hardware — and it used to mean the
+ *  static-floor offer stretched with it, to 70.0 s at a pinned 20 fps and
+ *  113 s at 10. **The offer no longer waits for the walk** (see
+ *  OFFER_AFTER_MS); this constant now paces only the silent garnish rungs,
+ *  which is the job the frame count was always the right unit for. */
 const GRACE_FRAMES = 90;
+
+/** How long a struggling visitor may be left before they are OFFERED the
+ *  static floor — **the owner's number, gate 10.1 §8.3: "70 seconds is too
+ *  long make it 30 seconds"** (2026-07-30).
+ *
+ *  It is a separate deadline rather than a faster ladder because the walk
+ *  cannot be compressed to 30 s without gutting the two protections above
+ *  it: MOUNT_GRACE_FRAMES is 12 s at 20 fps and the ten EMA re-crossings
+ *  are another 17.5 s, so the walk costs 29.5 s with GRACE_FRAMES at ZERO.
+ *  Reaching 30 s by shrinking the mount grace and quickening EMA_ALPHA
+ *  would re-introduce exactly what the reseed comment below was written
+ *  for — shedding rungs off a machine that was only compiling shaders.
+ *
+ *  So the garnish keeps its careful pacing and the terminal rung gets a
+ *  clock. Simulated against the real module after the change: the offer
+ *  arrives at **32.5 s at a pinned 20 fps, 34.6 s at 10 fps and 38.4 s at
+ *  27** — the first shed decision past the deadline, which is why it
+ *  overshoots slightly and why it is "about 30 s", not exactly 30. **It
+ *  also all but closes the slow-hardware inversion** the owner disliked (a
+ *  5.9 s spread across 10–27 fps, against 57 s before), because a deadline
+ *  in milliseconds does not care how many frames the device drew.
+ *
+ *  Note what the visitor gets at 10 and 27 fps: only 2 garnish rungs walk
+ *  before the deadline, then the remaining 8 land at once. That is the
+ *  intended trade — the owner asked to stop making people wait, and on the
+ *  slowest hardware that means less gradual shedding, not more.
+ *
+ *  Only ever consulted at a shed decision point, and that is load-bearing:
+ *  a decision point is proof the device is slow RIGHT NOW (post-grace, EMA
+ *  past the dead band). A device that recovers stops reaching them, so it
+ *  can sit at a shed rung for ten minutes and never be asked. The clock
+ *  alone must never trigger the offer. */
+const OFFER_AFTER_MS = 30_000;
 
 /** Longer grace at mount. The journey's first seconds are shader
  *  compilation, texture bakes and the boot sequence; that is the most
@@ -84,6 +115,12 @@ export interface FidelityState {
   /** EMA of frame time, ms. -1 until the first sample. */
   emaMs: number;
   grace: number;
+  /** Frame time actually spent since mount, ms — the OFFER_AFTER_MS budget.
+   *  A sum of accepted deltas, NOT `performance.now()` since mount, so a
+   *  backgrounded tab or an alt-tab cannot burn the visitor's patience
+   *  while nothing is being drawn (the STALL_MS guard drops those deltas
+   *  before they get here). */
+  renderedMs: number;
   /** Rung "drsFloor" reached — `DynamicResolution` pins to DRS_MIN. */
   drsPinned: boolean;
   /** Rung "staticFloor" reached — the prompt is showing. */
@@ -99,6 +136,7 @@ export function createFidelityState(): FidelityState {
     next: 0,
     emaMs: -1,
     grace: MOUNT_GRACE_FRAMES,
+    renderedMs: 0,
     drsPinned: false,
     offering: false,
     declined: false,
@@ -144,10 +182,11 @@ export function shedRung(state: FidelityState, rung: Rung): void {
 }
 
 /**
- * Fold one frame into the watchdog, shedding at most one rung per call.
- * Returns the rung shed, or null. The caller does not need to apply
- * anything — a rung is applied here so there is no way to observe a
- * decision that was never enacted.
+ * Fold one frame into the watchdog. Returns the rung shed, or null — and
+ * `"staticFloor"` when the OFFER_AFTER_MS deadline fired, which is the one
+ * call that applies MORE than one rung (see below). The caller does not
+ * need to apply anything: a rung is applied here so there is no way to
+ * observe a decision that was never enacted.
  */
 export function sampleFidelity(
   state: FidelityState,
@@ -159,6 +198,11 @@ export function sampleFidelity(
     return null;
   }
   if (deltaMs <= 0 || deltaMs > STALL_MS) return null;
+
+  // Counted for every accepted frame, graced or not: the deadline measures
+  // how long the VISITOR has been sitting there, and the mount grace is
+  // twelve of those seconds at 20 fps.
+  state.renderedMs += deltaMs;
 
   // Grace DISCARDS samples rather than merely suppressing action, and
   // reseeds the average to the budget on the way out. Both halves matter,
@@ -186,6 +230,25 @@ export function sampleFidelity(
   state.emaMs += EMA_ALPHA * (deltaMs - state.emaMs);
 
   if (state.emaMs <= floorMs * SLOW_RATIO) return null;
+
+  // Out of patience. Spend every remaining cheap lever in one go, THEN
+  // ask — the offer stays the last resort, exactly as the header promises,
+  // it just stops being the last thing in a queue.
+  //
+  // Shedding the rest rather than jumping straight to the offer is what
+  // makes a DECLINE safe: `declineFloor` ends the ladder for the session,
+  // so a visitor who says no to the floor at 30 s would otherwise be left
+  // on a struggling device with seven rungs of garnish still burning frames
+  // and no path left to shed them.
+  if (state.renderedMs >= OFFER_AFTER_MS) {
+    let rung: Rung = LADDER[state.next];
+    while (state.next < LADDER.length) {
+      rung = LADDER[state.next];
+      state.next++;
+      shedRung(state, rung);
+    }
+    return rung;
+  }
 
   const rung = LADDER[state.next];
   state.next++;
