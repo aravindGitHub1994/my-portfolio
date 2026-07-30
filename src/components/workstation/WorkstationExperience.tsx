@@ -8,7 +8,6 @@ import { Choreography } from "./choreography/Choreography";
 import { WorkstationCanvas } from "./WorkstationCanvas";
 import { ExperienceBoundary } from "./ExperienceBoundary";
 import { PowerOn } from "./PowerOn";
-import { TitleBeats } from "./TitleBeats";
 import { ScrollHint } from "./ScrollHint";
 import { SignOff } from "./SignOff";
 import { DockSwap } from "./crt/DockSwap";
@@ -113,9 +112,10 @@ export default function WorkstationExperience() {
         onContextLost={() => setFailed(true)}
       />
       <Choreography runway={runway} />
-      {/* Ch. 0 entry gesture + ch. 1 title beats (4.1). */}
+      {/* Ch. 0 entry gesture, and — since ADR-014 §9 — the title card
+          that used to be `TitleBeats` playing across chapter 1. Chapter 1
+          now has no DOM overlay at all; its job is the glow. */}
       <PowerOn />
-      <TitleBeats />
       {/* Says "scroll" wherever the journey has come to a stop (9.2). */}
       <ScrollHint />
       {/* Ch. 4 painter→DOM swap at the dock rest point (4.2). */}

@@ -8,8 +8,10 @@
 // Pressing it is the visitor's one deliberate gesture — it unlocks audio
 // (6.1) and starts the boot sequencer. Scroll stays parked (Lenis stopped)
 // until the desktop settles; the boot auto-plays and never scrubs.
-// Returning visitors (localStorage) get a skip affordance, and as of gate
-// 3.3 §4.3 every visitor is *told* that any key skips the intro.
+// Every visitor is *told* how to skip (gate 3.3 §4.3), and as of ADR-014 §6
+// what they are told depends on their pointer class: a coarse pointer has
+// no key to press, so it is offered a tap and the pointer skip is armed at
+// `idle` for it. The returning visitor's `skip intro` link is gone.
 //
 // The affordance is a DOM `<button>` pinned over the projected 3D button
 // rather than a raycast on the mesh: `unlockAudio()` has to run
@@ -36,6 +38,8 @@ import { BOOT_TOTAL_MIN_MS, SPLASH_MIN_MS } from "@/lib/bootScript";
 import { unlockAudio } from "@/lib/audio";
 import { experienceState } from "@/lib/experienceState";
 import { REST_POINTS } from "@/lib/chapters";
+import { SITE } from "@/lib/nav";
+import { coarsePointer } from "@/lib/shellLayout";
 import {
   armPowerPress,
   attachPowerContact,
@@ -46,6 +50,12 @@ import {
   skipPowerPress,
 } from "@/lib/powerPress";
 
+/** Marks that a visitor has been through the opening. **Write-only as of
+ *  ADR-014 §6** — the returning visitor's `skip intro` link was the only
+ *  thing that ever branched on it, and the owner asked for that link gone
+ *  (gate 10.1 §1). Kept because it is the page's only record that the
+ *  intro has been seen, and because every QA checklist in `docs/qa/` opens
+ *  by clearing it; clearing it now changes nothing, which 7.1 records. */
 const SEEN_KEY = "w98-intro-seen";
 
 /** Liveness net. The press machine is ticked from inside the Canvas, so a
@@ -90,14 +100,45 @@ const PAN_HOLD_MS = POST_MS * 0.11;
 /** Travel time, seconds. ~1.2 s. */
 const PAN_DURATION_S = (POST_MS * 0.44) / 1000;
 
+// --- The title card ---------------------------------------------------
+//
+// ADR-014 §9 moved the name and role off chapter 1 (where `TitleBeats`
+// played them across a scrub) onto the entry frame, and made the name
+// outlive the controls: the ring and the copy go with the overlay's
+// existing 700 ms fade, the card holds a beat and dissolves over the first
+// POST lines.
+//
+// **The dwell is bounded by the splash, not by taste.** §3a's objection was
+// to text sitting on top of the POST *and the splash*; what makes this a
+// narrowing rather than a reversal is that the splash stays uncovered. So
+// the hard constraint is `TITLE_HOLD_MS + TITLE_FADE_MS <= POST_MS` —
+// stated against the POST phase alone, deliberately ignoring the ~0.55 s
+// of arm reach between the press and the boot actually starting. That
+// makes the guarantee independent of how long the reach takes, including
+// the `PRESS_WATCHDOG_MS` path where contact is forced 3 s late.
+//
+// Measured from the press, at POST_MS = 2740 ms: controls gone at 0.70 s,
+// contact ~0.55 s, pan 0.85 → 2.06 s, card gone at 2.11 s, splash 3.29 s.
+// That leaves 1.18 s of headroom. If the owner wants the name to hold
+// longer at gate 2.4, that headroom is the honest lever — plan-0011 risk 6
+// says covering the splash is not.
+//
+// Fractions of POST_MS, matching PAN_HOLD_MS and PAN_DURATION_S, so the
+// card keeps its proportions if `bootScript` ever grows a line.
+const TITLE_HOLD_MS = POST_MS * 0.22;
+const TITLE_FADE_MS = POST_MS * 0.55;
+
 export function PowerOn() {
   const lenisRef = useLenisRef();
   const [stage, setStage] = useState<"idle" | "booting" | "done">("idle");
-  // ssr:false tree — localStorage is safe in the lazy initializer (the
-  // same pattern as WorkstationExperience's detectTier).
-  const [returning] = useState(
-    () => window.localStorage.getItem(SEEN_KEY) === "1",
-  );
+  // Pointer class decides both the announced copy and whether the pointer
+  // skip is live at `idle` (ADR-014 §6). Read once in a lazy initializer,
+  // the same mechanism `ScrollHint.tsx:57` uses for the same branch: this
+  // whole tree is behind `WorkstationRoot`'s `ssr: false` import, so there
+  // is no hydration pass to mismatch, and reading it in an effect instead
+  // would paint the wrong line of copy first and swap it — a flash of
+  // "any key skips the intro" on a device with no keys.
+  const [coarse] = useState(coarsePointer);
   const boot = useRef<BootController | null>(null);
   const ring = useRef<HTMLButtonElement>(null);
   const watchdog = useRef(0);
@@ -208,8 +249,8 @@ export function PowerOn() {
 
   const skip = () => {
     window.localStorage.setItem(SEEN_KEY, "1");
-    // Its own gesture (returning visitors can click skip without ever
-    // pressing power) — the shell still needs audio. Idempotent.
+    // Its own gesture — a skip can happen without power ever being
+    // pressed, and the shell still needs audio. Idempotent.
     unlockAudio();
     window.clearTimeout(watchdog.current);
     window.clearTimeout(pan.current);
@@ -229,9 +270,8 @@ export function PowerOn() {
   };
 
   // Any key or click skips the boot (owner's call, session 18 — plan-0010
-  // §2.3 lists the path but it had never existed; the only skip was the
-  // returning visitor's link, and that is disabled the moment the overlay
-  // fades).
+  // §2.3 lists the path but it had never existed; the only skip at the time
+  // was a returning visitor's link, which ADR-014 §6 has since deleted).
   //
   // **It no longer hides.** Gate 3.3 §4.3 asked whether the hatch should
   // announce itself and the owner said yes, on the entry frame — so the
@@ -241,9 +281,9 @@ export function PowerOn() {
   //
   // Announcing it there is what forces the key path to be live at `idle`
   // too: copy that promises a skip has to be true where it is read. So the
-  // keys are armed from the moment the entry mounts, and the same `skip()`
-  // the returning visitor's link calls does the work — a first-time key
-  // skip is the never-pressed path that link already exercised.
+  // keys are armed from the moment the entry mounts. The same principle,
+  // applied to a device with no keys, is what arms the POINTER at `idle`
+  // for a coarse pointer — see the effect below.
   const skipRef = useRef<() => void>(() => {});
   // Assigned in an effect, not during render — `skip` closes over this
   // render's `stage`, and the compiler rules forbid mutating during render.
@@ -273,13 +313,24 @@ export function PowerOn() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [stage]);
-  // The pointer half stays boot-only, and stays unannounced. Before the
-  // press the frame is "a dark room and one glowing button" and the ring is
-  // the only thing in it that answers a pointer; a stray click on the
-  // backdrop losing the whole opening would be a worse trade than the one
-  // §4.3 asked for. Only the announced key path is live at `idle`.
+  // **On a FINE pointer the pointer half stays boot-only, and stays
+  // unannounced.** Before the press the frame is "a dark room and one
+  // glowing button" and the ring is the only thing in it that answers a
+  // pointer; a stray click on the backdrop losing the whole opening would
+  // be a worse trade than the one §4.3 asked for. Only the announced key
+  // path is live at `idle`. That reasoning is unchanged and is now
+  // explicitly scoped to a mouse.
+  //
+  // **On a COARSE pointer it inverts (ADR-014 §6).** There is no key, so
+  // the announced copy above promises something the visitor cannot do, and
+  // the returning visitor's link — the element the owner asked to delete —
+  // was their only way out of the entry frame. §3a's own principle, *copy
+  // that promises a skip has to be true where it is read*, is what forces
+  // the pointer to be armed at `idle` here. So §3a is preserved where it
+  // was aimed and narrowed where it does not apply.
   useEffect(() => {
-    if (stage !== "booting") return;
+    if (stage === "done") return;
+    if (stage === "idle" && !coarse) return;
     const onPointer = (e: PointerEvent) => {
       // The mute toggle is reachable throughout the boot by design; a
       // click on it is that control's, not a skip.
@@ -289,18 +340,59 @@ export function PowerOn() {
     };
     window.addEventListener("pointerdown", onPointer);
     return () => window.removeEventListener("pointerdown", onPointer);
-  }, [stage]);
+  }, [stage, coarse]);
 
   if (stage === "done") return null;
 
   const fading = stage === "booting";
 
   return (
-    <div
-      className={`pointer-events-none fixed inset-0 z-40 transition-opacity duration-700 ${
-        fading ? "opacity-0" : "opacity-100"
-      }`}
-    >
+    // **The root carries no transition of its own (ADR-014 §9).** It used
+    // to, and one `transition-opacity` on a common ancestor cannot give two
+    // children different durations — which is exactly what the title card
+    // needs. Anything reading this element's computed opacity to decide
+    // whether the entry is up is now wrong; read `stage` or the children.
+    <div className="pointer-events-none fixed inset-0 z-40">
+      {/* The title card. Top of frame because the ring does NOT sit still:
+          it tracks the projected 3D button, which after ADR-014 §1's
+          recomposition lands mid-frame (NDC y -0.085 landscape, -0.052
+          portrait — i.e. 53-54 % down). Top is the one band no framing puts
+          it in. `aria-hidden`, following `TitleBeats`' precedent and
+          ADR-012 §9: the canvas is cinematic, the content surface is the
+          DOM floor. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 top-[10vh] px-6 text-center text-balance"
+        style={{
+          opacity: fading ? 0 : 1,
+          transitionProperty: "opacity",
+          // Linear, not an ease: this is a film dissolve, and an ease-out
+          // would spend most of the budget near-invisible.
+          transitionTimingFunction: "linear",
+          transitionDuration: `${TITLE_FADE_MS}ms`,
+          transitionDelay: fading ? `${TITLE_HOLD_MS}ms` : "0ms",
+        }}
+      >
+        <p className="font-w98-mono text-3xl text-ink [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] md:text-5xl">
+          {SITE.name}
+        </p>
+        {/* 11 px, not `text-xs`, below `sm`: at `tracking-widest` this line
+            is 39 characters, which is 328 px at 12 px against the 312 px a
+            360 px viewport leaves after `px-6` — a five-per-cent overflow
+            and therefore a two-word orphan on line two. 11 px brings it to
+            300 px and it sits on one line. `text-balance` stays as the net
+            for anything narrower. */}
+        <p className="mt-2 font-mono text-[11px] tracking-widest text-ink-muted uppercase [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] sm:text-sm">
+          {SITE.role}
+        </p>
+      </div>
+
+      {/* The controls keep the overlay's original 700 ms fade. */}
+      <div
+        className={`absolute inset-0 transition-opacity duration-700 ${
+          fading ? "opacity-0" : "opacity-100"
+        }`}
+      >
       <button
         ref={ring}
         type="button"
@@ -320,34 +412,26 @@ export function PowerOn() {
         />
       </button>
 
-      {/* Instruction and the returning-visitor skip stay parked at the
-          bottom of the frame: they are page furniture, and letting them
-          ride the projected anchor would jitter text against the scene. */}
-      <div className="absolute inset-x-0 bottom-[12vh] flex flex-col items-center gap-3">
-        {/* The instruction and its escape hatch are one block, tighter than
-            the gap to the returning visitor's link: one thing to do, one
-            way out of it. */}
+      {/* The instruction and its escape hatch stay parked at the bottom of
+          the frame: they are page furniture, and letting them ride the
+          projected anchor would jitter text against the scene. One thing to
+          do, one way out of it — two lines, and as of ADR-014 §6 that is
+          all, for every visitor and every pointer class. */}
+      <div className="absolute inset-x-0 bottom-[12vh] flex flex-col items-center">
         <div className="flex flex-col items-center gap-1.5">
           <p className="font-mono text-xs tracking-widest text-ink uppercase [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
             press power
           </p>
           {/* Gate 3.3 §4.3 — the owner's call: the skip announces itself,
               here on the entry frame rather than over the boot. Muted and
-              lower-case so it reads as the way out, not as the invitation. */}
+              lower-case so it reads as the way out, not as the invitation.
+              ADR-014 §6: the promise has to be true where it is read, and
+              a touch visitor has no key. */}
           <p className="font-mono text-xs text-ink-muted [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
-            any key skips the intro
+            {coarse ? "tap anywhere to skip" : "any key skips the intro"}
           </p>
         </div>
-        {returning && (
-          <button
-            type="button"
-            onClick={skip}
-            disabled={fading}
-            className="pointer-events-auto font-mono text-xs text-ink-muted underline underline-offset-4 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] hover:text-ink"
-          >
-            skip intro
-          </button>
-        )}
+      </div>
       </div>
     </div>
   );

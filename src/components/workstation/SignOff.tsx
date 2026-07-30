@@ -4,15 +4,15 @@
 // rest point. After the shutdown beat the room goes dark and this DOM
 // overlay is what's left — email, LinkedIn, GitHub, resume.
 //
-// Unlike TitleBeats this is NOT decorative: while the experience is
-// mounted the static floor is display:none (globals.css), so these are
-// the only contact affordances in the tab order. It therefore stays
+// Unlike the entry frame's title card this is NOT decorative: while the
+// experience is mounted the static floor is display:none (globals.css),
+// so these are the only contact affordances in the tab order. It stays
 // semantic (a real <nav> of real links) and must be reachable by
 // keyboard scrub alone — arrow/PageDown stepping lands on chapter 5's
 // rest point, and Tab picks the links up from there.
 //
 // The rAF writes opacity straight to the node (experienceState, never
-// React state — the TitleBeats pattern), and flips `visibility` in the
+// React state — the ScrollHint pattern), and flips `visibility` in the
 // same pass: while the layer is invisible it must also be untabbable,
 // or a keyboard visitor in chapter 1 tabs into an unseen contact card.
 
