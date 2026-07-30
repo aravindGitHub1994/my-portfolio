@@ -182,6 +182,12 @@ Two things to read this with in mind:
 
 ## QA gotchas (accumulated, all still true)
 
+- **A viewport matrix is only as wide as its widest entry, and ours had a hole.**
+  Every "mobile" claim on this scene was made at 360×640 and 390×844 — two phone
+  portraits and nothing else. Gate 10.1 §8.2 found the scene **does not fit an
+  iPad**, which no run had ever loaded. Passing two phone sizes is not evidence
+  about tablets, landscape, or anything between phone and desktop; when a check
+  says "responsive", read which sizes it actually opened.
 - Floor-page DOM coexists under the shell: **scope selectors to the window
   `section[aria-label=...]`** — bare `find text` collides. The floor is
   `display:none` but still in the accessibility tree, so `snapshot -i` shows
