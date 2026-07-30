@@ -55,7 +55,7 @@ const LEAK_CHAPTER = 2;
 /**
  * Minimum spacing between clacks, in seconds.
  *
- * A backstop, not the rhythm. The rhythm is the rig's: session 19 slowed
+ * A backstop, not the rhythm. The rhythm is the rig's: session 23 slowed
  * the eight fingers to a ~0.97 s mean interval (~8 taps/s) and gave the
  * keyboard bursts and pauses, because thinning a continuous stream *here*
  * can only ever produce a continuous stream — and heavy thinning makes it a

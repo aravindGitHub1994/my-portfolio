@@ -73,7 +73,7 @@ const SCROLL_QUIET_MS = 350;
  * undocks whether or not it followed a pause.
  *
  * The pause rule cannot be the only rule, and the way it fails was reported
- * from the *backward* pass (session 19). A visitor returning from SIGN-OFF
+ * from the *backward* pass (session 23). A visitor returning from SIGN-OFF
  * is travelling, not arriving: they cross ch. 4, the dock latches them, and
  * they carry on scrolling — so every event they produce lands within
  * SCROLL_QUIET_MS of the one before it, every one of them reads as the

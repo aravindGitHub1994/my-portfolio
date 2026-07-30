@@ -90,7 +90,7 @@ const FIRST_GAP = [18, 38] as const;
 const GAP = [11, 30] as const;
 
 /**
- * Typing comes in bursts (session 19). Before this the eight fingers tapped
+ * Typing comes in bursts (session 23). Before this the eight fingers tapped
  * without pause for the entire ride — the hands never stopped, so 6.2's
  * clacks never stopped either, and the owner heard a machine gun rather
  * than someone working.
