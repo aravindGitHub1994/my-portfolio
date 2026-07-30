@@ -4,9 +4,13 @@
 //
 // **The brief was "slow".** These are two content animals on a cat tree at
 // dusk, seen from across the room in chapter 3; the point is that the room
-// is alive, not that anything is happening. So the fastest term in the whole
-// driver has a ~12 s period, and the visible tip travel over a full sweep is
-// a couple of centimetres — about twenty pixels at the chapter-3 framing.
+// is alive, not that anything is happening. The visible tip travel over a
+// full sweep is a couple of centimetres — about twenty pixels at the
+// chapter-3 framing.
+//
+// **Slow, but the owner asked for a smidge faster** (gate 10.1 §4.3,
+// ADR-014 §8), and `WAG_RATE` below is that smidge. The fastest term in the
+// driver had a ~10.3 s period at rate 1.0; at 1.2 it is ~8.6 s.
 //
 // **Why sines and not a scheduler.** 4.1's behaviour scheduler exists because
 // a person's arm has to *commit* — it is at the keyboard or at the mug, and
@@ -56,6 +60,23 @@ const FLICK_GAP_SPAN = 26;
  *  make the two tails beat against each other on a period you can see. */
 const CAT_B_RATE = 0.847;
 
+/** Gate 10.1 §4.3 — the owner asked for "a smidge" faster (ADR-014 §8).
+ *
+ *  **One multiplier, applied to `t` and nothing else.** All seven
+ *  frequencies scale identically, so every ratio between them — and
+ *  `CAT_B_RATE`'s 0.847 — is preserved exactly. Editing the seven literals
+ *  individually risks landing two of them on a rational ratio and putting a
+ *  visible beat into a driver whose whole design is that it has no period.
+ *
+ *  It must scale `t`, **not `elapsed`**: `elapsed` is also the ear-flick
+ *  clock below, and `FLICK_GAP_MIN`/`FLICK_GAP_SPAN` are specified in real
+ *  seconds.
+ *
+ *  A starting candidate, not a chosen value — headless renders this scene
+ *  at 2–6 fps and cannot judge a cadence, so gate 6.2 is where the number
+ *  is settled by the owner's eyes. */
+const WAG_RATE = 1.2;
+
 interface Bones {
   rig: CatRig;
   /** Authored rest rotations. Every write below is rest + offset, because
@@ -99,7 +120,7 @@ export function createCatIdle(rigs: CatRig[], seed: number): CatIdleUpdate {
 
   return (elapsed) => {
     for (const b of bones) {
-      const t = elapsed * b.rate + b.phase;
+      const t = elapsed * b.rate * WAG_RATE + b.phase;
 
       // Side to side — the sweep, and the only term big enough to notice.
       b.rig.tail.rotation.y =

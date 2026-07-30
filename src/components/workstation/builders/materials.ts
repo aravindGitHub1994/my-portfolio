@@ -39,7 +39,15 @@ export interface RoomMaterials {
   cardboard: MeshStandardMaterial;
   /** CRT glass — the distinct slot slice 3.1 will target. */
   screen: MeshStandardMaterial;
+  /** **DoubleSide** (ADR-014 §7): `buildMug` opens the body so the coffee
+   *  can be seen, and one surface then has to serve as both the outside and
+   *  the inner wall. Only the mug uses this slot. */
   mug: MeshStandardMaterial;
+  /** The coffee itself. Its own slot because `materials.rubber` — what the
+   *  disc wore while it was sealed in — is roughness 0.95 and reads as
+   *  black rubber once visible, and is shared with the cables, the chair,
+   *  the tower feet and the mouse pad, so it cannot be retuned in place. */
+  coffee: MeshStandardMaterial;
   poster: MeshStandardMaterial;
   windowDusk: MeshBasicMaterial;
   cdCase: MeshStandardMaterial;
@@ -302,7 +310,14 @@ export function createRoomMaterials(seed: number): RoomMaterials {
     paper: new MeshStandardMaterial({ map: paperTex, roughness: 0.9 }),
     cardboard: new MeshStandardMaterial({ color: "#e4dfd2", roughness: 0.9 }),
     screen: new MeshStandardMaterial({ color: "#0b1512", roughness: 0.35 }),
-    mug: new MeshStandardMaterial({ map: mugTex, roughness: 0.4 }),
+    mug: new MeshStandardMaterial({
+      map: mugTex,
+      roughness: 0.4,
+      side: DoubleSide,
+    }),
+    // Dark warm brown, and glossy enough to catch the CRT cast — which is
+    // the only reason the surface reads as liquid rather than as a hole.
+    coffee: new MeshStandardMaterial({ color: "#32200f", roughness: 0.3 }),
     poster: new MeshStandardMaterial({ map: posterTex, roughness: 0.85 }),
     windowDusk: new MeshBasicMaterial({ map: windowTex }),
     cdCase: new MeshStandardMaterial({ color: "#2b2e35", roughness: 0.45 }),
@@ -356,6 +371,7 @@ export function createRoomMaterials(seed: number): RoomMaterials {
         materials.cardboard,
         materials.screen,
         materials.mug,
+        materials.coffee,
         materials.poster,
         materials.windowDusk,
         materials.cdCase,

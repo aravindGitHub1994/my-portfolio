@@ -39,12 +39,20 @@ import {
 import { mulberry32 } from "@/lib/prng";
 import { effectsState } from "./sheddable";
 import { propHandles } from "./propHandles";
+import { STEAM_SURFACE_R, STEAM_SURFACE_Y } from "../builders/mug";
 
-/** `buildMug`: the coffee disc sits at local y 0.088 with radius 0.036.
- *  Emit a hair above it and just inside it, so wisps clear the liquid
- *  without clipping the mug wall on the way out. */
-const SURFACE_Y = 0.092;
-const SURFACE_R = 0.03;
+/** Where the wisps are born, in mug-local space: a hair above the liquid
+ *  and just inside it, so they clear the surface without clipping the wall
+ *  on the way out.
+ *
+ *  **Imported, not quoted.** These used to be two hand-written literals
+ *  copied out of `buildMug`, and they drifted: `SURFACE_Y = 0.092` sat
+ *  above the coffee disc and *below* the body's solid top cap, so every
+ *  wisp was born inside a sealed mug and climbed out through the lid — the
+ *  "steam comes out of a white top surface" the owner reported (ADR-014
+ *  §7). The mug is open now and it owns both numbers. */
+const SURFACE_Y = STEAM_SURFACE_Y;
+const SURFACE_R = STEAM_SURFACE_R;
 
 /** Seconds a wisp lives. Long enough to climb clear of the mug, short
  *  enough that a lift leaves a trail rather than a rope. */
