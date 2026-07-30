@@ -1,7 +1,10 @@
 "use client";
 
-// Chapter 0 entry (plan-0009 §4.1, ADR-012 §5; recomposed by ADR-013 §3).
-// The film opens on a macro of the tower's power button in a dark room.
+// Chapter 0 entry (plan-0009 §4.1, ADR-012 §5; recomposed by ADR-013 §3
+// and again by ADR-014 §1). The film opens high and wide from behind the
+// figure's right, on a dark room with the machine still off — the button
+// is a small thing across the room, not a macro, and the ring below is
+// what makes it findable.
 // Pressing it is the visitor's one deliberate gesture — it unlocks audio
 // (6.1) and starts the boot sequencer. Scroll stays parked (Lenis stopped)
 // until the desktop settles; the boot auto-plays and never scrubs.
@@ -145,8 +148,8 @@ export function PowerOn() {
     return resetPowerPress;
   }, []);
 
-  /** Where chapter 0 comes to rest, in page pixels — the phosphor close-up
-   *  the boot pan is heading for. Read from the runway geometry
+  /** Where chapter 0 comes to rest, in page pixels — the monitor medium the
+   *  boot pan is heading for (ADR-014 §2). Read from the runway geometry
    *  `Choreography` publishes (the DockSwap pattern) rather than re-derived,
    *  so the two can never disagree about the mapping. */
   const chapterZeroPx = () => {

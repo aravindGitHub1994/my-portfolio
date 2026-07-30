@@ -65,24 +65,83 @@ export function setViewportAspect(aspect: number): void {
 export const HEAD_FOCUS = new Vector3(0, 1.22, -0.06);
 const head = HEAD_FOCUS;
 
-/** Chapter beats (ADR-012 §5 table, as amended by ADR-013 §2). REST_POINTS
+/** Chapter beats (ADR-012 §5 table, as amended by ADR-013 §2 and then by
+ *  ADR-014 §1/§2, which recomposed chapter 0 wholesale). REST_POINTS
  *  index: 0 power-on, 1 glow, 2 man, 3 room, 4 dock, 5 sign-off. */
 const KEYS: CameraKey[] = [
   {
-    // Ch. 0 opens on the tower's power button — macro, ~165 mm out, the
-    // button just below frame centre and about a tenth of the frame wide.
-    // The camera sits in front of the tower and BEHIND the figure's hands,
-    // so the right forearm enters from frame right on the press and no
-    // torso or face is ever in shot (ADR-013 §4 keeps the reveal for ch. 2).
+    // Ch. 0 opens high and wide from BEHIND AND TO THE RIGHT of the figure
+    // (ADR-014 §1): the whole seated figure small in frame with the desk,
+    // the tower, the CRT and the room around it, the machine still off.
+    //
+    // This replaced a macro ~165 mm off the power button. The macro's
+    // mechanism was the near plane, not the hand: R3F's default near is
+    // 0.1 m, the right forearm swings through that on the reach, and a
+    // `FrontSide` capsule cut open at the lens shows no backface at all —
+    // the visitor looked inside the figure. From here the nearest thing in
+    // shot along the whole chapter is 0.199 m and the reach never comes
+    // within the near plane on any of its 143 frames.
+    //
+    // **The constraint that does not show in these numbers is occlusion.**
+    // `PowerButtonAnchor` is projection-only — it tests `v.z < 1` and a
+    // screen-space margin, with no depth test — so an occluded button
+    // leaves `PowerOn`'s glowing ring floating over the figure with
+    // nothing behind it, and the ring is the visitor's only affordance.
+    // From directly behind, the torso and the right shoulder occlude the
+    // tower: 438 of 972 swept camera positions were blocked by
+    // `chest` or `shoulderPivotR`. **That is why the shot is behind-RIGHT
+    // and high, and the reason cannot be recovered from the coordinates.**
+    // Any change here must re-check that the sight line to POWER_WORLD
+    // still lands on the `towerPower` mesh first.
+    //
+    // Composition at 1920×1080: the figure 21 % × 63 % of frame and
+    // uncropped at every viewport in the gate matrix, the desk 34 % × 48 %,
+    // the ring at NDC (0.00, -0.08). Chapter 3's wide is front-LEFT at
+    // dusk, so the two room shots are opposite sides of the room and
+    // different moments (ADR-014 Consequences).
     p: 0,
-    position: new Vector3(0.03, 0.825, -0.375),
-    target: new Vector3(POWER_WORLD.x + 0.005, POWER_WORLD.y + 0.013, POWER_WORLD.z),
+    position: new Vector3(1.6, 2.15, 1.8),
+    target: new Vector3(0, 0.95, -0.45),
   },
   {
-    // Ch. 0 rest: pull up and left off the button onto phosphor glass —
-    // the extreme close-up that used to be the film's first frame.
+    // Ch. 0 arc: bow out to the figure's left before turning in.
+    //
+    // **Required, not decorative.** `sampleCameraPath` lerps straight lines
+    // between keys, and the straight run from the opening to the rest
+    // passes through the figure: swept over the whole opening grid its best
+    // clearance against the upper-body keep-out column is 0.082 m and its
+    // median is 0.024 m. This is the same failure the ch. 2→3 arc key
+    // exists for. With this key the whole chapter clears by 0.146 m.
+    //
+    // `p` sits at 83 % because that is the leg's share of the path length
+    // (2.472 m of 2.979 m) — the two legs then run at the same speed
+    // instead of the camera sprinting one and crawling the other.
+    p: REST_POINTS[0] * 0.83,
+    position: new Vector3(-0.3, 1.25, 0.5),
+    target: new Vector3(-0.11, 1.02, -0.51),
+  },
+  {
+    // Ch. 0 rest: a medium on the monitor — the CRT sizeable with its
+    // bezel, not filling the frame (ADR-014 §2). The extreme close-up on
+    // phosphor that used to sit here is cut from the film entirely.
+    //
+    // **The side is forced and the distance is measured.** The figure sits
+    // square-on in front of the CRT, so the space a square-on medium wants
+    // is the space the figure occupies; the camera can only clear it by
+    // going laterally wide, over the top, or by staying inside 0.17 m of
+    // the glass — which is the close-up being cut. Because the CRT sits at
+    // x -0.22 while the figure sits at x 0, the left is the near side: best
+    // sight-line obliquity on the glass is 10° from the left against 37°
+    // from centre and 46° from the right.
+    //
+    // The distance answers to POST legibility, not to taste (ADR-013 §2a
+    // says the lines are read, not merely heard). The painter draws 13 px
+    // Courier on a 640×480 canvas, so a POST line's cap height in device px
+    // follows from the screen's projected height: 7.0 px here at 1920×1080
+    // against 4.5 px at chapter 1's rest, which is the floor. It clears
+    // that floor at all eight gate viewports.
     p: REST_POINTS[0],
-    position: new Vector3(SCREEN_WORLD.x, SCREEN_WORLD.y, SCREEN_WORLD.z + 0.21),
+    position: new Vector3(-0.48, 1.1, 0.05),
     target: SCREEN_WORLD,
   },
   {

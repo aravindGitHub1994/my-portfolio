@@ -7,10 +7,16 @@ import type { RoomBuilderOptions } from "./materials";
 export const TOWER_SIZE = { width: 0.46, height: 0.15, depth: 0.4 } as const;
 
 /** Power button centre in tower-local space. Exported because the opening
- *  is composed around this one point (ADR-013 §2/§3): the camera's `p: 0`
- *  macro frames it, the DOM hotspot projects it, and 2.3's press depresses
- *  the mesh named `towerPower`. At the room's tower placement this is world
- *  (-0.05, 0.777, -0.518), which is the figure's reach target too. */
+ *  is composed around this one point (ADR-013 §2/§3): the DOM hotspot
+ *  projects it and 2.3's press depresses the mesh named `towerPower`. At
+ *  the room's tower placement this is world (-0.05, 0.777, -0.518), which
+ *  is the figure's reach target too.
+ *
+ *  ADR-014 §1 retired the macro that used to frame it — chapter 0 is now a
+ *  wide from behind-right, so this button reads a tenth of the size it did.
+ *  What the wide added is a constraint: the sight line to it must clear the
+ *  figure, because `PowerButtonAnchor` has no depth test. See
+ *  `cameraPath.ts`'s `p: 0` key. */
 export const POWER_BUTTON_LOCAL = {
   x: 0.17,
   y: TOWER_SIZE.height * 0.38,
@@ -54,12 +60,13 @@ export function buildTower({ materials }: RoomBuilderOptions): Group {
   const badge = new Mesh(new BoxGeometry(0.035, 0.018, 0.003), materials.metal);
   badge.position.set(-0.17, height * 0.32, frontZ);
 
-  // Power LED, beside the button (2.3). The tower had none at all, and in
-  // the recomposed opening the dark-to-green pop is the payoff of the
-  // visitor's one gesture — the frame is a macro on this pair, so the
-  // whole reward for pressing has to live inside it. Dark until
-  // `TowerPower` ramps `materials.led`; over Bloom's 0.68 threshold at
-  // full, deliberately, so it blooms in a dark room.
+  // Power LED, beside the button (2.3). The tower had none at all, and the
+  // dark-to-green pop is the payoff of the visitor's one gesture. ADR-014
+  // §1 moved the camera a long way back, so that pop is now a few pixels
+  // rather than a frame-filling event — which is exactly why it is over
+  // Bloom's 0.68 threshold at full: in a dark room the bloom is what
+  // carries it at this distance. Dark until `TowerPower` ramps
+  // `materials.led`.
   const led = new Mesh(new BoxGeometry(0.008, 0.005, 0.004), materials.led);
   led.name = "towerLed";
   led.position.set(POWER_BUTTON_LOCAL.x - 0.035, POWER_BUTTON_LOCAL.y, frontZ);
