@@ -8,6 +8,7 @@ import { Vector3 } from "three";
 import { DESK_TOP_Y } from "../builders/desk";
 import { TOWER_SIZE, POWER_BUTTON_LOCAL } from "../builders/tower";
 import { REST_POINTS } from "@/lib/chapters";
+import { dockDistance, REF_ASPECT } from "./viewport";
 
 /** CRT screen centre in world space (RoomScene layout + crt.ts locals). */
 export const SCREEN_WORLD = new Vector3(
@@ -26,13 +27,36 @@ export const POWER_WORLD = new Vector3(
   -0.72 + POWER_BUTTON_LOCAL.z,
 );
 
-/** Square-on dock distance: screen height 0.24 fills a 50° fov frame. */
-export const DOCK_DISTANCE = 0.26;
-
 interface CameraKey {
   p: number;
   position: Vector3;
   target: Vector3;
+}
+
+/** Ch. 4's dock pose, square-on at `dockDistance(aspect)` from the glass.
+ *  Held as its own binding because it is the ONE key that is not frozen at
+ *  module load: `setViewportAspect` rewrites its z on resize (ADR-014 §3),
+ *  so the analytic dock rect and the camera pose cannot drift apart. It
+ *  starts at the reference aspect's solution — the shipped 0.26 — so a
+ *  render before the first resize read is exactly what main shipped. */
+const DOCK_KEY: CameraKey = {
+  p: REST_POINTS[4],
+  position: new Vector3(
+    SCREEN_WORLD.x,
+    SCREEN_WORLD.y,
+    SCREEN_WORLD.z + dockDistance(REF_ASPECT),
+  ),
+  target: SCREEN_WORLD,
+};
+
+/**
+ * Re-solve the dock keyframe for a viewport aspect. Called from the journey
+ * camera's resize effect, never from a frame loop — `sampleCameraPath` stays
+ * a pure function of progress and this is the only write into `KEYS` in the
+ * module's life.
+ */
+export function setViewportAspect(aspect: number): void {
+  DOCK_KEY.position.z = SCREEN_WORLD.z + dockDistance(aspect);
 }
 
 /** The figure's head centre — ch. 2's framing target, and the point 6.2
@@ -129,17 +153,10 @@ const KEYS: CameraKey[] = [
     position: new Vector3(0.3, 1.32, 0.28),
     target: SCREEN_WORLD,
   },
-  {
-    // …then push square-on until the screen fills the frame (dock pose;
-    // 4.2 swaps to DOM here).
-    p: REST_POINTS[4],
-    position: new Vector3(
-      SCREEN_WORLD.x,
-      SCREEN_WORLD.y,
-      SCREEN_WORLD.z + DOCK_DISTANCE,
-    ),
-    target: SCREEN_WORLD,
-  },
+  // …then push square-on until the screen fills the frame (dock pose;
+  // 4.2 swaps to DOM here). Distance is a function of viewport aspect —
+  // see DOCK_KEY above.
+  DOCK_KEY,
   {
     // Ch. 5 rest: widest pull-back; dusk has deepened (Lighting reads
     // experienceState.duskDeepen).
