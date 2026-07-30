@@ -50,10 +50,12 @@ Other standing contracts:
 - **Fidelity:** high by default. A runtime FPS watchdog **asks before**
   downgrading (`src/lib/gpuTier.ts`, `?tier=high|low|static`; ADR-010 §2 survives
   as a process rule). Under sustained slow frames `workstation/fidelity.ts` walks
-  a one-way shed ladder — **ten rungs**: eight silent garnish rungs (`steam` was
-  added at ADR-013 §7, immediately before `idleDensity`), then the DRS floor, then
-  an offer of the static floor. **DRS chases 60 fps; the ladder defends the 30 fps
-  floor** — two knobs, two targets, so they cannot oscillate against each other.
+  a one-way shed ladder — **nine rungs**: seven silent garnish rungs (`steam`
+  sheds immediately before `idleDensity`), then the DRS floor, then an offer of
+  the static floor. ADR-014 §5 deleted the `dust` rung along with its subject,
+  and the corner lamp that replaced the motes is **not** a rung. **DRS chases
+  60 fps; the ladder defends the 30 fps floor** — two knobs, two targets, so
+  they cannot oscillate against each other.
 - **Lazy apps (ADR-012 §8):** `win98/apps/lazyApps.ts` maps appIds → a dynamic
   import of a `registerNN.ts` chunk that calls `registerApp` at top level.
 - **The Gallery's raster assets (ADR-013 §9/§9a):** `public/pictures/` holds the

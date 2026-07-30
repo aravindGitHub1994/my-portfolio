@@ -37,7 +37,8 @@ const TOUCH_SCALE_MAX = 1.4;
  *  the pointer reports fine. */
 const NARROW_MAX_W = 760;
 /** A coarse pointer on a big screen (desk touchscreen) keeps the desktop
- *  shell: it has the room, and hover was never the only affordance. */
+ *  shell: it has the room, and hover was never the only affordance.
+ *  Landscape only — see `isTouchShell`. */
 const COARSE_MAX_W = 1024;
 
 export interface ShellLayout {
@@ -55,7 +56,24 @@ export interface ShellLayout {
   taskbarH: number;
 }
 
-export function isTouchShell(viewportWidth: number, coarsePointer: boolean) {
+/**
+ * Which shell a viewport gets. Coarse pointers route by ORIENTATION first
+ * (ADR-014 §4): portrait always gets the touch shell, landscape keeps the
+ * width rule. Fine pointers are untouched — width alone, as before.
+ *
+ * Orientation is the right question rather than a patched threshold: a
+ * tablet held landscape has the room for overlapping windows, a taskbar and
+ * a real desktop metaphor; held portrait it does not, and 640×480 chrome at
+ * that scale gives ~28 css px title bars against TOUCH_TARGET_PX's 44.
+ * It also retires the exactly-1024 trap that put a 12.9" iPad in portrait
+ * down the desktop branch and gave it a 1718 px dock on a 1024 px viewport.
+ */
+export function isTouchShell(
+  viewportWidth: number,
+  viewportHeight: number,
+  coarsePointer: boolean,
+) {
+  if (coarsePointer && viewportWidth < viewportHeight) return true;
   return viewportWidth < (coarsePointer ? COARSE_MAX_W : NARROW_MAX_W);
 }
 
@@ -85,7 +103,7 @@ export function computeShellLayout(
   coarsePointer: boolean,
   desktopScale = 1,
 ): ShellLayout {
-  if (!isTouchShell(viewportWidth, coarsePointer)) {
+  if (!isTouchShell(viewportWidth, viewportHeight, coarsePointer)) {
     return desktopLayout(desktopScale);
   }
   const scale = clamp(
@@ -93,7 +111,11 @@ export function computeShellLayout(
     TOUCH_SCALE_MIN,
     TOUCH_SCALE_MAX,
   );
-  const touchUnit = Math.round(TOUCH_TARGET_PX / scale);
+  // ceil, not round: this is a WCAG floor, and rounding DOWN spends up to
+  // half a virtual unit of it. At the scale ceiling every tablet portrait
+  // now lands on (ADR-014 §4) that was 43.4 css px against a 44 px rule —
+  // the very number §4 cites as the reason tablets get this shell at all.
+  const touchUnit = Math.ceil(TOUCH_TARGET_PX / scale);
   return {
     touch: true,
     scale,

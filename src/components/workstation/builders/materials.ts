@@ -5,6 +5,7 @@
 
 import {
   CanvasTexture,
+  DoubleSide,
   MeshBasicMaterial,
   MeshStandardMaterial,
   RepeatWrapping,
@@ -38,7 +39,15 @@ export interface RoomMaterials {
   cardboard: MeshStandardMaterial;
   /** CRT glass — the distinct slot slice 3.1 will target. */
   screen: MeshStandardMaterial;
+  /** **DoubleSide** (ADR-014 §7): `buildMug` opens the body so the coffee
+   *  can be seen, and one surface then has to serve as both the outside and
+   *  the inner wall. Only the mug uses this slot. */
   mug: MeshStandardMaterial;
+  /** The coffee itself. Its own slot because `materials.rubber` — what the
+   *  disc wore while it was sealed in — is roughness 0.95 and reads as
+   *  black rubber once visible, and is shared with the cables, the chair,
+   *  the tower feet and the mouse pad, so it cannot be retuned in place. */
+  coffee: MeshStandardMaterial;
   poster: MeshStandardMaterial;
   windowDusk: MeshBasicMaterial;
   cdCase: MeshStandardMaterial;
@@ -56,6 +65,11 @@ export interface RoomMaterials {
   catGinger: MeshStandardMaterial;
   catCream: MeshStandardMaterial;
   catGrey: MeshStandardMaterial;
+  /** Corner lamp (ADR-014 §5). Two slots, and the split is the point: the
+   *  bulb is meant to bloom and the shade is meant not to. `DoubleSide` on
+   *  the shade because the cone is open-ended — see `lamp.ts`. */
+  lampShade: MeshStandardMaterial;
+  lampBulb: MeshStandardMaterial;
   dispose(): void;
 }
 
@@ -296,7 +310,14 @@ export function createRoomMaterials(seed: number): RoomMaterials {
     paper: new MeshStandardMaterial({ map: paperTex, roughness: 0.9 }),
     cardboard: new MeshStandardMaterial({ color: "#e4dfd2", roughness: 0.9 }),
     screen: new MeshStandardMaterial({ color: "#0b1512", roughness: 0.35 }),
-    mug: new MeshStandardMaterial({ map: mugTex, roughness: 0.4 }),
+    mug: new MeshStandardMaterial({
+      map: mugTex,
+      roughness: 0.4,
+      side: DoubleSide,
+    }),
+    // Dark warm brown, and glossy enough to catch the CRT cast — which is
+    // the only reason the surface reads as liquid rather than as a hole.
+    coffee: new MeshStandardMaterial({ color: "#32200f", roughness: 0.3 }),
     poster: new MeshStandardMaterial({ map: posterTex, roughness: 0.85 }),
     windowDusk: new MeshBasicMaterial({ map: windowTex }),
     cdCase: new MeshStandardMaterial({ color: "#2b2e35", roughness: 0.45 }),
@@ -308,6 +329,34 @@ export function createRoomMaterials(seed: number): RoomMaterials {
     catGinger: new MeshStandardMaterial({ color: "#c8763a", roughness: 0.95 }),
     catCream: new MeshStandardMaterial({ color: "#ecdcc2", roughness: 0.95 }),
     catGrey: new MeshStandardMaterial({ color: "#8f8d8c", roughness: 0.95 }),
+    // Corner lamp (ADR-014 §5). Emissive only, both of them — like the
+    // LEDs they add no light to the room, so the gate-2.3 brightness
+    // contract (screen luminance cap 0.7 + Lighting's CAST_MAX 2.6) is
+    // untouched. The lamp's actual illumination is a point light in
+    // `Lighting.tsx`, with its own ceiling.
+    //
+    // The shade glows because it is lit from inside, but stays UNDER
+    // Bloom's 0.68 luminance threshold: a blooming lampshade is a light
+    // box, not a lamp. `DoubleSide` because `lamp.ts` builds the cone
+    // open-ended so the bulb reads through it.
+    lampShade: new MeshStandardMaterial({
+      color: "#e8d7b8",
+      emissive: "#ffcf94",
+      emissiveIntensity: 0.45,
+      roughness: 0.85,
+      side: DoubleSide,
+    }),
+    // The bulb DOES bloom, and that is the point of the lamp (ADR-014 §5).
+    // Pitched above the tower LED's shipped `#4bff9b` at 1.35, which is the
+    // one emissive in this scene proved to bloom through this exact
+    // pipeline — a measured reference beats guessing where tone mapping
+    // leaves the 0.68 threshold.
+    lampBulb: new MeshStandardMaterial({
+      color: "#3a3024",
+      emissive: "#ffd9a8",
+      emissiveIntensity: 1.6,
+      roughness: 0.4,
+    }),
     dispose() {
       const all = [
         materials.wood,
@@ -322,6 +371,7 @@ export function createRoomMaterials(seed: number): RoomMaterials {
         materials.cardboard,
         materials.screen,
         materials.mug,
+        materials.coffee,
         materials.poster,
         materials.windowDusk,
         materials.cdCase,
@@ -330,6 +380,8 @@ export function createRoomMaterials(seed: number): RoomMaterials {
         materials.catGinger,
         materials.catCream,
         materials.catGrey,
+        materials.lampShade,
+        materials.lampBulb,
         ...materials.cdSpines,
       ];
       for (const material of all) {

@@ -1,16 +1,18 @@
 // Dock alignment (plan-0009 §4.2): size/position the DOM shell to the
 // CRT screen mesh's screen-space quad. The dock pose is analytic —
-// camera square-on at DOCK_DISTANCE with a known fov — so the projected
+// camera square-on at the dock distance with a known fov — so the projected
 // rect is exact math from the viewport, no camera readback, and holds
 // for any DPR (CSS px are DPR-independent). Re-run on resize.
+//
+// Both halves of that pose are functions of viewport aspect since ADR-014
+// §3, and they come from `viewport.ts` rather than being mirrored here: a
+// hand-maintained copy of the Canvas's fov is exactly how the rect and the
+// camera got to disagree on an iPad.
 
 import { DESKTOP_H, DESKTOP_W } from "@/lib/win98State";
 import { computeShellLayout } from "@/lib/shellLayout";
 import { CRT_SCREEN_SIZE } from "../builders/crt";
-import { DOCK_DISTANCE } from "../choreography/cameraPath";
-
-/** Must match the journey Canvas camera fov. */
-const DOCK_FOV_DEG = 50;
+import { dockDistance, journeyFov } from "../choreography/viewport";
 
 export interface DockRect {
   left: number;
@@ -52,9 +54,10 @@ export function computeDockRect(
     };
   }
 
-  const halfFov = (DOCK_FOV_DEG / 2) * (Math.PI / 180);
+  const aspect = viewportWidth / viewportHeight;
+  const halfFov = (journeyFov(aspect) / 2) * (Math.PI / 180);
   // World height visible at the screen plane, dock distance away.
-  const visibleH = 2 * DOCK_DISTANCE * Math.tan(halfFov);
+  const visibleH = 2 * dockDistance(aspect) * Math.tan(halfFov);
   const height = viewportHeight * (CRT_SCREEN_SIZE.height / visibleH);
   const width = height * (CRT_SCREEN_SIZE.width / CRT_SCREEN_SIZE.height);
   const rect: DockRect = {

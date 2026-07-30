@@ -343,6 +343,14 @@ skip works; total auto-play ≈ 5 s on a warm cache.
 
 ## 4.1 — Chapter choreography 0–3 + 5 · AFK · blocked by 2.2, 3.3
 
+> **Superseded in two places, and left standing as the record.** ADR-014 §9
+> deleted `TitleBeats` — the "title beats (name/role in ch. 1)" below describes
+> a component that no longer exists; the name and role are now a title card on
+> the entry frame, and chapter 1 has no DOM overlay at all. ADR-014 §6 deleted
+> the returning visitor's skip link, so "skip/resume affordance for returning
+> visitors" is gone too. plan-0011 §3 is the successor. **Do not restore either
+> to satisfy this citation.**
+
 **Files:** `choreography/Choreography.tsx` (real now), `cameraPath.ts`,
 `src/lib/chapters.ts` (final spans); entry overlay `PowerOn.tsx`.
 

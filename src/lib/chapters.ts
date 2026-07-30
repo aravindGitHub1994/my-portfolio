@@ -16,9 +16,11 @@ export interface Chapter {
 }
 
 export const CHAPTERS: Chapter[] = [
-  // Chapter 0 owns real scroll span as of ADR-013 §2: the film opens on a
-  // macro of the tower's power button, and this is the distance between
-  // that button and the glass. The boot still never scrubs — `PowerOn`
+  // Chapter 0 owns real scroll span as of ADR-013 §2. ADR-014 §1/§2 then
+  // recomposed both ends of it: the film opens high and wide from behind
+  // the figure's right and comes to rest on a monitor medium, so this span
+  // is now the length of that whole move across the room rather than the
+  // 165 mm between a button and the glass. The boot still never scrubs — `PowerOn`
   // stops Lenis for its whole duration and releases when the desktop
   // settles, so this span is only ever scrubbed *after* the boot, which is
   // what keeps ADR-012 §5's "scrubbing a boot backwards feels wrong" true.
@@ -38,8 +40,9 @@ export const RUNWAY_LENGTH_VH = CHAPTERS.reduce(
 
 /**
  * Normalized [0..1] progress where each chapter comes to rest (its end).
- * `REST_POINTS[0]` is where the pull-back off the power button lands — the
- * extreme close-up on the glass that used to sit at progress 0.
+ * `REST_POINTS[0]` is where the boot pan lands: a medium on the monitor
+ * (ADR-014 §2). It used to be an extreme close-up on the glass, and that
+ * shot is cut from the film rather than moved.
  */
 export const REST_POINTS: number[] = (() => {
   let acc = 0;

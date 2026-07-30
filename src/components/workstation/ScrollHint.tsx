@@ -19,9 +19,10 @@
 // label, and runs its own pulse timing — see the journey cue block in
 // globals.css. The floor keeps its own values untouched.
 //
-// Frame path follows TitleBeats: one rAF writes opacity straight to the
-// element from experienceState. No React state per frame, so nothing here
-// re-renders during the ride.
+// Frame path: one rAF writes opacity straight to the element from
+// experienceState. No React state per frame, so nothing here re-renders
+// during the ride. (`TitleBeats` was the other user of this shape until
+// ADR-014 §9 deleted it; `PowerOn`'s ring anchor is the live twin.)
 
 import { useEffect, useRef, useState } from "react";
 import { experienceState } from "@/lib/experienceState";

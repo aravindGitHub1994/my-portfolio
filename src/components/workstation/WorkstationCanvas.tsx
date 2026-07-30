@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { Vector3, type Group } from "three";
+import { PerspectiveCamera, Vector3, type Group } from "three";
 import { experienceState } from "@/lib/experienceState";
 import { mulberry32 } from "@/lib/prng";
 import type { FidelityTier } from "@/lib/gpuTier";
-import { sampleCameraPath } from "./choreography/cameraPath";
+import { sampleCameraPath, setViewportAspect } from "./choreography/cameraPath";
+import { journeyFov, REF_FOV_DEG } from "./choreography/viewport";
 import { PowerButtonAnchor } from "./choreography/PowerButtonAnchor";
 import {
   CharacterScene,
@@ -80,10 +81,34 @@ function MarkerField() {
 }
 
 /** Journey camera (4.1): samples the chapter path from the mutable
- *  singleton each frame — allocation-free, never React state. */
+ *  singleton each frame — allocation-free, never React state.
+ *
+ *  It also owns the viewport's effect on the lens (ADR-014 §3): the fov and
+ *  the dock keyframe are both re-solved from `viewport.ts` when the canvas
+ *  resizes. That happens in an effect keyed on R3F's size rather than in the
+ *  frame loop — the value only ever changes on resize, and an unconditional
+ *  write in `useFrame` would rebuild the projection matrix sixty times a
+ *  second to land on the number it already had. */
 function JourneyCamera() {
   const target = useRef(new Vector3());
+  const size = useThree((state) => state.size);
+  const aspect = size.width / size.height;
+  const fov = journeyFov(aspect);
+
+  // The dock keyframe is module state, so it moves on resize alone.
+  useEffect(() => setViewportAspect(aspect), [aspect]);
+
   useFrame(({ camera }) => {
+    // Guarded, because this is a frame loop: `fov` only changes when the
+    // canvas resizes, and an unconditional write would rebuild the
+    // projection matrix sixty times a second to land on the number it
+    // already had. (The write lives here rather than in an effect because
+    // the camera is only modifiable through the frame callback's state —
+    // react-hooks/immutability owns that rule.)
+    if (camera instanceof PerspectiveCamera && camera.fov !== fov) {
+      camera.fov = fov;
+      camera.updateProjectionMatrix();
+    }
     sampleCameraPath(
       experienceState.scrollProgress,
       camera.position,
@@ -185,7 +210,9 @@ export function WorkstationCanvas({
         // PowerOn press (WorkstationExperience layer), camera rides the
         // chapter path.
         <Canvas
-          camera={{ fov: 50 }}
+          // The reference fov; JourneyCamera adapts it to the viewport's
+          // aspect on mount and on every resize (ADR-014 §3).
+          camera={{ fov: REF_FOV_DEG }}
           dpr={tier === "low" ? 1 : [1, 2]}
           onCreated={watchContext}
         >

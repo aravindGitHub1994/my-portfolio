@@ -20,6 +20,23 @@ export const ROOM = {
  * short of the sill's inner edge. Those are the window's numbers, not the
  * tree's, so the tree imports them and moving the window moves the tree.
  */
+/**
+ * Baseboards on the three built walls. Hoisted out of the builder for the
+ * same reason `WINDOW` was (5.1's cat tree): ADR-014 §5's corner lamp
+ * stands *against* this trim, and anything standing against a wall has to
+ * clear it. `offset` is the board's centre from the wall plane, so its
+ * room-facing face is at `offset + thickness / 2`.
+ */
+export const BASEBOARD = {
+  height: 0.09,
+  thickness: 0.02,
+  offset: 0.011,
+  /** How far the trim's face stands proud of the wall plane. */
+  get proud() {
+    return this.offset + this.thickness / 2;
+  },
+} as const;
+
 const GLASS_W = 0.95;
 const GLASS_H = 0.85;
 const SILL_DEPTH = 0.12;
@@ -79,9 +96,13 @@ export function buildRoom({ materials }: RoomBuilderOptions): Group {
   group.add(rightWall);
 
   // Baseboards on the three visible walls.
-  const base = (w: number) => new Mesh(new BoxGeometry(w, 0.09, 0.02), materials.wood);
+  const base = (w: number) =>
+    new Mesh(
+      new BoxGeometry(w, BASEBOARD.height, BASEBOARD.thickness),
+      materials.wood,
+    );
   const backBase = base(width);
-  backBase.position.set(centerX, 0.045, ROOM.backZ + 0.011);
+  backBase.position.set(centerX, BASEBOARD.height / 2, ROOM.backZ + BASEBOARD.offset);
   group.add(backBase);
   for (const [x, sign] of [
     [ROOM.leftX, 1],
@@ -89,7 +110,7 @@ export function buildRoom({ materials }: RoomBuilderOptions): Group {
   ] as const) {
     const side = base(depth);
     side.rotation.y = Math.PI / 2;
-    side.position.set(x + sign * 0.011, 0.045, centerZ);
+    side.position.set(x + sign * BASEBOARD.offset, BASEBOARD.height / 2, centerZ);
     group.add(side);
   }
 

@@ -53,10 +53,10 @@ shipped as a **static export** (`output: "export"`) to Vercel. See `README.md` a
     **`RoomScene` must never import from `character/`**.
   - **Fidelity:** high by default; the FPS watchdog **prompts** before any
     downgrade (`src/lib/gpuTier.ts`, `?tier=high|low|static`). Sustained slow
-    frames walk `workstation/fidelity.ts`'s one-way shed ladder — **ten rungs**
-    since ADR-013 §7 added `steam` before `idleDensity` (see
-    `docs/design-system.md`); DRS chases 60 fps, the ladder defends the 30 fps
-    floor.
+    frames walk `workstation/fidelity.ts`'s one-way shed ladder — **nine rungs**
+    since ADR-014 §5 deleted `dust` with the motes; `steam` still sheds before
+    `idleDensity` (see `docs/design-system.md`). DRS chases 60 fps, the ladder
+    defends the 30 fps floor.
   - **Lazy apps (§8):** `win98/apps/lazyApps.ts` maps appIds → a dynamic import
     of a `registerNN.ts` chunk whose top level calls `registerApp`. Verify new
     chunks actually split out of the initial bundle in `out/`.
