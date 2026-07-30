@@ -63,9 +63,31 @@ const LATCH_FALLBACK_MS = 450;
  * scrolling first — they were reading. The pause threshold is set well
  * above any inter-event gap a burst produces and well below the pause
  * anyone takes to look at a desktop, so it does not need to be precise.
+ *
+ * A third rule bounds the second one — see MOMENTUM_MAX_MS.
  */
 const UNDOCK_GRACE_MS = 800;
 const SCROLL_QUIET_MS = 350;
+/**
+ * How long leftover momentum can plausibly last. Past this, scroll intent
+ * undocks whether or not it followed a pause.
+ *
+ * The pause rule cannot be the only rule, and the way it fails was reported
+ * from the *backward* pass (session 19). A visitor returning from SIGN-OFF
+ * is travelling, not arriving: they cross ch. 4, the dock latches them, and
+ * they carry on scrolling — so every event they produce lands within
+ * SCROLL_QUIET_MS of the one before it, every one of them reads as the
+ * docking burst's own momentum, and the dock never releases. It looked like
+ * the undock was broken. The visitor who "fixed" it by clicking the desktop
+ * and then scrolling had really fixed it by *pausing* around the click.
+ *
+ * Momentum decays: a fling is spent inside about a second, and nothing
+ * generates wheel events after it. Scrolling that is still arriving this
+ * long after the latch is a person, so it is taken at its word. Forward
+ * visitors are unaffected — they stop to read, so the pause rule still
+ * releases them on their first notch, well inside this window.
+ */
+const MOMENTUM_MAX_MS = 1500;
 /** Cross-fade duration — the §4.2 budget is ≤ 150 ms. */
 const FADE_MS = 150;
 /** rAF can stall right at the engage moment (docking pauses the frame
@@ -271,8 +293,15 @@ export function DockSwap() {
       setPhase("out");
     };
     const onScrollIntent = () => {
-      // Still inside the burst that got us here — not intent.
-      if (scrollGap.current.gap < SCROLL_QUIET_MS) return;
+      // Still inside the burst that got us here — not intent. Only while
+      // there is momentum left to mistake it for, though: past
+      // MOMENTUM_MAX_MS the pause is no longer required, or a visitor who
+      // keeps scrolling is held by the very rule meant to protect them.
+      if (
+        performance.now() - dockedAt.current < MOMENTUM_MAX_MS &&
+        scrollGap.current.gap < SCROLL_QUIET_MS
+      )
+        return;
       undock();
     };
     const onKeyDown = (e: KeyboardEvent) => {

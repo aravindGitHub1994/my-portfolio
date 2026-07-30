@@ -89,6 +89,24 @@ const TOTAL_WEIGHT = BEHAVIOURS.reduce((sum, b) => sum + b.weight, 0);
 const FIRST_GAP = [18, 38] as const;
 const GAP = [11, 30] as const;
 
+/**
+ * Typing comes in bursts (session 19). Before this the eight fingers tapped
+ * without pause for the entire ride — the hands never stopped, so 6.2's
+ * clacks never stopped either, and the owner heard a machine gun rather
+ * than someone working.
+ *
+ * Nobody types continuously. They type a clause, stop, read it, type the
+ * next one. So the keyboard now has two states and the pause is a real
+ * pause: the fingers park on the keys and no tap is emitted, which means no
+ * clack is emitted — the §6.2 contract ("clack timing comes from the rig's
+ * tap events, never a parallel timer") is what makes fixing the *motion*
+ * fix the *sound*, and it is why this lives here and not in `AudioTextures`.
+ *
+ * Seconds; seeded, and wide enough that no cycle is audible. ~64 % duty.
+ */
+const KEYS_BURST = [1.8, 4.5] as const;
+const KEYS_PAUSE = [0.9, 2.6] as const;
+
 const smooth = (t: number) => t * t * (3 - 2 * t);
 
 export function createTyping(targets: TypingTargets, seed: number): TypingUpdate {
@@ -103,11 +121,20 @@ export function createTyping(targets: TypingTargets, seed: number): TypingUpdate
     nextTap[i] = 0.3 + rnd() * 1.2;
     tapStart[i] = -1;
   }
+  /** Per-finger interval between taps, seconds. Mean ~0.97 s across eight
+   *  fingers is ~8 taps/s inside a burst — fast, legible typing. It was
+   *  ~0.455 s (17.6 taps/s), roughly twice the fastest human keystroke
+   *  rate, which is the other half of why the keyboard sounded machined. */
+  const tapGap = () => 0.42 + rnd() * 1.1;
   const chestBaseRotX = chest.rotation.x;
 
   // Scheduler state.
   let nextBehaviourAt = FIRST_GAP[0] + rnd() * (FIRST_GAP[1] - FIRST_GAP[0]);
   let lastBehaviour = -1;
+  // Keyboard burst state. Opens mid-burst so the desktop settles onto
+  // someone already working.
+  let keysActive = true;
+  let keysSwitchAt = KEYS_BURST[0] + rnd() * (KEYS_BURST[1] - KEYS_BURST[0]);
   // The lean's chest envelope, run here so `chest.rotation` keeps exactly
   // one writer. -1 means "not leaning".
   let leanStart = -1;
@@ -156,7 +183,12 @@ export function createTyping(targets: TypingTargets, seed: number): TypingUpdate
     // stops one starting a second BEFORE it and sending the right arm
     // across the desk exactly when the button needs it.
     const held = powerPressHoldsArms();
-    if (held) nextBehaviourAt += dt;
+    if (held) {
+      nextBehaviourAt += dt;
+      // The burst schedule rides the frozen clock too, or the machine
+      // finishes booting into the middle of a pause it never took.
+      keysSwitchAt += dt;
+    }
 
     // The sip advances whatever else is going on. It is only ever running
     // because this scheduler started it, and it has to see every frame of
@@ -219,6 +251,22 @@ export function createTyping(targets: TypingTargets, seed: number): TypingUpdate
       }
     }
 
+    // --- Keyboard bursts. Flipping between typing and reading, with the
+    // whole hand parked for the pause. The restart re-arms every finger at
+    // once so the burst does not open on a chord — and it is the only place
+    // the pause draws from `rnd`, unlike the busy branch below, which
+    // re-arms per frame.
+    if (!held && elapsed >= keysSwitchAt) {
+      keysActive = !keysActive;
+      if (keysActive) {
+        for (let i = 0; i < fingers.length; i++) {
+          nextTap[i] = elapsed + 0.05 + rnd() * 0.9;
+        }
+      }
+      const span = keysActive ? KEYS_BURST : KEYS_PAUSE;
+      keysSwitchAt = elapsed + span[0] + rnd() * (span[1] - span[0]);
+    }
+
     // --- Finger taps, seeded and staggered, suspended on the busy arm
     // only. The other hand carries on, which is what people actually do.
     // `held` suspends both hands: a dead machine gets no keystrokes, and
@@ -228,6 +276,15 @@ export function createTyping(targets: TypingTargets, seed: number): TypingUpdate
     const busyL = held || armBusy("L");
     for (let i = 0; i < fingers.length; i++) {
       const busy = i < 4 ? busyR : busyL;
+      if (!busy && !keysActive) {
+        // Between bursts: the hand rests ON the keys. `nextTap` is left
+        // alone — the restart above owns re-arming it.
+        if (tapStart[i] >= 0) {
+          tapStart[i] = -1;
+          fingers[i].position.y = baseY[i];
+        }
+        continue;
+      }
       if (busy) {
         // Park the finger at rest and hold its next tap ahead of us, so it
         // does not fire the instant the hand lands back on the keys.
@@ -240,7 +297,7 @@ export function createTyping(targets: TypingTargets, seed: number): TypingUpdate
       }
       if (tapStart[i] < 0 && elapsed >= nextTap[i]) {
         tapStart[i] = elapsed;
-        nextTap[i] = elapsed + 0.18 + rnd() * 0.55;
+        nextTap[i] = elapsed + tapGap();
         typingState.lastTapAt = elapsed;
         typingState.taps++;
       }
