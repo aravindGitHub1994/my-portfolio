@@ -282,6 +282,18 @@ next/previous, caption and count in a period status bar. It follows ADR-012 §8'
 lazy-app contract exactly — its own `registerNN.ts` chunk behind
 `lazyApps.ts`, so it stays out of the initial bundle.
 
+> **AMENDED 2026-07-30 by gate 6.2 — the set is 23, not 29, and the size band
+> below is superseded.** The owner reviewed the selection at the gate written for
+> exactly that purpose and pulled six: `cat-04-nimbus`, `ride-04-maharashtra`,
+> `ride-05-hogenakkal`, `ride-06-tamil-nadu`, `ride-10-west-coast`,
+> `ride-13-kashmir`. Two ids were corrected (`hike-04-goa` → `hike-05-goa` for a
+> duplicate number, `ride-07-pondicherry` → `ride-07-goa` for the wrong place),
+> the sources being untouched because ids are authored in the allow-list rather
+> than derived from filenames. **23 photographs ship, at 3.39 MB across 46
+> files** — see §9a. `docs/qa/6.2-picture-review.md` is the authority on the set,
+> the ids and the captions; this section is not. **The six pulls are the owner's
+> call at a gate and must not be restored on this ADR's authority.**
+
 29 photographs ship: 8 cats, 17 rides and hikes, workspace, guitar, and the two
 existing portraits. Originals run 200 KB – 3.3 MB, which is not shippable, and the
 repo has no image pipeline (`scripts/` holds only `diagrams-light.js`). So a one-off
@@ -293,9 +305,16 @@ output is committed so the build stays a plain static export with no new build s
 **Boundaries that are not negotiable here:**
 
 - **No tattoo reference photography.** `assets-src/workstation/tattoo01–04.jpg` are
-  ADR-012 §3 source material; plan-0009's acceptance criterion is literally "no image
-  file under `public/` contains tattoo photography". The build script enumerates an
-  explicit allow-list and never globs a directory.
+  ADR-012 §3 source material. The build script enumerates an explicit allow-list
+  and never globs a directory. **The boundary is the four close-ups, not the word
+  "tattoo"** — plan-0009 §1.3's acceptance criterion reads "no image file under
+  `public/` contains tattoo photography", and taken literally that has been false
+  since long before this branch: `aravind-2.jpg` has always shipped showing the
+  owner's tattooed forearms. Three of the 23 (`guitar-01`, `workspace-01`,
+  `cat-02-nimbus`) show them too, each consciously cleared by the owner at gate
+  6.2. **This has been re-flagged as a breach in three separate sessions; it is
+  not one.** The criterion means *reference* photography, which is what this
+  heading says and what plan-0009's own preamble says.
 - **No client material.** These are personal photographs — cats, motorcycles, hills,
   a desk, a guitar. No client names, no client data, no client screenshots
   (ADR-012 §10).
@@ -308,6 +327,44 @@ the docked DOM view. **This is consistent with ADR-012 §4, not a violation of i
 §4's parity is a *store* parity ("the swap is a view change, not a state handoff"),
 and the store knows the window is open in both renderers. It was never a pixel parity;
 no app has one.
+
+### 9a. What actually shipped (2026-07-30, gates 6.2 and 8.1)
+
+Recorded here because §9 above was written before the pipeline was built and the
+set was reviewed, and three of its numbers moved.
+
+- **23 photographs, 46 files, 3.39 MB** in `public/pictures/` — replacing §9's
+  "roughly 4–5 MB" and the §11 consequence line that quotes it. The band was
+  budgeted for 29; at 23 the same encode spends less, and the owner chose to
+  **keep the quality where it is rather than spend the spare budget** (*"quality
+  is also fine"*, 2026-07-30). So `q84` stands and the band moves down to match
+  what ships. Re-measure only if the set changes; the measurement behind `q84` is
+  specific to 1200×900 viewers and 192×144 thumbnails.
+- **`src/lib/pictures.ts` is the single source** for ids, groups, shipped
+  dimensions and captions, and it is answerable to `docs/qa/6.2-picture-review.md`
+  §2 — not to this ADR. Dimensions come from `scripts/pictures-manifest.tsv`;
+  `npm run pictures` cross-checks the two and names any drift.
+- **The pipeline does not redact number plates.** Every plate visible in the
+  shipped set (`ride-09`, `ride-11`, and the KTM in `ride-12`) was blacked out by
+  hand *in the source*. A photograph added later needs the same hand — this is a
+  standing constraint on adding to the allow-list and it is written down nowhere
+  else.
+- **Captions are the owner's voice, with two rules from the gate**: a caption may
+  only joke about what is visible in its own photograph, and nothing is asserted
+  about other people in frame. An agent adding a photograph adds a caption *slot*,
+  not a caption.
+- **ADR-012 §10 and the confidentiality rule are intact and this was checked, not
+  assumed:** no client material, no readable client name, no watermark and no
+  personal name in the 23 (the one watermarked photograph carrying a third party's
+  name was among the six pulls), and 0 of 46 shipped files carry EXIF/XMP/ICC.
+- **The painter's suggestion is unreachable, and that is accepted.** 6.5 built the
+  thumbnail-grid suggestion the paragraph above specifies, and verification then
+  found no visitor can see it: undocking requires every window closed or minimized
+  (`DockSwap`), the painter skips minimized windows, and every window-opening path
+  lives in the docked DOM shell. So the CRT never has a window body on it — which
+  also means the grey-appId fallback was never visible either. The owner chose to
+  **keep the code** (2026-07-30). Do not plan a future slice around painting a
+  window body, and do not "fix" it by painting minimized windows.
 
 ### 10. The scroll cue gets contrast, not new logic
 
@@ -364,10 +421,11 @@ the two should not disagree.
 - **`RoomScene` and `Figure` are no longer fully independent.** They share one mutable
   handle, in one direction (Room publishes, Figure consumes). Keeping that direction
   one-way is what stops it from becoming a general coupling.
-- **`public/` grows by roughly 4–5 MB** of photographs. They are static files fetched
-  only when the Gallery window opens, so the initial bundle and the journey are
-  unaffected — but the repo is meaningfully larger and the Gallery is the first app
-  that ships raster assets at all.
+- **`public/` grows by ~~roughly 4–5 MB~~ 3.39 MB** of photographs (46 files, 23
+  photographs — see §9a; the 4–5 MB estimate was for the 29-photograph set gate 6.2
+  cut down). They are static files fetched only when the Gallery window opens, so
+  the initial bundle and the journey are unaffected — but the repo is meaningfully
+  larger and the Gallery is the first app that ships raster assets at all.
 - **Chapter 2's beat gets stronger, not weaker.** Opening on the button with only a
   forearm in frame means the tattoo is the first thing the visitor ever sees, and the
   person attached to it is still a reveal.

@@ -36,14 +36,39 @@ Other standing contracts:
 
 - **Brightness (gate 2.3):** luminance cap 0.7 in `CrtScreen` + `CAST_MAX 2.6`
   in `Lighting` — preserve in every screen change.
+- **The arm rig (ADR-013 §1):** the figure's arms are two-bone rotational chains
+  — `shoulderPivot{R,L}` → upper arm → `elbowPivot{R,L}` → forearm + hand — and
+  `character/armPose.ts` moves them by **rotating those four pivots only**. Never
+  rebuild geometry, never write world positions, never translate a pivot. Pose
+  quaternions are solved **once at driver creation**; nothing in the frame path
+  solves anything. `armPointLocal` in `buildBody.ts` is the single source of truth
+  for where the palm and fingertips are.
+- **Props are driven, never re-parented (ADR-013 §6):** `scene/propHandles.ts` is
+  a noticeboard — **the room publishes, the character consumes**, one-way, and
+  `RoomScene` must never import from `character/`. A carried prop stays a child of
+  the room for its whole life, so no unmount order can dispose it twice or never.
 - **Fidelity:** high by default. A runtime FPS watchdog **asks before**
   downgrading (`src/lib/gpuTier.ts`, `?tier=high|low|static`; ADR-010 §2 survives
   as a process rule). Under sustained slow frames `workstation/fidelity.ts` walks
-  a one-way shed ladder — seven silent garnish rungs, then an offer of the static
-  floor. **DRS chases 60 fps; the ladder defends the 30 fps floor** — two knobs,
-  two targets, so they cannot oscillate against each other.
+  a one-way shed ladder — **ten rungs**: eight silent garnish rungs (`steam` was
+  added at ADR-013 §7, immediately before `idleDensity`), then the DRS floor, then
+  an offer of the static floor. **DRS chases 60 fps; the ladder defends the 30 fps
+  floor** — two knobs, two targets, so they cannot oscillate against each other.
 - **Lazy apps (ADR-012 §8):** `win98/apps/lazyApps.ts` maps appIds → a dynamic
   import of a `registerNN.ts` chunk that calls `registerApp` at top level.
+- **The Gallery's raster assets (ADR-013 §9/§9a):** `public/pictures/` holds the
+  **23** photographs (46 files, 3.39 MB) that gate 6.2 cleared — the first and only
+  app that ships raster assets. Regenerate with `npm run pictures`, which reads an
+  **explicit allow-list** in `scripts/build-pictures.mjs` and never globs a
+  directory; that allow-list is the mechanism keeping the tattoo *reference*
+  close-ups and the AI concept sheets in gitignored `assets-src/`. `src/lib/
+  pictures.ts` owns ids/groups/captions and is answerable to
+  `docs/qa/6.2-picture-review.md`, never to the ADR; dimensions come from
+  `scripts/pictures-manifest.tsv` and are never typed by hand. **The pipeline does
+  not redact number plates** — every plate shipping today was blacked out by hand
+  in the source, and a new photograph needs the same hand. **`painter.ts` must
+  never import `pictures.ts`** (it is in the initial bundle; the captions belong to
+  the Gallery's chunk).
 - **Zero Microsoft IP (ADR-012 §10):** all icons original pixel art, all sounds
   synthesized (`src/lib/audio.ts`; no sample files ship), fonts openly-licensed
   period faces. Never commit raw client screenshots — imagery under

@@ -197,9 +197,19 @@ passes.
   reach every ~90 s) as a timeline of pose targets.
 
 **Acceptance:** lint + build green; albedo generated once at startup (no per-frame
-canvas work); no image file under `public/` contains tattoo photography; koi
-visibly red in the harness's key light; typing loop runs without allocation churn
-in `useFrame`.
+canvas work); no image file under `public/` contains tattoo **reference**
+photography (see the clarification below); koi visibly red in the harness's key
+light; typing loop runs without allocation churn in `useFrame`.
+
+> **Clarified 2026-07-30 (ADR-013 §9, gate 6.2).** This criterion originally read
+> "no image file under `public/` contains tattoo photography", and read literally
+> it was **never true** — `public/aravind-2.jpg` has shipped since before this plan
+> and shows the owner's tattooed forearms. The boundary always meant the four
+> **reference close-ups** (`assets-src/workstation/tattoo01–04.jpg`), which is what
+> this plan's own preamble says and what ADR-013 §9's heading says. Three of the 23
+> Gallery photographs show tattooed forearms incidentally and were each cleared by
+> the owner at gate 6.2. **Three separate sessions have re-flagged the literal
+> wording as a breach; it is not one — do not re-open it.**
 
 ---
 

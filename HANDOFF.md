@@ -1,22 +1,29 @@
-# HANDOFF — `scene-refinement` (2026-07-30, session 21 wrap)
+# HANDOFF — `scene-refinement` (2026-07-30, session 22 wrap)
 
 > For the next agent session. **ADR-012's plan is finished and merged.**
 > `redesign-attempt2` → `main` @ `dac6de4`; every gate (1.2, 2.3, 4.3, 9.2)
 > is owner-PASSED. The 9.2 record is `docs/qa/9.2-desktop-checklist.md`.
 >
-> **GATE 3.3 IS PASSED.** The owner ran the whole-ride camera gate and
-> ticked every item in §1, §2, §3 and §5 — the record, including their
-> answers to the five §4 questions, is
-> **`docs/qa/3.3-camera-ride-checklist.md`**. **P3 is closed.**
+> # PLAN-0010 IS BUILT. **THE ONLY THING LEFT IS GATE 8.3 — THE OWNER'S.**
 >
-> **P1, P2, P3, P4, P5 and P7 are all done**, gates 1.3, 2.4 and 3.3 are
-> owner-PASSED, and **P6 now has one slice left**: 6.1 (the picture pipeline),
-> 6.3 (the Gallery glyph), 6.2 (the owner's picture-and-caption review) and
-> **6.4 (the Gallery app) are all landed**, leaving only 6.5 (the painter's
-> thumbnail-grid suggestion).
+> **All eight packages are complete.** P1–P7 built and owner-closed; **8.1**
+> (regression sweep) and **8.2** (docs reconcile) landed this session. There is
+> **no build work left on this branch** and nothing is blocked on an agent.
 >
-> **SLICE 6.4 IS COMMITTED (`68631c0`) AND OWNER-APPROVED** — *"gallery app
-> works fine"* (2026-07-30). See "What 6.4 actually did".
+> **The next action is not code: it is the owner running
+> `docs/qa/10.1-scene-refinement-checklist.md`** on a production static export on
+> their own hardware. That document is written, and its §0 lists what 8.1 already
+> proved so they do not repeat it.
+>
+> **Gates PASSED:** 1.3, 2.4, 3.3, 6.2 — all owner-recorded. **Nothing on this
+> branch is owner-unseen** as of 2026-07-30: the Gallery app, the picture quality,
+> 4.3's announced skip and 5.2's tail wag were all approved in the browser.
+>
+> **What 8.3 is for, and it is an honest list rather than a formality:** the audio
+> mix (no human has ever heard it), a real phone, the fidelity ladder's pacing, the
+> low tier's texture budget, `aboutMe.ts` copy, the four FPS moments — and the
+> **dock's *feel***, since 8.1 could re-prove its mechanics at 750 vh but headless
+> cannot produce a hard flick.
 >
 > **GATE 6.2 IS ANSWERED, and it changed the set: 29 photographs → 23.** The
 > owner pulled six, renamed two ids and set the caption register; all 23
@@ -64,18 +71,21 @@
   closed. **Read the caveat under "Unresolved Threads": the gate was passed
   as a whole, and the three specific questions this branch raised inside it
   were not answered one by one.** Do not treat them as decided.
-- **Working tree is NOT clean — slice 6.4 is in it, uncommitted.** Everything
-  in the commit list below is committed; lint, `tsc` and `npm run build` are
-  green *with* 6.4 applied. `assets-src/` is gitignored. The 6.4 files are:
-  `src/lib/pictures.ts` and `src/components/win98/apps/Gallery.tsx` +
-  `register54.ts` (new), and edits to `lazyApps.ts`, `shell/appDefs.ts`,
-  `src/lib/win98State.ts` and `scripts/build-pictures.mjs`.
+- **Working tree is clean** apart from gitignored `assets-src/`; lint, `tsc` and
+  `npm run build` are green at HEAD.
 - **Gate 6.2 PASSED** (owner, 2026-07-30) — the set is **23 photographs at
   3.39 MB**, two ids corrected, 23 captions drafted and three of them rewritten
   to the owner's corrections. Record: `docs/qa/6.2-picture-review.md`, verdict at
   §4 and the `q84` call at §4a. **The box is ticked and nothing on the gate is
   open**; the owner passed it after seeing the built Gallery, not just the record.
 - Commits on the branch, newest first:
+  - *(this session)* — **8.1 + 8.2** (the sweep's record, the docs reconcile, and
+    `docs/qa/10.1-scene-refinement-checklist.md` for gate 8.3)
+  - `8da8db1` — **slice 6.5** (the painter's grid suggestion; carries the
+    unreachability finding)
+  - `04686e1` — docs (gate 6.2 ticked PASS, §4a `q84` stays, 4.3 approved)
+  - `68631c0` — **slice 6.4** (the Gallery app; owner-approved)
+  - `ea80f00` — docs (the handoff caught up with gate 6.2)
   - `6a56d7f` — **gate 6.2** (six photographs pulled, two ids renamed, 23
     captions; supersedes "all 29 ship")
   - `5e7facc` — docs (the dock spot-check)
@@ -906,6 +916,48 @@ the DOM and the picture. (b) `agent-browser wait 45000` exceeds the daemon's own
 read timeout and reports `os error 10060` — **the wait still happens**, and the
 next command returns correctly, so that error is noise rather than a failure.
 
+### What 8.1 actually did — the sweep, and what it could not touch
+
+**Nothing was built; this is verification only.** Run against a production static
+export built at HEAD and served by `npx serve out -l 3005`, headless at 1440×900.
+
+Offline and mechanical, all passing:
+
+- `npm run lint` and `npm run build` clean.
+- **The dock, re-proved at the 750 vh runway** — the item three handoffs called
+  this branch's biggest regression risk. Six checks: parked at p = 0.70 undocked;
+  **one jump to p = 0.95 clamped to y = 4758** and latched (the crossing test at
+  the new length); a paused wheel gesture undocked; scrolling back down re-armed
+  and re-latched; **a minimized window survived undock → scroll away → re-dock and
+  restored with all 23 thumbnails**; and undocking *downward* reached sign-off and
+  stayed undocked. Nothing stuck in any order. That is checklist §4/§17a's
+  substance minus the feel.
+- Brightness contract intact: `LUMINANCE_CAP = 0.7` (`CrtScreen`), `CAST_MAX = 2.6`
+  (`Lighting`).
+- `?tier=static` presentable — zero canvases, hero and its own cue intact.
+  `?tier=low` presentable — chapter 2's face reveal reads at low detail, with both
+  cats legible on the tree.
+- Prerendered HTML: **14 headings at h1–h3**, which is what the 9.2 record's "14"
+  meant. A naive recount gives **43** because the project cards carry h4/h5 —
+  worth knowing before someone reports a regression that isn't one.
+- `public/audio/` and `out/audio/` contain only `LICENSES.md`.
+- `public/pictures/` is 46 files / 3.39 MB, and the Gallery's caption chunk is
+  **still split** after 6.5 touched the painter (`19f3-fu859wt7.js`, zero
+  references from `index.html`).
+
+**What 8.1 could NOT do, and it is not a gap in the sweep:** the four §12 FPS
+moments and the dock's *feel*. Headless renders this scene at **2–6 fps on
+software GL**, so it can neither measure a frame rate nor produce a 60 fps input
+cadence — a hard flick is a burst of events this instrument cannot generate.
+`UNDOCK_GRACE_MS` 800 and `SCROLL_QUIET_MS` 350 therefore remain
+owner-hardware-verified only, exactly as at 9.2. Both are §6 and §7 of the 10.1
+checklist. **Do not record headless timings here as evidence.**
+
+**One harness lesson worth keeping:** on this page a screenshot can lag the DOM by
+a frame or more, and it lied outright once — a capture showed the Gallery window
+standing when an `eval` proved it had already unmounted. **Trust a DOM read over
+the picture**, and take the picture only as corroboration.
+
 ### What P7 actually did
 
 Gating logic in `ScrollHint.tsx` is **byte-for-byte unchanged** — it was never
@@ -933,19 +985,14 @@ reveal, 3.2 the room wide, gate 3.3 passed). **P4 is complete** (4.1
 scheduler, 4.2 the sip, 4.3 steam). **P5 is complete** (5.1 the cat tree and
 the cats, 5.2 the tail wag).
 
-**What is left is 6.5 and P8.** 6.1 (the picture pipeline), 6.3 (the glyph),
-**6.2 (the owner's review — answered, `6a56d7f`)** and **6.4 (the Gallery app —
-built, uncommitted)** are done, which leaves **6.5 (the painter's
-thumbnail-grid suggestion)**. P8 is 8.1 (the dock sweep — **spot-checked in
-session 21 and smaller than three handoffs implied**) and 8.2 (close-out docs,
-and **now carrying a real punch list** — see "Slice 8.2 has content now").
+**Nothing is left to build.** **P6 is closed** — 6.1 (the picture pipeline), 6.3
+(the glyph), 6.2 (the owner's review, `6a56d7f`), 6.4 (the Gallery app, `68631c0`,
+owner-approved) and 6.5 (the painter's suggestion, `8da8db1`). **P8 is closed** —
+8.1's sweep and 8.2's docs both landed in session 22.
 
-**6.5 is now the only build work left, and 6.4 leaves it a clean seam.** The
-painter draws every window body as a sunken white field with the appId in grey
-(`painter.ts` around the `fillText(win.appId, …)` line) — that is what the CRT
-shows for the Gallery in cinematic mode today. 6.5's suggestion is a thumbnail
-grid there. Note the painter's `switch` is **non-exhaustive** and will silently
-draw nothing, unlike `pixelIcons.tsx`'s `Record<IconGlyph, …>`.
+**The remaining work is gate 8.3, and it is the owner's**, run against
+`docs/qa/10.1-scene-refinement-checklist.md`. An agent's only useful job before
+that is to answer questions about the record.
 
 ## Decisions already made — do not re-litigate
 
@@ -960,14 +1007,16 @@ Resolved with the owner (ADR-013 records the reasoning):
   singleton across the `RoomScene` → `Figure` boundary.
 - **The opening frame is a macro on the tower's power button with no person
   in it.** The forearm enters on click. Chapter 2 keeps its reveal.
-- ~~**All 29 photographs ship**~~ — **SUPERSEDED by gate 6.2 (2026-07-30).**
-  The owner pulled six at the review: `cat-04-nimbus`, `ride-04-maharashtra`,
-  `ride-05-hogenakkal`, `ride-06-tamil-nadu`, `ride-10-west-coast`,
-  `ride-13-kashmir`. **23 ship** — cats, rides/hikes, workspace, guitar and the
-  two existing portraits. This entry is left visible rather than deleted because
-  three documents still assert the old number; **8.2 fixes them.** Sources are
-  untouched under `assets-src/`, so a pull is one allow-list line to reverse —
-  but reversing one needs the owner, not an agent reading ADR-013.
+- **23 photographs ship** (owner, gate 6.2, 2026-07-30) — cats, rides/hikes,
+  workspace, guitar and the two existing portraits, at 3.39 MB. This supersedes
+  the earlier "all 29 ship"; the six the owner pulled are `cat-04-nimbus`,
+  `ride-04-maharashtra`, `ride-05-hogenakkal`, `ride-06-tamil-nadu`,
+  `ride-10-west-coast` and `ride-13-kashmir`. **8.2 has corrected every document
+  that still asserted 29** (ADR-013 §9 now carries an amendment box and a new §9a;
+  plan-0009's tattoo criterion is clarified; CLAUDE.md and AGENTS.md name the
+  shipped set). Sources are untouched under `assets-src/`, so a pull is one
+  allow-list line to reverse — **but reversing one needs the owner, not an agent
+  reading an ADR.** `docs/qa/6.2-picture-review.md` is the authority.
 - **The entry gesture stays a DOM button**, pinned over the projected 3D
   button. `unlockAudio()` must run synchronously in a real user gesture, and
   the canvas is `fixed inset-0 -z-10` so clicks never reach it.
@@ -1107,53 +1156,68 @@ the CRT shows for the Gallery in cinematic mode today" was therefore **never
 visible either** — that sentence was wrong, and it is why 6.5 looked like it had
 a visible payoff.
 
-**6.5 ships as built** — it is ~90 lines, allocates nothing, cannot flicker
-(indexed tones, byte-identical repaints), and is defensive if any of the three
-facts above ever change. But the owner should decide which of these it is:
+**DECIDED by the owner (2026-07-30): keep it.** *"Keep the 90 lines of code, it's
+not that much anyway."* So 6.5 stands as **accepted dead-but-correct code** — the
+plan built as approved, ~90 lines, no allocation, no flicker (indexed tones,
+byte-identical repaints), and defensive if any of the three facts above ever
+change. The two options that were rejected, so nobody re-opens them:
 
-- **accept it** as dead-but-correct code, the plan built as approved; or
-- **make it reachable**, which means changing the dock contract (a window
-  surviving an undock) — that is ADR-012 §4 and gate 9.2 territory, so not an
-  agent's call; or
-- **revert it** and let the painter keep drawing the appId, on the grounds that
-  unreachable code is a liability.
+- **making it reachable** would mean changing the dock contract (a window
+  surviving an undock) — ADR-012 §4 and gate 9.2 territory, not an agent's call
+  and not asked for; and
+- **reverting it** on the grounds that unreachable code is a liability.
+
+The finding itself still matters even though the code stays: it is why **the
+painter's window body cannot be used to show anything** to a visitor, so no
+future slice should be planned around painting one.
 
 **Do not "fix" this by painting minimized windows.** Minimized means hidden, and
 the taskbar button is already how the painter represents one.
 
 **New, from earlier in this branch:**
 
-**SLICE 8.2 HAS CONTENT NOW — it is no longer just "close-out docs".** Gate 6.2
-falsified a decision three documents record as settled, and documentation that
-contradicts the shipped set is worse than none. In rough order of how badly each
-one misleads a reader:
+**SLICE 8.2 IS DONE — the punch list below is closed.** Every item is struck
+through with what was actually written. Left in place rather than deleted because
+the *reasons* are still the standing constraints, and because a future agent
+reading only the closed list learns why the wording matters.
 
-1. **ADR-013 §9 says all 29 ship and budgets 4–5 MB.** Both are now wrong: 23
-   ship, and the directory is 3.39 MB, *under* the band. Record the pull and the
-   six ids, and **move the band down** — the owner answered the `q84`/`q88` call
-   on 2026-07-30 (*"quality is also fine"*), so the quality does not rise to fill
-   the band and the band is the number that is stale.
-2. **This file's "Decisions already made" carried "all 29 photographs ship."**
-   Already struck through in place, with the reason left visible on purpose.
-   Whoever writes 8.2 should decide whether the strikethrough stays as history or
-   the entry is rewritten outright.
-3. **Plan-0009's acceptance criterion — "no image file under `public/` contains
-   tattoo photography" — is still literally false and always was.** `aravind-2.jpg`
-   has shipped since long before this branch, and the owner has now approved
-   **three** photographs showing tattooed forearms (`guitar-01`, `workspace-01`
-   and `cat-02-nimbus`; 6.1's write-up said two). The criterion means *no tattoo
-   **reference** photography*, which is what ADR-013 §9's heading actually says.
-   **Fix the wording so the next agent does not re-flag it as a breach** — this is
-   the third session in a row it has come up.
-4. **The pipeline does not redact number plates**, and every plate currently
-   shipping was redacted by hand in the source. That is a standing constraint on
-   adding photographs, and it is written down nowhere but the 6.2 record.
-5. **ADR-012 §10 / the confidentiality rule are unaffected** — no client material,
-   no readable client name, no watermark, no metadata in the 23. Say so
-   explicitly at close-out rather than leaving it inferred.
+The five items, all now fixed:
 
-**One thing 8.2 should NOT do: reopen the six pulls.** They are the owner's call
+1. ~~ADR-013 §9 says all 29 ship and budgets 4–5 MB.~~ **FIXED.** §9 gains an
+   amendment box naming the six pulls and the two id corrections, and a new **§9a
+   "What actually shipped"** carrying 23 / 46 files / 3.39 MB, the `q84` decision
+   and why the band moved *down* rather than the quality up. §11's "roughly 4–5 MB"
+   consequence line is struck and corrected in place.
+2. ~~This file's "Decisions already made" carried "all 29 photographs ship."~~
+   **FIXED — rewritten outright**, not left struck through: the entry now states
+   the shipped set as the decision, names the six pulls as history inside it, and
+   points at `docs/qa/6.2-picture-review.md` as the authority.
+3. ~~Plan-0009's tattoo criterion is literally false and always was.~~ **FIXED.**
+   The criterion now reads "no tattoo **reference** photography" with a dated
+   clarification block underneath explaining that `aravind-2.jpg` has always
+   shipped showing the same forearms, that three of the 23 do too with the owner's
+   clearance, and that **three sessions in a row re-flagged this as a breach and it
+   is not one.** ADR-013 §9's boundary text says the same thing without leaning on
+   plan-0009's wording.
+4. ~~The pipeline does not redact number plates.~~ **FIXED** — recorded in ADR-013
+   §9a, CLAUDE.md and AGENTS.md, not just in the 6.2 record. Every plate shipping
+   today (`ride-09`, `ride-11`, the KTM in `ride-12`) was blacked out **by hand in
+   the source**; a photograph added later needs the same hand.
+5. ~~Say the confidentiality position explicitly rather than leaving it inferred.~~
+   **FIXED** — ADR-013 §9a states it as a checked result: no client material, no
+   readable client name, no watermark or third-party name (the one watermarked
+   photograph was among the pulls), and 0 of 46 shipped files carry EXIF/XMP/ICC.
+
+**The one thing 8.2 did NOT do: reopen the six pulls.** They are the owner's call
 at a gate written for exactly that purpose.
+
+**Also landed in 8.2, beyond the five:** `docs/design-system.md`'s ladder table is
+**ten rungs** with `steam` in place and the measured 70.0 s / slow-hardware
+inversion recorded; **ADR-012 gains an amendment box** pointing at ADR-013 for §2
+(the rig) and §5 (the opening and the reframed chapters) without rewriting its
+content, per the 9.1 convention; CLAUDE.md and AGENTS.md gained the rig contract,
+the prop-handle contract, the ten-rung ladder and the `public/pictures/` rules;
+and **`docs/qa/10.1-scene-refinement-checklist.md`** is written for gate 8.3.
 
 - **Gate 6.2 is answered** (2026-07-30) — pulled forward as this thread kept
   recommending, and it earned it: it cut six photographs and rewrote three

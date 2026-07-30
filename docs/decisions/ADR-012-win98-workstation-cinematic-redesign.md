@@ -12,6 +12,30 @@ and the entire content model in `src/lib/` (`projects.ts`, `resume.ts`, `stats.t
 An earlier ADR-012 ("NOISE/SIGNAL") existed only on the deleted `complete-redesign`
 branch and never reached `main`; this document reuses the number cleanly.
 
+> **AMENDED IN PART by [ADR-013](ADR-013-scene-refinement-rigged-arms-and-the-power-press-opening.md)
+> (2026-07-28, branch `scene-refinement`).** Following the 9.1 convention for
+> superseded sections, the content below is **not rewritten** — read it with these
+> two amendments in hand:
+>
+> - **§2 (the figure) — ADR-013 §1.** The arms are no longer static capsules baked
+>   into the typing pose. They are a two-bone rotational rig (`shoulderPivot` →
+>   upper arm → `elbowPivot` → forearm + hand) driven by `character/armPose.ts`,
+>   which is what makes the power press, the mouse reach and the mug lift possible.
+>   Rotations only: bone lengths are fixed at build time and nothing in the frame
+>   path solves anything. §2's "no eyes, no mouth" decision is **unchanged** — the
+>   face is revealed by lighting, never by geometry (ADR-013 §4).
+> - **§5 (the six-chapter journey) — ADR-013 §2, §2a, §3, §3a, §4 and §8.**
+>   Chapter 0 gains real scroll span (90 vh, so `RUNWAY_LENGTH_VH` is **750**): the
+>   film now opens on a macro of the tower's power button, the visitor presses it,
+>   the figure's forearm reaches in, and the camera holds on the lit LED before
+>   panning to the glass while the POST runs. The boot still never *scrubs*.
+>   Chapter 2 orbits further to a three-quarter face reveal, and chapter 3 is
+>   recomposed onto the window wall so the cat tree reads.
+>
+> Everything else in this document — the two-renderer store contract (§4), the
+> lazy-app contract (§8), the brightness contract, the touch shell (§9) and the
+> zero-Microsoft-IP rule (§10) — stands exactly as written and binds ADR-013 too.
+
 ## Date
 2026-07-18
 
