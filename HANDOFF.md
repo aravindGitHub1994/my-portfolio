@@ -18,7 +18,8 @@ checklist**. Follow those, and don't restore the old file to satisfy a citation.
 **`scene-refinement` is merged.** Plan-0010's eight packages (P1–P8) are
 complete, ADR-013 is fully built, and **gate 10.1 PASSED on the owner's second
 run (session 24) and merged to `main`**. `main` now carries ADR-012 + ADR-013.
-There is no open branch.
+`ladder-pacing` (worklist item 6, the 30 s offer deadline) is merged too. **There
+is no open branch**, and the five remaining worklist items below have no code.
 
 Gate 10.1's record is `docs/qa/10.1-scene-refinement-checklist.md` and it is
 closed — read it for context, not as a worklist:
@@ -50,6 +51,9 @@ values, not placeholders.
 four of them "save this for later" in the checklist itself. They are cosmetic or
 question-shaped, none is a regression, and the gate passed with them open. Cut a
 new branch off `main` for them; **don't re-open gate 10.1**.
+
+**Item 6 is done and merged (`ladder-pacing`); five remain.** Item 5, the iPad
+fit, is the only one of the five that is a defect rather than a preference.
 
 1. **Drop the `skip intro` link** (checklist §1 notes) —
    `workstation/PowerOn.tsx:338–347`, the `returning && (…)` button. Keep `any
@@ -104,7 +108,8 @@ new branch off `main` for them; **don't re-open gate 10.1**.
    the set from 29 photographs to 23, and ADR-013's "all 29 ship" is dead. Do
    not restore them on the ADR's authority.
 3. `docs/decisions/ADR-013-…md` — ten decisions made with the owner. Amendments
-   so far: **§2a**, **§3a**, **§10a**. Don't re-litigate the rest.
+   so far: **§2a**, **§3a**, **§7a**, **§10a** (plus **§9a**, which is a record of
+   what shipped rather than an amendment). Don't re-litigate the rest.
 4. `docs/plans/implementation-plan-0010.md` — 25 slices, owner-approved as
    written. The AFK gate is always lint + build green.
 
