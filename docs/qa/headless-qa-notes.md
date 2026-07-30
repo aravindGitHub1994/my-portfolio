@@ -134,6 +134,46 @@ Two things to read this with in mind:
   "is it slow enough" — is owner-verified only. Say so rather than claiming it.
   **Static appearance, however, is fair game** — contrast and legibility
   screenshots are valid at 2 fps, which is how P7 was verified.
+- **Projecting a candidate camera pose through the real room, with an
+  OCCLUSION test** (plan-0011 §2.1, and the tool the whole chapter-0
+  recomposition was built on). The 3.2 pattern above answers "how big is it
+  and where"; it cannot answer "can you actually see it", and that turned out
+  to be the constraint that decided the shot. `PowerButtonAnchor` is
+  projection-only with no depth test, so an occluded button leaves the entry
+  ring floating over nothing. Build the world through `jiti` (recipe below),
+  then for a candidate `(position, target)` report four things:
+  1. **occlusion** — raycast camera → `POWER_WORLD` against the whole world;
+     the first hit must be the `towerPower` mesh. From behind the figure, 438
+     of 972 swept positions were blocked by `chest` or `shoulderPivotR`, which
+     is *why* the shot is behind-right;
+  2. **subject sizes** in px at each gate viewport, plus offset from centre;
+  3. **keep-out clearance** along the segment, sampled through the real
+     `sampleCameraPath`;
+  4. **near-plane breach** (0.1 m), including the right arm at every frame of
+     a real `createArmPose` power reach.
+
+  Three traps, each of which reported a wrong answer first:
+  - **A vertex-depth straddle is not a near-plane cut.** The floor and walls
+    are single huge quads: one corner behind the camera, another 4 m in front,
+    so their vertex depths straddle `near` at *every* pose inside the room
+    while the floor never comes near the lens. Intersect the triangle with the
+    plane `z = -near`, which gives a segment, and ask whether that segment
+    meets the near-plane rectangle (`near·tanH` × `near·tanV`).
+  - **A keep-out cylinder fitted to the figure's whole bounding box is the
+    wrong shape.** It spans the legs under the desk and both arms over the
+    keyboard, so its radius encloses the desk and every camera near the
+    keyboard reads as "inside the figure". Fit it to the upper body — arms
+    excluded, y-band restricted — which is what "cut through the hair"
+    actually meant.
+  - **Do not compare a sampled pose to a hand-typed literal.** At `p` exactly
+    on a key, `lerpVectors(a, b, 1)` is `a + (b - a)`, which is not bit-exactly
+    `b`. Compare sampled-to-sampled against a re-implementation of the other
+    side's sampler; that reads 0.00e+0 where the literal comparison reads
+    ~1e-16 of motion on keys that provably did not move.
+
+  **The harness is not committed** — no harness in this repo ever has been —
+  and it takes about an hour to rebuild from this entry. Its results live in
+  `docs/qa/11.1-opening-and-fit-checklist.md` §0.
 - **Running the real modules in node with no scratch project at all — new in
   session 23, and it replaces most of the ceremony above.** `jiti` is already
   in `node_modules` (Next depends on it) and resolves TypeScript, `@/…`
@@ -188,6 +228,23 @@ Two things to read this with in mind:
   iPad**, which no run had ever loaded. Passing two phone sizes is not evidence
   about tablets, landscape, or anything between phone and desktop; when a check
   says "responsive", read which sizes it actually opened.
+
+  **The matrix, closed at the source (plan-0011).** Use these thirteen, and add
+  the rotation of anything new:
+
+  | | portrait | landscape |
+  |---|---|---|
+  | phone | 360×640 · 390×844 | 844×390 |
+  | 9.7" tablet | 768×1024 | 1024×768 |
+  | 10.9" tablet | 810×1080 · 820×1180 | 1080×810 · 1180×820 |
+  | 12.9" tablet | **1024×1366** | 1366×1024 |
+  | desktop | — | 1440×900 · 1920×1080 |
+
+  **1024×1366 by name**: `isTouchShell`'s strict `<` against `COARSE_MAX_W = 1024`
+  sent exactly-1024 down the desktop branch, which is half of why the iPad did
+  not fit. ADR-014 §4 replaced the width rule with an orientation rule, so a
+  coarse pointer in portrait always gets the touch shell — and **rotating a
+  tablet now swaps the shell mid-session**.
 - Floor-page DOM coexists under the shell: **scope selectors to the window
   `section[aria-label=...]`** — bare `find text` collides. The floor is
   `display:none` but still in the accessibility tree, so `snapshot -i` shows
@@ -225,10 +282,13 @@ Two things to read this with in mind:
   **Jumping past chapter 4 engages the dock** (`docked: true`, progress
   clamps to the dock rest); wheel a few notches to undock before continuing.
 - The entry control is an **unlabeled 96×96 `<button>`** — find it by size,
-  not by text. **As of 2.2 it is no longer at viewport centre**: it pins
-  itself over the projected 3D power button, which at 1440×900 lands at
-  ≈ (695, 519). Read `window.__experienceState.powerAnchor` (`{x, y}`,
-  fractions of the viewport) rather than assuming a position.
+  not by text. **It is not at viewport centre**: it pins itself over the
+  projected 3D power button. **ADR-014 §1 recomposed chapter 0, so the old
+  ≈ (695, 519) at 1440×900 is stale — it is now ≈ (719, 488)**, and the anchor
+  sits at NDC (-0.001, -0.085) in landscape and (-0.001, -0.052) in portrait.
+  Read `window.__experienceState.powerAnchor` (`{x, y}`, fractions of the
+  viewport) rather than assuming a position; that is the whole reason it is
+  published.
 - **The container around it is `pointer-events-none`** with
   `pointer-events-auto` on the button itself. A programmatic `.click()`
   ignores that, so it is not evidence a real pointer lands — hit-test with
@@ -264,12 +324,29 @@ Two things to read this with in mind:
   safe), and **Enter/Space while the power button holds focus** — which it
   does on load, so those two press power rather than skipping. **Clicking
   empty space still only skips during the boot**, never at idle.
-- **The entry frame has three lines of copy for a returning visitor** and two
-  for a first-timer: `press power`, `any key skips the intro` (4.3), and the
-  older underlined `skip intro` link. A script matching on entry text should
-  not assume one line.
-- Reset before any first-run test: `w98-intro-seen`, `w98-muted`,
-  `w98-fidelity-floor`.
+- **The entry frame has FOUR text elements as of ADR-014 §6/§9**, the same for
+  every visitor: `SITE.name` and `SITE.role` at the top (the title card that used
+  to be `TitleBeats` playing over chapter 1), then `press power` and the skip
+  line at `bottom-[12vh]`. The old count — three for a returning visitor, two for
+  a first-timer — is dead, and so is the underlined `skip intro` link that made
+  the difference.
+- **The skip copy depends on the POINTER CLASS.** A fine pointer reads
+  `any key skips the intro`; a coarse one reads `tap anywhere to skip`, and on
+  coarse the pointer skip is armed at `idle` too, so **a stray tap on the
+  backdrop of the entry frame now throws the opening away**. On a fine pointer
+  clicking empty space at `idle` still does nothing. A touch-emulating QA session
+  has to tap the ring, not near it.
+- **`PowerOn`'s root opacity no longer governs the whole overlay** (ADR-014 §9).
+  The root shed its `transition-opacity` so the title card can outlive the
+  controls: the controls fade over 700 ms, the card holds ~0.60 s and dissolves
+  over ~1.51 s, gone by ~2.11 s from the press and well before the splash at
+  ~3.29 s. A probe reading the root's computed opacity to decide whether the
+  entry is up is now wrong — read the children, or `.power-ring`.
+- Reset before any first-run test: `w98-muted`, `w98-fidelity-floor`.
+  **`w98-intro-seen` is write-only since ADR-014 §6** — the returning visitor's
+  `skip intro` link was the only thing that ever branched on it, and it is gone,
+  so clearing the key changes nothing. Every checklist in this directory still
+  opens by clearing all three; that instruction is now a no-op, not a mistake.
 - **The Gallery (6.4) answers a single click, not a double-click**, and its
   thumbnails are **not** tab stops — the grid is one `[tabindex="0"]` and the
   cursor is an inline `outline` on a cell, so a script looking for

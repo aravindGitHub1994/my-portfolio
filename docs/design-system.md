@@ -176,23 +176,29 @@ are what the tier actually buys.
 
 `fidelity.ts` samples frame time into an EMA and walks `LADDER` one rung at a
 time whenever the average sits above the 30 fps floor. **Only the last rung
-speaks**: the eight garnish rungs shed silently, and only the static-floor offer
+speaks**: the seven garnish rungs shed silently, and only the static-floor offer
 asks the visitor anything. Declining ends it for the session.
 
-**The ladder is ten rungs** as of ADR-013 §7 (slice 4.3 added `steam`).
+**The ladder is nine rungs.** ADR-013 §7 made it ten by adding `steam`;
+ADR-014 §5 brought it back to nine by deleting `dust` — the mote cloud the
+owner asked to replace with a corner lamp, so the flag lost its subject.
 
 | # | Rung | What goes | Reasoning |
 |---|---|---|---|
 | 1 | `audioMusic` | Tier-3 earbud music leak | Audio garnish sheds *before* the visuals it pairs with — silence costs the visitor less than a dimmer room |
-| 2 | `dust` | Floating dust motes | Pure atmosphere |
-| 3 | `shafts` | Window light shafts | Pure atmosphere |
-| 4 | `audioTexture` | Clacks, drive chatter, fan bed | Tier-1 cues are never sheddable, by construction |
-| 5 | `castFlicker` | Screen-light flicker (smoothed instead) | The room stays lit, just steadier |
-| 6 | `bloomRich` | Full-richness bloom → cheap bloom | Remounts postprocessing |
-| 7 | `steam` | Mug steam wisps | Pure atmosphere, but shed late — it is the only thing in the room that says the coffee is hot (ADR-013 §7). Deliberately not folded into `dust`, which goes at rung 2 |
-| 8 | `idleDensity` | Idle animation at half rate — figure **and** cat tails together | Last visual rung — a stiller figure is the first thing that reads as "the scene broke" |
-| 9 | `drsFloor` | DRS floor drops | Resolution, not content |
-| 10 | `staticFloor` | **Offers** the static floor | The only rung that speaks |
+| 2 | `shafts` | Window light shafts | Pure atmosphere |
+| 3 | `audioTexture` | Clacks, drive chatter, fan bed | Tier-1 cues are never sheddable, by construction |
+| 4 | `castFlicker` | Screen-light flicker (smoothed instead) | The room stays lit, just steadier |
+| 5 | `bloomRich` | Full-richness bloom → cheap bloom | Remounts postprocessing |
+| 6 | `steam` | Mug steam wisps | Pure atmosphere, but shed late — it is the only thing in the room that says the coffee is hot (ADR-013 §7) |
+| 7 | `idleDensity` | Idle animation at half rate — figure **and** cat tails together | Last visual rung — a stiller figure is the first thing that reads as "the scene broke" |
+| 8 | `drsFloor` | DRS floor drops | Resolution, not content |
+| 9 | `staticFloor` | **Offers** the static floor | The only rung that speaks |
+
+**The corner lamp is not a rung** (ADR-014 §5). No light in `Lighting.tsx` is
+one — `castFlicker` sheds the *flicker*, not the light — and a corner going
+dark is a conspicuous pop where vanishing motes were not. A garnish rung has
+to shed a real cost *invisibly*; the lamp manages one of those two.
 
 Two constants that look like belt-and-braces and are not:
 
@@ -222,16 +228,20 @@ rung is applied at once and the visitor is offered the static floor.
 **This is the owner's number** — gate 10.1 §8.3, *"70 seconds is too long make it
 30 seconds"* (2026-07-30). It is a separate deadline rather than a faster ladder
 because the walk **cannot** reach 30 s: `MOUNT_GRACE_FRAMES` is 12 s at 20 fps
-and the ten EMA re-crossings are 17.5 s more, so the walk costs 29.5 s with
-`GRACE_FRAMES` at *zero*. Two consequences worth knowing:
+and the EMA re-crossings are ~1.75 s each, so the walk costs more than 27 s
+with `GRACE_FRAMES` at *zero*. Two consequences worth knowing:
 
 - **The slow-hardware inversion is all but closed** as a side effect — a 5.9 s
   spread across 10–27 fps against 57 s before, because a millisecond deadline does
   not care how many frames the device drew. The inversion the owner accepted at
   gate 3.3 is no longer worth the paragraph it used to need.
 - **On the slowest hardware the shedding is less gradual, not more.** At 10 and
-  27 fps only two garnish rungs walk before the deadline and the other eight land
-  together. That is the trade the 30 s asks for.
+  27 fps **one** garnish rung walks before the deadline and the other eight land
+  together (three walk at 20 fps). That is the trade the 30 s asks for.
+  ADR-013 §7a says "two" here and was already wrong when written — simulated
+  against `main`'s own ten-rung module it is one. The offer times below are
+  bit-identical at nine rungs and ten, which is the point: `OFFER_AFTER_MS` is
+  a millisecond deadline and does not depend on the ladder's length.
 
 The deadline is consulted **only at a shed decision point** — proof the device is
 slow *right now*. A device that recovers stops reaching decision points, so it is
@@ -291,7 +301,7 @@ fallback are complete diagrams.
 | `character/` | Parametric figure + idle-animation driver (faces **−Z**; `DESK_TOP_Y` 0.72) |
 | `crt/CrtScreen` | Canvas → `CanvasTexture` → CRT shader; writes `screenLight` per frame |
 | `crt/DockSwap` · `crt/dockAlignment` | Texture ⇄ DOM cross-fade and pixel alignment |
-| `PowerOn` · `SignOff` · `TitleBeats` | Entry gesture (`w98-intro-seen` skip), sign-off layer, chapter titles |
+| `PowerOn` · `SignOff` | Entry gesture **and the title card** (ADR-014 §9 folded `TitleBeats` into `PowerOn`, so chapter 1 has no overlay), sign-off layer. `PowerOn`'s root no longer carries one fade for the whole overlay — the controls and the title have their own |
 | `FidelityWatchdog` · `FidelityPrompt` · `DynamicResolution` | The three fidelity mechanisms above |
 | `AudioTextures` · `MuteToggle` | One frame reader driving every cue off existing rig state; mute at the experience root (boot audio precedes the dock) |
 | `PerfCounter` | **Dev-only** frame/draw/texture readout |
