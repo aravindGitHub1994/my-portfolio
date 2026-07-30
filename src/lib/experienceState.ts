@@ -8,8 +8,10 @@ import type { FidelityTier } from "@/lib/gpuTier";
 export const experienceState = {
   /** Normalized scrub progress 0..1 across the whole chapter runway. */
   scrollProgress: 0,
-  /** Index into CHAPTERS of the chapter the scrub is currently inside. */
-  chapterIndex: 1,
+  /** Index into CHAPTERS of the chapter the scrub is currently inside.
+   *  Starts at 0 — chapter 0 owns real span as of ADR-013 §2, so progress
+   *  0 genuinely is inside it. */
+  chapterIndex: 0,
   /** True while chapter 4's dock is active — scroll suspended, DOM shell
    *  live (lands in slice 4.2). */
   docked: false,
@@ -25,6 +27,15 @@ export const experienceState = {
   runwaySpan: 0,
   /** Mirrored from WorkstationRoot's tier detection; "pending" pre-detect. */
   fidelityTier: "pending" as FidelityTier | "pending",
+  /**
+   * The tower's power button, projected to normalized viewport coordinates
+   * (0..1 from the top-left) by `PowerButtonAnchor` each frame. `PowerOn`'s
+   * DOM button pins itself here, so the affordance sits over the 3D thing
+   * it operates at any window size without a hard-coded offset (ADR-013
+   * §3). `onScreen` is false when the button is behind the camera or well
+   * outside the frustum.
+   */
+  powerAnchor: { x: 0.5, y: 0.5, onScreen: false },
   /** Dev-only perf readout (§7.2's recorded budgets). Written by
    *  `PerfCounter` each second in development and left at zero in
    *  production, where that component never mounts. */

@@ -45,6 +45,15 @@ export const APP_DEFS: Record<string, AppDef> = {
     width: 360,
     height: 280,
   },
+  // 6.4: wide enough for five 80-unit thumbnails plus a scrollbar inside the
+  // window's own padding, and tall enough for four rows of them.
+  "my-pictures": {
+    appId: "gallery",
+    title: "My Pictures",
+    glyph: "gallery",
+    width: 470,
+    height: 340,
+  },
   // Start-menu only (no desktop icon) — the ADR-012 §6 skills surface.
   "add-remove": {
     appId: "add-remove",

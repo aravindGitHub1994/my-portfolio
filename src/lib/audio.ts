@@ -302,15 +302,28 @@ function bell(freq: number, delay: number, peak: number, decay: number): void {
 
 // ------------------------------------------------------------ tier-1 cues
 
-/** Degauss thunk — the CRT's magnetic shudder as it wakes. */
+/**
+ * Degauss thunk — the CRT's magnetic shudder as it wakes.
+ *
+ * Three layers, and the middle one exists because of what small speakers
+ * do: the 92→38 Hz drop is the *feel* of the thunk and a laptop driver
+ * reproduces almost none of it, so a mid-band clunk and a wider noise band
+ * carry the cue where it is actually heard. Session 19: the owner could not
+ * hear the boot at all, and this was the loudest thing in it — a measured
+ * 0.36 of output, every bit of it under 100 Hz.
+ */
 export function playDegauss(): void {
   tone({ bus: "machine", freq: 92, toFreq: 38, type: "triangle", peak: 0.85, decay: 0.5 });
-  noise({ bus: "machine", peak: 0.5, decay: 0.3, filter: "lowpass", freq: 240 });
+  // The body — the part a laptop can actually move air with.
+  tone({ bus: "machine", freq: 232, toFreq: 104, type: "triangle", peak: 0.55, decay: 0.26 });
+  noise({ bus: "machine", peak: 0.6, decay: 0.3, filter: "lowpass", freq: 800 });
 }
 
-/** Single POST beep — square, sharp, unmistakably a BIOS. */
+/** Single POST beep — square, sharp, unmistakably a BIOS. Levelled with
+ *  the startup chime (≈0.21 at the output): it is one 140 ms event in a
+ *  ~2.7 s POST, so if it is merely *present* it is missed. */
 export function playBiosBeep(): void {
-  tone({ bus: "machine", freq: 1046, type: "square", peak: 0.28, attack: 0.002, decay: 0.1 });
+  tone({ bus: "machine", freq: 1046, type: "square", peak: 0.5, attack: 0.002, decay: 0.14 });
 }
 
 /** Startup chime — original rising figure, F–A–C–G' on FM bells. */
@@ -479,13 +492,19 @@ export function playClack(): void {
  * Hard-drive seek chatter — paced by the 3.3 boot lines (one burst per
  * POST line), not by a timer of its own, so the drive "works" exactly when
  * the sequencer says the machine is working.
+ *
+ * This is what fills the POST: nine bursts across ~2.7 s, and the only
+ * continuous sound the phase has. It was voiced at 0.041 of output — 2.5×
+ * quieter than a key clack, in 20–50 ms grains, under the hum bed — which
+ * is to say not voiced at all. `texture` is a sheddable bus and its trim
+ * belongs to the whole tier, so the level is corrected per cue.
  */
 export function playHddSeek(): void {
-  const bursts = 2 + Math.floor(textureRand() * 3);
+  const bursts = 3 + Math.floor(textureRand() * 3);
   for (let i = 0; i < bursts; i++) {
     noise({
       bus: "texture",
-      peak: 0.12,
+      peak: 0.34,
       attack: 0.001,
       decay: 0.02 + textureRand() * 0.03,
       delay: i * (0.045 + textureRand() * 0.05),

@@ -6,7 +6,7 @@
 
 import { Vector3 } from "three";
 import { DESK_TOP_Y } from "../builders/desk";
-import { TOWER_SIZE } from "../builders/tower";
+import { TOWER_SIZE, POWER_BUTTON_LOCAL } from "../builders/tower";
 import { REST_POINTS } from "@/lib/chapters";
 
 /** CRT screen centre in world space (RoomScene layout + crt.ts locals). */
@@ -14,6 +14,16 @@ export const SCREEN_WORLD = new Vector3(
   -0.22,
   DESK_TOP_Y + TOWER_SIZE.height + 0.008 + 0.217,
   -0.7 + 0.131,
+);
+
+/** Tower power button in world space — the film's first frame (ADR-013
+ *  §2). Derived from the room's tower placement rather than typed, so the
+ *  opening shot, the DOM hotspot and the press all move together if the
+ *  desk is ever rearranged. */
+export const POWER_WORLD = new Vector3(
+  -0.22 + POWER_BUTTON_LOCAL.x,
+  DESK_TOP_Y + POWER_BUTTON_LOCAL.y,
+  -0.72 + POWER_BUTTON_LOCAL.z,
 );
 
 /** Square-on dock distance: screen height 0.24 fills a 50° fov frame. */
@@ -31,12 +41,23 @@ interface CameraKey {
 export const HEAD_FOCUS = new Vector3(0, 1.22, -0.06);
 const head = HEAD_FOCUS;
 
-/** Chapter beats (ADR-012 §5 table). REST_POINTS index: 1 glow, 2 man,
- *  3 room, 4 dock, 5 sign-off. */
+/** Chapter beats (ADR-012 §5 table, as amended by ADR-013 §2). REST_POINTS
+ *  index: 0 power-on, 1 glow, 2 man, 3 room, 4 dock, 5 sign-off. */
 const KEYS: CameraKey[] = [
   {
-    // Ch. 1 opens on phosphor glass — extreme close-up.
+    // Ch. 0 opens on the tower's power button — macro, ~165 mm out, the
+    // button just below frame centre and about a tenth of the frame wide.
+    // The camera sits in front of the tower and BEHIND the figure's hands,
+    // so the right forearm enters from frame right on the press and no
+    // torso or face is ever in shot (ADR-013 §4 keeps the reveal for ch. 2).
     p: 0,
+    position: new Vector3(0.03, 0.825, -0.375),
+    target: new Vector3(POWER_WORLD.x + 0.005, POWER_WORLD.y + 0.013, POWER_WORLD.z),
+  },
+  {
+    // Ch. 0 rest: pull up and left off the button onto phosphor glass —
+    // the extreme close-up that used to be the film's first frame.
+    p: REST_POINTS[0],
     position: new Vector3(SCREEN_WORLD.x, SCREEN_WORLD.y, SCREEN_WORLD.z + 0.21),
     target: SCREEN_WORLD,
   },
@@ -47,23 +68,60 @@ const KEYS: CameraKey[] = [
     target: new Vector3(SCREEN_WORLD.x, SCREEN_WORLD.y - 0.02, SCREEN_WORLD.z),
   },
   {
-    // Ch. 2 rest: orbit to the figure's profile (earbud/beard/forearm).
+    // Ch. 2 rest: the face reveal (3.1, ADR-013 §4).
+    //
+    // Was (-1.25, 1.14, 0.2) — a hair PAST profile, about 102° off the
+    // figure's own facing axis, so the shot was mostly the back of a head.
+    // This is a true three-quarter: 40° off that axis, 0.95 m out, and
+    // 0.22 m above the head looking down. **No head geometry changed** —
+    // `buildHead.ts` still has no eyes and no mouth by decision, and the
+    // reveal is done by moving the camera into the light the CRT was
+    // already throwing (ADR-012 §2, ADR-013 §4).
+    //
+    // **The height is forced, not a taste call.** The figure sits at a desk
+    // with a monitor directly in front of it, so there is no room for a
+    // frontal camera at head height — every candidate below ~0.2 m of lift
+    // either ends up inside the CRT or drags the CRT into frame, and the
+    // plan wants it keying from OFF screen. Coming over the top is the only
+    // frontal angle this desk allows. It also happens to be why the
+    // tattooed right forearm still reads: from up here the camera sees
+    // clean over the torso to the far arm, which a profile at head height
+    // does not (verified by raycast, not by projection).
+    //
+    // The +X side — the tattoo's own side — was swept too and yields
+    // nothing: from there the CRT sits directly behind the head.
     p: REST_POINTS[2],
-    position: new Vector3(-1.25, 1.14, 0.2),
+    position: new Vector3(-0.61, 1.44, -0.79),
     target: head,
   },
   {
-    // Ch. 2→3 arc: swing behind the chair at height — a straight lerp
-    // from the profile to the wide shot cuts through the figure's hair.
+    // Ch. 2→3 arc: crane up and pull back on the figure's own side.
+    //
+    // This used to swing right, across the front of the figure, because
+    // ch. 3 finished on the far side of the room and a straight lerp from
+    // the profile cut through the hair. Since 3.2 moved ch. 3 to the
+    // FRONT-LEFT the crossing is gone — both ends are now at x ≈ -1.4 —
+    // so the arc bows gently outward instead. Keep both keys on the same
+    // side of the figure or the hair problem comes straight back.
     p: REST_POINTS[2] + (REST_POINTS[3] - REST_POINTS[2]) * 0.5,
-    position: new Vector3(-0.35, 1.6, 1.3),
-    target: new Vector3(-0.05, 1.02, -0.3),
+    position: new Vector3(-1.55, 1.6, 0.95),
+    target: new Vector3(0.1, 1.05, -0.4),
   },
   {
-    // Ch. 3 rest: dolly back + crane to the wide dusk establishing shot.
+    // Ch. 3 rest: the wide dusk establishing shot — "this is where it
+    // started" (ADR-012 §5).
+    //
+    // 3.2 moved this from (1.35, 1.85, 1.55). That was on the +X side,
+    // i.e. the SAME wall as the window, looking away from it: the glass,
+    // the light shafts, the cat tree and both cats all sat behind the
+    // camera, and 5.1 would have built a tree nobody ever saw. From the
+    // front-left the shot gets the two walls that matter — the desk
+    // against the back wall and the window along +X — in one frame, with
+    // the figure near the centre of it. The cats read off to the right of
+    // frame, which is what keeps this "the room" and not "the cats".
     p: REST_POINTS[3],
-    position: new Vector3(1.35, 1.85, 1.55),
-    target: new Vector3(-0.1, 0.95, -0.45),
+    position: new Vector3(-1.45, 1.95, 1.7),
+    target: new Vector3(0.45, 1.02, -0.5),
   },
   {
     // Ch. 4 approach: over-the-shoulder arc…

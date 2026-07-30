@@ -34,6 +34,35 @@ const TASKBAR_H = 28;
 const FONT = "11px Verdana, Geneva, sans-serif";
 const FONT_BOLD = "bold 11px Verdana, Geneva, sans-serif";
 
+/** Gallery suggestion (6.5) — deliberately the **same** numbers `Gallery.tsx`
+ *  lays its grid out with (`DESKTOP_GRID`, `GAP`, `PAD`), not a scaled-down
+ *  echo of them: both renderers draw in DESKTOP_W×DESKTOP_H virtual units, so
+ *  the suggestion and the real grid share a *pitch* — same cell size, same
+ *  columns, same number of rows before the fold — and the chapter-4 cross-fade
+ *  changes the content of the cells rather than their scale. It is **not**
+ *  pixel registration: the DOM's origin sits a few units off this one (window
+ *  padding, a taller toolbar, `w98-field`'s border), and chasing that would
+ *  couple the painter to `Window.tsx`'s box model for no gain. Change them
+ *  there, change them here. */
+const GALLERY_COLS = 5;
+const GALLERY_CELL_W = 80;
+const GALLERY_CELL_H = 60; // 80 × THUMB_H/THUMB_W — the shipped 4:3 crop.
+const GALLERY_GAP = 4;
+const GALLERY_PAD = 8;
+/** Cell tones, indexed and never random — the painter can be asked to repaint
+ *  the same state twice, and a reshuffled grid would read as the window
+ *  flickering. Seven of them because there are five columns: a count sharing a
+ *  factor with `GALLERY_COLS` paints every column one flat colour. */
+const GALLERY_TONES = [
+  "#8a93a0",
+  "#9aa08f",
+  "#7f8794",
+  "#a39a8c",
+  "#8f8a94",
+  "#96a09a",
+  "#8b8f86",
+];
+
 /** Sunken/raised 3D bevel — the whole chrome language in one helper. */
 function bevel(
   ctx: CanvasRenderingContext2D,
@@ -145,6 +174,32 @@ function drawGlyph(
       ctx.fillStyle = "#e8e8e8";
       ctx.fillRect(6 * u, 6 * u, 2 * u, 2 * u);
       break;
+    // 6.3 — the Gallery. **This switch is not compile-forced** (unlike
+    // `pixelIcons.tsx`'s `Record<IconGlyph, …>`), so a glyph added to
+    // `IconGlyph` and missed here draws nothing at all on the CRT rather than
+    // failing to build. Hence the deliberate mirror below.
+    //
+    // The cells are byte-for-byte the ones in `pixelIcons.tsx`'s `gallery`
+    // entry, in the same layer order, so the two renderers are **pixel**
+    // identical at every integer scale — not merely alike, which is all
+    // `globe` and `mine` manage (they use arcs here and cells there).
+    // Change one, change both.
+    case "gallery": {
+      const CELLS: [string, [number, number, number, number][]][] = [
+        ["#8a8272", [[1, 1, 14, 1], [1, 13, 14, 1], [1, 2, 1, 11], [14, 2, 1, 11]]],
+        ["#ede7d6", [[2, 2, 12, 11]]],
+        ["#6fb0c8", [[3, 3, 10, 9]]],
+        ["#e8c25a", [[10, 4, 2, 2]]],
+        ["#5d726b", [[7, 6, 1, 1], [6, 7, 3, 1], [5, 8, 5, 1], [4, 9, 7, 1], [3, 10, 10, 2]]],
+      ];
+      for (const [fill, cells] of CELLS) {
+        ctx.fillStyle = fill;
+        for (const [cx, cy, cw, ch] of cells) {
+          ctx.fillRect(cx * u, cy * u, cw * u, ch * u);
+        }
+      }
+      break;
+    }
   }
   ctx.restore();
 }
@@ -258,6 +313,111 @@ function paintBsod(ctx: CanvasRenderingContext2D, state: Win98State) {
   ctx.fillText(BSOD_PROMPT, DESKTOP_W / 2, 400);
 }
 
+/**
+ * The Gallery's window body (plan-0010 §6.5) — a *suggestion* of the thumbnail
+ * grid, so the CRT shows a photo-grid-ish window instead of the word `gallery`.
+ * Grey cells, an address field and a status line, all bevels and fills.
+ *
+ * Two properties are load-bearing, not stylistic:
+ *
+ *   1. **Nothing raster is loaded, here or ever.** The painter repaints on
+ *      store change only; an image that decoded later would need a repaint
+ *      nothing asks for, and the first frame after every state change would be
+ *      a hole. That is why this is grey rectangles rather than the thumbnails
+ *      themselves, and it is the criterion 6.5 is judged on.
+ *   2. **This file must never import `src/lib/pictures.ts`.** The painter ships
+ *      in the initial bundle; the Gallery's 23 captions live in `register54`'s
+ *      chunk, and keeping them there is 6.4's acceptance criterion (ADR-012
+ *      §8). Importing even the picture *count* would pull the strings across.
+ *
+ * Consequence of (2), and the one honest inaccuracy here: the grid fills
+ * whatever height it is given rather than stopping at 23 cells, so a maximized
+ * window suggests more photographs than ship. A literal 23 in this file is the
+ * worse trade — it would drift silently the day the set changes, and nothing in
+ * `npm run build` cross-checks the painter the way `npm run pictures` checks
+ * `pictures.ts`. "Many photographs, and more below the fold" is true at every
+ * window size.
+ */
+function paintGalleryBody(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  cw: number,
+  ch: number,
+) {
+  // The app's own background, where the DOM has window chrome behind the field.
+  ctx.fillStyle = CHROME;
+  ctx.fillRect(cx, cy, cw, ch);
+
+  // Address field — a text-shaped bar rather than "C:\My Pictures", which
+  // would be a second copy of a string only `Gallery.tsx` should own.
+  const toolY = cy + 3;
+  bevel(ctx, cx + 3, toolY, cw - 6, 14, false);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(cx + 5, toolY + 2, cw - 10, 10);
+  ctx.fillStyle = "#9aa0a8";
+  ctx.fillRect(cx + 8, toolY + 6, Math.min(64, cw - 20), 2);
+
+  // Status line — caption strip and count, the two sunken cells 6.4 draws.
+  const statusH = 12;
+  const statusY = cy + ch - statusH - 3;
+  const countW = 54;
+  const captionW = Math.max(8, cw - 6 - countW - 2);
+  bevel(ctx, cx + 3, statusY, captionW, statusH, false);
+  bevel(ctx, cx + 3 + captionW + 2, statusY, countW, statusH, false);
+  ctx.fillStyle = "#9aa0a8";
+  ctx.fillRect(cx + 6, statusY + 5, Math.max(0, captionW - 20), 2);
+  ctx.fillRect(cx + 3 + captionW + 6, statusY + 5, 30, 2);
+
+  // The grid field, and the scrollbar that always belongs beside it — the
+  // cells overflow it by construction (see the header), so the bar is honest.
+  const gridY = toolY + 17;
+  const gridH = statusY - 3 - gridY;
+  if (gridH < 12) return;
+  bevel(ctx, cx + 3, gridY, cw - 6, gridH, false);
+  const fieldX = cx + 5;
+  const fieldY = gridY + 2;
+  const fieldW = cw - 10;
+  const fieldH = gridH - 4;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(fieldX, fieldY, fieldW, fieldH);
+
+  const barW = 15;
+  bevel(ctx, fieldX + fieldW - barW, fieldY, barW, fieldH, false);
+  bevel(ctx, fieldX + fieldW - barW, fieldY, barW, 13, true);
+  bevel(ctx, fieldX + fieldW - barW, fieldY + fieldH - 13, barW, 13, true);
+  bevel(ctx, fieldX + fieldW - barW, fieldY + 13, barW, Math.min(46, Math.max(12, fieldH - 26)), true);
+
+  // Cells. Clipped rather than counted, so a partial bottom row peeks out of
+  // the fold exactly as a scrollable grid of 23 does at the authored size.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(fieldX, fieldY, fieldW - barW, fieldH);
+  ctx.clip();
+  const rows = Math.ceil((fieldH - GALLERY_PAD) / (GALLERY_CELL_H + GALLERY_GAP));
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < GALLERY_COLS; col++) {
+      const px = fieldX + GALLERY_PAD + col * (GALLERY_CELL_W + GALLERY_GAP);
+      const py = fieldY + GALLERY_PAD + row * (GALLERY_CELL_H + GALLERY_GAP);
+      if (px + GALLERY_CELL_W > fieldX + fieldW - barW) break;
+      bevel(ctx, px, py, GALLERY_CELL_W, GALLERY_CELL_H, false);
+      const w = GALLERY_CELL_W - 4;
+      const h = GALLERY_CELL_H - 4;
+      ctx.fillStyle =
+        GALLERY_TONES[(row * GALLERY_COLS + col) % GALLERY_TONES.length];
+      ctx.fillRect(px + 2, py + 2, w, h);
+      // A lit band over a darker one: the set is mostly ridges and roads, and
+      // a horizon is what makes a grey box read as a photograph rather than a
+      // swatch. It is also what the 6.3 glyph draws, at 16 px.
+      ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
+      ctx.fillRect(px + 2, py + 2, w, Math.round(h * 0.55));
+      ctx.fillStyle = "rgba(0, 0, 0, 0.18)";
+      ctx.fillRect(px + 2, py + 2 + Math.round(h * 0.62), w, h - Math.round(h * 0.62));
+    }
+  }
+  ctx.restore();
+}
+
 function paintWindow(
   ctx: CanvasRenderingContext2D,
   win: Win98Window,
@@ -307,6 +467,10 @@ function paintWindow(
   const cy = y + 24;
   const cw = w - 8;
   const ch = h - 28;
+  if (win.appId === "gallery") {
+    paintGalleryBody(ctx, cx, cy, cw, ch);
+    return;
+  }
   bevel(ctx, cx, cy, cw, ch, false);
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(cx + 2, cy + 2, cw - 4, ch - 4);

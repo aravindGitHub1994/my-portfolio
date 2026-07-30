@@ -6,6 +6,17 @@ import type { RoomBuilderOptions } from "./materials";
 
 export const TOWER_SIZE = { width: 0.46, height: 0.15, depth: 0.4 } as const;
 
+/** Power button centre in tower-local space. Exported because the opening
+ *  is composed around this one point (ADR-013 §2/§3): the camera's `p: 0`
+ *  macro frames it, the DOM hotspot projects it, and 2.3's press depresses
+ *  the mesh named `towerPower`. At the room's tower placement this is world
+ *  (-0.05, 0.777, -0.518), which is the figure's reach target too. */
+export const POWER_BUTTON_LOCAL = {
+  x: 0.17,
+  y: TOWER_SIZE.height * 0.38,
+  z: TOWER_SIZE.depth / 2 + 0.002,
+} as const;
+
 export function buildTower({ materials }: RoomBuilderOptions): Group {
   const group = new Group();
   group.name = "tower";
@@ -34,10 +45,26 @@ export function buildTower({ materials }: RoomBuilderOptions): Group {
 
   // Power button + badge.
   const power = new Mesh(new BoxGeometry(0.03, 0.03, 0.01), materials.plasticDark);
-  power.position.set(0.17, height * 0.38, frontZ);
+  power.name = "towerPower";
+  power.position.set(
+    POWER_BUTTON_LOCAL.x,
+    POWER_BUTTON_LOCAL.y,
+    POWER_BUTTON_LOCAL.z,
+  );
   const badge = new Mesh(new BoxGeometry(0.035, 0.018, 0.003), materials.metal);
   badge.position.set(-0.17, height * 0.32, frontZ);
-  group.add(power, badge);
+
+  // Power LED, beside the button (2.3). The tower had none at all, and in
+  // the recomposed opening the dark-to-green pop is the payoff of the
+  // visitor's one gesture — the frame is a macro on this pair, so the
+  // whole reward for pressing has to live inside it. Dark until
+  // `TowerPower` ramps `materials.led`; over Bloom's 0.68 threshold at
+  // full, deliberately, so it blooms in a dark room.
+  const led = new Mesh(new BoxGeometry(0.008, 0.005, 0.004), materials.led);
+  led.name = "towerLed";
+  led.position.set(POWER_BUTTON_LOCAL.x - 0.035, POWER_BUTTON_LOCAL.y, frontZ);
+
+  group.add(power, badge, led);
 
   return group;
 }

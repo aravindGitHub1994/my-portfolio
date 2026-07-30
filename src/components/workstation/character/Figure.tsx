@@ -23,6 +23,8 @@ import { createSkinMaterial, createForearmMaterial } from "./skinTexture";
 import { createIdle, type IdleUpdate } from "./idle";
 import { effectsState } from "../scene/sheddable";
 import { createTyping, type TypingUpdate } from "./typing";
+import { createMugSip, type MugSip } from "./mugSip";
+import { armPoseRef, createArmPose, type ArmPoseDriver } from "./armPose";
 
 /**
  * The figure (plan-0009 §1.1 + 1.3): seeded parametric builders under a
@@ -40,6 +42,13 @@ export function Figure({
 }) {
   const idle = useRef<IdleUpdate | null>(null);
   const typing = useRef<TypingUpdate | null>(null);
+  const armPose = useRef<ArmPoseDriver | null>(null);
+  const sip = useRef<MugSip | null>(null);
+  /** Dev-only: a hold time parked here by `window.__sipNow()`, consumed on
+   *  the next frame. It cannot be started straight from the console —
+   *  `start` has to be handed the same clock the ticks read, and only the
+   *  frame loop has it. */
+  const sipRequest = useRef(0);
 
   const figure = useMemo(() => {
     // Fallback clay (only used if a palette slot is missing).
@@ -85,7 +94,16 @@ export function Figure({
     headPivot.rotation.x = -0.06; // slight tilt toward the screen
     headPivot.add(buildHead(opts), buildHair(hairOpts), buildBeard(hairOpts));
 
-    root.add(body, headPivot, buildWardrobe(opts));
+    // The smartwatch hangs off the left elbow pivot (ADR-013 §1) so it
+    // rides the forearm through every pose. `buildWardrobe` returns
+    // elbow-local geometry; falling back to `root` would place it in body
+    // space, which is only correct at the rest pose — so make the missing
+    // pivot loud rather than silently wrong.
+    const elbowL = body.getObjectByName("elbowPivotL");
+    if (!elbowL) throw new Error("[character] elbowPivotL missing from body rig");
+    elbowL.add(buildWardrobe(opts));
+
+    root.add(body, headPivot);
     return { root, material, hairMaterial, palette };
   }, [seed, detail]);
 
@@ -98,7 +116,30 @@ export function Figure({
       idle.current = createIdle({ chest, head, eyelids }, seed);
     }
 
-    // Typing rig: the eight named fingers + both hands + the chest.
+    // Arm-pose driver (1.2): owns the four rig pivots 1.1 introduced. The
+    // pivots are required, not optional — without them the power press,
+    // the mouse reach and the mug sip all fail together, so a missing one
+    // is worth the same loud failure `elbowPivotL` already gets. Built
+    // before the typing rig, which needs it: 4.1's scheduler drives poses
+    // and its taps consult `busy()`.
+    const shoulderR = root.getObjectByName("shoulderPivotR");
+    const shoulderL = root.getObjectByName("shoulderPivotL");
+    const elbowR = root.getObjectByName("elbowPivotR");
+    const elbowL = root.getObjectByName("elbowPivotL");
+    if (shoulderR && shoulderL && elbowR && elbowL) {
+      armPose.current = createArmPose({ shoulderR, shoulderL, elbowR, elbowL });
+    } else {
+      console.error("[character] arm rig pivots missing — poses disabled");
+    }
+    // Publish for readers outside this subtree (2.3's press has to move
+    // the right arm from a component mounted under RoomScene). Null when
+    // the rig is missing, which is why `powerPress` has a reach timeout
+    // rather than waiting forever for a contact that cannot come.
+    armPoseRef.current = armPose.current;
+
+    // Typing rig: the eight named fingers + both hands + the chest. The
+    // finger ORDER is load-bearing — 4.1 maps indices 0–3 to the right arm
+    // and 4–7 to the left to suspend taps per arm.
     const fingers: Object3D[] = [];
     for (const side of ["R", "L"]) {
       for (let f = 0; f < 4; f++) {
@@ -108,11 +149,38 @@ export function Figure({
     }
     const handR = root.getObjectByName("handR");
     const handL = root.getObjectByName("handL");
+
+    // The mug sequence (4.2). Needs the left hand as the frame the mug is
+    // carried in, and the pose driver to sequence — without either, the
+    // scheduler falls back to 4.1's bare reach rather than losing the
+    // behaviour, which is also what happens in a scene with no mug in it.
+    if (armPose.current && handL) {
+      sip.current = createMugSip(armPose.current, handL);
+    }
+
     if (chest && fingers.length === 8 && handR && handL) {
       typing.current = createTyping(
-        { fingers, hands: [handR, handL], chest },
+        {
+          fingers,
+          hands: [handR, handL],
+          chest,
+          armPose: armPose.current,
+          sip: sip.current,
+        },
         seed,
       );
+    }
+
+    // Dev-only QA handle, the `__fidelity` pattern: 1.2's acceptance is
+    // "calling goTo from the console moves the correct arm", and this is
+    // what makes that sentence executable.
+    if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
+      window.__armPose = armPose.current ?? undefined;
+      // The scheduler starts a sip on an 11–30 s seeded gap, which is a
+      // long time to sit in front of a harness waiting to look at one.
+      window.__sipNow = (holdS = 2.5) => {
+        sipRequest.current = holdS;
+      };
     }
 
     // Poly budget (1.1 acceptance: recorded, target < 60 k) — instances
@@ -131,8 +199,18 @@ export function Figure({
     );
 
     return () => {
+      // Before anything else: the mug belongs to the room, and unmounting
+      // mid-sip must not leave it floating where the hand happened to be.
+      sip.current?.release();
+      sip.current = null;
       idle.current = null;
       typing.current = null;
+      armPose.current = null;
+      armPoseRef.current = null;
+      if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
+        window.__armPose = undefined;
+        window.__sipNow = undefined;
+      }
       root.traverse((obj) => {
         if (obj instanceof Mesh) obj.geometry.dispose();
       });
@@ -159,8 +237,33 @@ export function Figure({
     if (effectsState.idleDensity || oddFrame.current) {
       idle.current?.(clock.elapsedTime, delta);
     }
+    // Poses run at full rate even when idle density is shed: a reach is a
+    // deliberate movement the visitor is watching, not garnish, and
+    // halving its rate would read as a dropped frame rather than as calm.
+    //
+    // Ahead of the typing rig, not after it: the rig's scheduler starts
+    // poses and its taps consult `busy()`, so it wants this frame's pose
+    // state rather than the previous frame's.
+    armPose.current?.(clock.elapsedTime, delta);
+    // Dev-only sip trigger. The whole branch is behind a NODE_ENV literal
+    // so it is eliminated from the production bundle rather than costing a
+    // comparison per frame forever.
+    if (process.env.NODE_ENV !== "production") {
+      if (sipRequest.current > 0 && sip.current && !armPose.current?.busy("L")) {
+        sip.current.start(clock.elapsedTime, sipRequest.current);
+        sipRequest.current = 0;
+      }
+    }
     typing.current?.(clock.elapsedTime);
   });
 
   return <primitive object={figure.root} />;
+}
+
+declare global {
+  interface Window {
+    __armPose?: ArmPoseDriver;
+    /** Start a mug sip on the next frame (dev only). */
+    __sipNow?: (holdS?: number) => void;
+  }
 }

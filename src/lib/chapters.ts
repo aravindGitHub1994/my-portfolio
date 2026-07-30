@@ -8,13 +8,21 @@ export interface Chapter {
   title: string;
   /**
    * Scroll span in viewport-heights. 0 = an auto-play beat that owns no
-   * scrub span (chapter 0's boot never scrubs — ADR-012 §5).
+   * scrub span. No chapter uses 0 today; the case is kept because the
+   * arithmetic below and `chapterAtProgress` both have to mean something
+   * if one ever does again.
    */
   lengthVh: number;
 }
 
 export const CHAPTERS: Chapter[] = [
-  { slug: "power-on", title: "Power On", lengthVh: 0 },
+  // Chapter 0 owns real scroll span as of ADR-013 §2: the film opens on a
+  // macro of the tower's power button, and this is the distance between
+  // that button and the glass. The boot still never scrubs — `PowerOn`
+  // stops Lenis for its whole duration and releases when the desktop
+  // settles, so this span is only ever scrubbed *after* the boot, which is
+  // what keeps ADR-012 §5's "scrubbing a boot backwards feels wrong" true.
+  { slug: "power-on", title: "Power On", lengthVh: 90 },
   { slug: "the-glow", title: "The Glow", lengthVh: 120 },
   { slug: "the-man", title: "The Man", lengthVh: 140 },
   { slug: "the-room", title: "The Room", lengthVh: 140 },
@@ -30,7 +38,8 @@ export const RUNWAY_LENGTH_VH = CHAPTERS.reduce(
 
 /**
  * Normalized [0..1] progress where each chapter comes to rest (its end).
- * Chapter 0 owns no span, so its rest point is 0 — the journey's start.
+ * `REST_POINTS[0]` is where the pull-back off the power button lands — the
+ * extreme close-up on the glass that used to sit at progress 0.
  */
 export const REST_POINTS: number[] = (() => {
   let acc = 0;

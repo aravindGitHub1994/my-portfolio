@@ -14,6 +14,7 @@ type Loader = () => Promise<unknown>;
 const load51: Loader = () => import("./register51");
 const load52: Loader = () => import("./register52");
 const load53: Loader = () => import("./register53");
+const load54: Loader = () => import("./register54");
 const load81: Loader = () => import("./register81");
 const load82: Loader = () => import("./register82");
 
@@ -29,6 +30,7 @@ const LOADERS: Record<string, Loader> = {
   outlook: load53,
   "dialup-linkedin": load53,
   "dialup-github": load53,
+  gallery: load54,
   "recycle-bin": load81,
   minesweeper: load82,
 };

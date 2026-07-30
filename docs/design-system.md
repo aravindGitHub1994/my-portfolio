@@ -176,8 +176,10 @@ are what the tier actually buys.
 
 `fidelity.ts` samples frame time into an EMA and walks `LADDER` one rung at a
 time whenever the average sits above the 30 fps floor. **Only the last rung
-speaks**: the seven garnish rungs shed silently, and only the static-floor offer
+speaks**: the eight garnish rungs shed silently, and only the static-floor offer
 asks the visitor anything. Declining ends it for the session.
+
+**The ladder is ten rungs** as of ADR-013 §7 (slice 4.3 added `steam`).
 
 | # | Rung | What goes | Reasoning |
 |---|---|---|---|
@@ -187,9 +189,10 @@ asks the visitor anything. Declining ends it for the session.
 | 4 | `audioTexture` | Clacks, drive chatter, fan bed | Tier-1 cues are never sheddable, by construction |
 | 5 | `castFlicker` | Screen-light flicker (smoothed instead) | The room stays lit, just steadier |
 | 6 | `bloomRich` | Full-richness bloom → cheap bloom | Remounts postprocessing |
-| 7 | `idleDensity` | Idle animation at half rate | Last visual rung — a stiller figure is the first thing that reads as "the scene broke" |
-| 8 | `drsFloor` | DRS floor drops | Resolution, not content |
-| 9 | `staticFloor` | **Offers** the static floor | The only rung that speaks |
+| 7 | `steam` | Mug steam wisps | Pure atmosphere, but shed late — it is the only thing in the room that says the coffee is hot (ADR-013 §7). Deliberately not folded into `dust`, which goes at rung 2 |
+| 8 | `idleDensity` | Idle animation at half rate — figure **and** cat tails together | Last visual rung — a stiller figure is the first thing that reads as "the scene broke" |
+| 9 | `drsFloor` | DRS floor drops | Resolution, not content |
+| 10 | `staticFloor` | **Offers** the static floor | The only rung that speaks |
 
 Two constants that look like belt-and-braces and are not:
 
@@ -202,7 +205,16 @@ Two constants that look like belt-and-braces and are not:
   expires, which sheds four rungs off a machine that was never slow.
 
 `GRACE_FRAMES` and `EMA_ALPHA` are the two knobs that change ladder *pacing*
-(a device pinned at 20 fps currently walks all nine rungs in ~64 s).
+(a device pinned at 20 fps walks all ten rungs to the offer in **70.0 s**,
+measured at slice 4.3 — it was ~64 s at nine rungs).
+
+**Grace counts frames, not seconds, so the offer arrives LATER on slower
+hardware** — 70.0 s at 20 fps but **113 s at 10 fps** and 170 s at 27 fps. The
+device most in need of the static floor waits longest for it. The owner was shown
+this inversion at gate 3.3 and chose to leave it (*"leave it"*, 2026-07-30), so
+it is accepted behaviour rather than an open defect. Frame-counted grace is what
+makes the mount-time reseed above correct; changing it to wall-clock would
+reintroduce the four-rung false shed.
 
 The canvas is `aria-hidden`; the loader is dismissed with a failsafe timeout so
 WebGL failure never locks the page.

@@ -14,6 +14,38 @@ export const ROOM = {
   ceilingY: 2.55,
 } as const;
 
+/**
+ * The +X window, hoisted out of the builder because 5.1's cat tree is placed
+ * *against* it: its top platform sits level with the sill and has to stop
+ * short of the sill's inner edge. Those are the window's numbers, not the
+ * tree's, so the tree imports them and moving the window moves the tree.
+ */
+const GLASS_W = 0.95;
+const GLASS_H = 0.85;
+const SILL_DEPTH = 0.12;
+const SILL_THICKNESS = 0.03;
+/** How far the sill sits below the glass. */
+const SILL_DROP = 0.065;
+/** The sill's own offset from the window group's centre, into the room. */
+const SILL_OFFSET_X = -0.03;
+
+export const WINDOW = {
+  x: ROOM.rightX - 0.012,
+  y: 1.45,
+  z: -0.25,
+  glassW: GLASS_W,
+  glassH: GLASS_H,
+  sillDepth: SILL_DEPTH,
+  sillThickness: SILL_THICKNESS,
+  sillDrop: SILL_DROP,
+  sillOffsetX: SILL_OFFSET_X,
+  /** World y of the ledge's top face — perch height. */
+  sillTopY: 1.45 - GLASS_H / 2 - SILL_DROP + SILL_THICKNESS / 2,
+  /** World x of the ledge's room-facing edge. Anything standing against
+   *  this wall has to stay below it or it intersects the ledge. */
+  sillInnerX: ROOM.rightX - 0.012 + SILL_OFFSET_X - SILL_DEPTH / 2,
+} as const;
+
 export function buildRoom({ materials }: RoomBuilderOptions): Group {
   const group = new Group();
   group.name = "room";
@@ -64,8 +96,7 @@ export function buildRoom({ materials }: RoomBuilderOptions): Group {
   // Window on the +X wall: dusk glass, frame, cross mullions, sill.
   const win = new Group();
   win.name = "window";
-  const glassW = 0.95;
-  const glassH = 0.85;
+  const { glassW, glassH } = WINDOW;
   const glass = new Mesh(new PlaneGeometry(glassW, glassH), materials.windowDusk);
   glass.rotation.y = -Math.PI / 2;
   win.add(glass);
@@ -93,11 +124,14 @@ export function buildRoom({ materials }: RoomBuilderOptions): Group {
   mullionV.position.set(half, 0, 0);
   const mullionH = bar(glassW, false, 0.03);
   mullionH.position.set(half, 0, 0);
-  const sill = new Mesh(new BoxGeometry(0.12, 0.03, glassW + 0.2), materials.wood);
-  sill.position.set(-0.03, -glassH / 2 - 0.065, 0);
+  const sill = new Mesh(
+    new BoxGeometry(WINDOW.sillDepth, WINDOW.sillThickness, glassW + 0.2),
+    materials.wood,
+  );
+  sill.position.set(WINDOW.sillOffsetX, -glassH / 2 - WINDOW.sillDrop, 0);
   win.add(top, bottom, left, right, mullionV, mullionH, sill);
 
-  win.position.set(ROOM.rightX - 0.012, 1.45, -0.25);
+  win.position.set(WINDOW.x, WINDOW.y, WINDOW.z);
   group.add(win);
 
   return group;

@@ -19,12 +19,23 @@
 import { useEffect, useRef } from "react";
 import { RESUME_LINK, SITE, SOCIAL_LINKS } from "@/lib/nav";
 import { experienceState } from "@/lib/experienceState";
+import { REST_POINTS } from "@/lib/chapters";
 
 /** duskDeepen (0..1 across ch. 5) where the layer starts/finishes fading in. */
 const FADE_START = 0.45;
 const FADE_END = 0.72;
 /** Below this opacity the layer is visibility:hidden — out of the tab order. */
 const VISIBLE_EPS = 0.02;
+
+/** Scrub progress at which this layer starts appearing. Exported because
+ *  the scroll cue has to stop before it: P7 made the cue visible and
+ *  exposed a long-standing overlap — the "Scroll" label sitting ~30 px
+ *  under the contact links, competing with them. The owner's call was to
+ *  drop the cue's END_P below this point rather than teach the cue about
+ *  SignOff, so it is derived here from the same two constants that place
+ *  the fade. Retune FADE_START and the cue follows. */
+export const SIGNOFF_START_P =
+  REST_POINTS[4] + FADE_START * (1 - REST_POINTS[4]);
 
 export function SignOff() {
   const el = useRef<HTMLDivElement>(null);

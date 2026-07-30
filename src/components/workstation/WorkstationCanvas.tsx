@@ -8,6 +8,7 @@ import { experienceState } from "@/lib/experienceState";
 import { mulberry32 } from "@/lib/prng";
 import type { FidelityTier } from "@/lib/gpuTier";
 import { sampleCameraPath } from "./choreography/cameraPath";
+import { PowerButtonAnchor } from "./choreography/PowerButtonAnchor";
 import {
   CharacterScene,
   CHARACTER_CAMERA,
@@ -193,6 +194,10 @@ export function WorkstationCanvas({
               into it — the "low" geometry existed and never shipped. */}
           <FullScene autoBoot={false} detail={tier === "low" ? "low" : "high"} />
           <JourneyCamera />
+          {/* Tells PowerOn's DOM button where the 3D power button is on
+              screen (2.2). After the camera, so it projects this frame's
+              pose rather than the previous one's. */}
+          <PowerButtonAnchor />
           {/* Tier-2/3 texture audio (6.2) — frame reader only, no scene
               contribution; silent until the power press builds a context. */}
           <AudioTextures />

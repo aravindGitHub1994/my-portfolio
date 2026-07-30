@@ -55,15 +55,24 @@ const LEAK_CHAPTER = 2;
 /**
  * Minimum spacing between clacks, in seconds.
  *
- * The typing rig taps eight fingers on a ~0.455 s mean interval — about
- * 17.6 taps/second. That reads as busy, legible finger motion, but one
- * clack per tap would be roughly twice the fastest human keystroke rate
- * and lands as a machine gun. This gate thins the stream to ~11/s.
+ * A backstop, not the rhythm. The rhythm is the rig's: session 23 slowed
+ * the eight fingers to a ~0.97 s mean interval (~8 taps/s) and gave the
+ * keyboard bursts and pauses, because thinning a continuous stream *here*
+ * can only ever produce a continuous stream — and heavy thinning makes it a
+ * metronome, since a gate this side of the taps voices them at exactly its
+ * own period. Fix the typing, and the sound follows for free; that is the
+ * whole point of §6.2's "clacks come from tap events".
+ *
+ * What it catches now is fingers landing together, which eight independent
+ * fingers do often: simulated over two minutes it drops 42 % of taps, and
+ * the stream that survives is ~5 clacks/s inside a burst, ~3.1/s across the
+ * ride, 39 % of it silence — against ~11/s of unbroken typing before.
  *
  * It does NOT reintroduce a timer: no clack ever fires without a real tap
- * event, so the sound still cannot drift from the motion — some taps just
- * go unvoiced, exactly as a real keyboard's quieter presses do. Worth the
- * owner's ear at gate 9.2; raising it thins further, 0 restores 1:1.
+ * event, so the sound cannot drift from the motion — some taps just go
+ * unvoiced, exactly as a real keyboard's quieter presses do. 0 restores
+ * 1:1; to change the *pace*, change `KEYS_BURST`/`KEYS_PAUSE`/`tapGap` in
+ * `character/typing.ts`.
  */
 const MIN_CLACK_GAP_S = 0.09;
 /** Don't rewrite an audio param for changes under this. */

@@ -28,6 +28,12 @@ export interface RoomMaterials {
   plasticDark: MeshStandardMaterial;
   rubber: MeshStandardMaterial;
   metal: MeshStandardMaterial;
+  /** Power LEDs — the tower's (2.3) and the CRT's, which shares this same
+   *  instance because they report the same thing: the machine is on. Its
+   *  `emissiveIntensity` is animated by `TowerPower` and is 0 at rest, so
+   *  a scene that never boots shows dead plastic. Split the instance if
+   *  the two lamps ever need to disagree. */
+  led: MeshStandardMaterial;
   paper: MeshStandardMaterial;
   cardboard: MeshStandardMaterial;
   /** CRT glass — the distinct slot slice 3.1 will target. */
@@ -38,6 +44,18 @@ export interface RoomMaterials {
   cdCase: MeshStandardMaterial;
   /** One material per labeled CD spine (from resume EDUCATION). */
   cdSpines: MeshStandardMaterial[];
+  /** Cat tree (5.1): fleece-covered platforms and the sisal-wrapped post,
+   *  matched to the reference photograph — navy fleece, tan rope. */
+  fleece: MeshStandardMaterial;
+  sisal: MeshStandardMaterial;
+  /** The two cats' coats (ADR-013 §8). Nimbus is ginger; Ivy is a dilute
+   *  calico, so she is mostly `catGrey` with `catCream` underneath and a
+   *  little `catGinger` on the head — which is why the ginger slot is
+   *  shared rather than named for one cat. `catCream` does both cats'
+   *  muzzle, chest and paws. */
+  catGinger: MeshStandardMaterial;
+  catCream: MeshStandardMaterial;
+  catGrey: MeshStandardMaterial;
   dispose(): void;
 }
 
@@ -266,6 +284,15 @@ export function createRoomMaterials(seed: number): RoomMaterials {
       roughness: 0.45,
       metalness: 0.6,
     }),
+    // Dark green plastic until it lights. Emissive only — it adds no light
+    // to the room, so the gate-2.3 brightness contract (screen luminance
+    // cap 0.7 + Lighting's CAST_MAX 2.6) is untouched by it.
+    led: new MeshStandardMaterial({
+      color: "#0d2b18",
+      emissive: "#4bff9b",
+      emissiveIntensity: 0,
+      roughness: 0.35,
+    }),
     paper: new MeshStandardMaterial({ map: paperTex, roughness: 0.9 }),
     cardboard: new MeshStandardMaterial({ color: "#e4dfd2", roughness: 0.9 }),
     screen: new MeshStandardMaterial({ color: "#0b1512", roughness: 0.35 }),
@@ -274,6 +301,13 @@ export function createRoomMaterials(seed: number): RoomMaterials {
     windowDusk: new MeshBasicMaterial({ map: windowTex }),
     cdCase: new MeshStandardMaterial({ color: "#2b2e35", roughness: 0.45 }),
     cdSpines,
+    // Fabric and fur are the roughest things in the room — anything shiny
+    // here reads as plastic at this scale.
+    fleece: new MeshStandardMaterial({ color: "#2f3a52", roughness: 0.98 }),
+    sisal: new MeshStandardMaterial({ color: "#bda27a", roughness: 0.95 }),
+    catGinger: new MeshStandardMaterial({ color: "#c8763a", roughness: 0.95 }),
+    catCream: new MeshStandardMaterial({ color: "#ecdcc2", roughness: 0.95 }),
+    catGrey: new MeshStandardMaterial({ color: "#8f8d8c", roughness: 0.95 }),
     dispose() {
       const all = [
         materials.wood,
@@ -283,6 +317,7 @@ export function createRoomMaterials(seed: number): RoomMaterials {
         materials.plasticDark,
         materials.rubber,
         materials.metal,
+        materials.led,
         materials.paper,
         materials.cardboard,
         materials.screen,
@@ -290,6 +325,11 @@ export function createRoomMaterials(seed: number): RoomMaterials {
         materials.poster,
         materials.windowDusk,
         materials.cdCase,
+        materials.fleece,
+        materials.sisal,
+        materials.catGinger,
+        materials.catCream,
+        materials.catGrey,
         ...materials.cdSpines,
       ];
       for (const material of all) {

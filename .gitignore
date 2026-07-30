@@ -25,6 +25,14 @@
 *.pem
 recovery-codes.txt
 
+# owner source assets (ADR-013 §9) — reference photography, AI concept sheets,
+# KML route legs and the raw originals the Gallery is built from. These are
+# SOURCE: `scripts/build-pictures.mjs` emits bounded copies into
+# public/pictures/ and that output is what ships. Ignored rather than merely
+# untracked because `assets-src/workstation/tattoo01–04.jpg` must never be
+# committed (ADR-012 §3) and "nobody types `git add -A`" is not a control.
+/assets-src/
+
 # confidential client screenshots (ADR-006 §7a) — raw product captures must
 # never be committed; published imagery is recreated with dummy data only.
 # Nothing under docs/projects/ is ever a publishable image: recreations are

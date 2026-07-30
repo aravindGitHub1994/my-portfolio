@@ -120,7 +120,7 @@ export function Choreography({
       snap?.destroy();
       trigger.kill();
       experienceState.scrollProgress = 0;
-      experienceState.chapterIndex = 1;
+      experienceState.chapterIndex = 0;
       experienceState.runwayStart = 0;
       experienceState.runwaySpan = 0;
     };
