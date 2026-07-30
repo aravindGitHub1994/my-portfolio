@@ -46,7 +46,7 @@
 //    every time rather than checking timestamps — 29 photographs cost a few
 //    seconds, and a cache is a thing that can be wrong.
 
-import { mkdir, readdir, stat, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -325,7 +325,55 @@ async function main() {
       "utf8",
     );
   }
+
+  await reportLibDrift(rows);
   console.log("");
+}
+
+/** The Gallery (6.4) hard-codes this set: `src/lib/pictures.ts` carries an id,
+ *  a group, the shipped dimensions and the owner's caption for each
+ *  photograph. Nothing in the build can catch it drifting from what actually
+ *  shipped — a pulled photograph leaves a thumbnail that 404s, a re-encode at
+ *  a different bound leaves a grid that shifts — so this run says so out loud.
+ *  Reported rather than thrown: the images written above are correct, and what
+ *  needs a human is the content file (a new photograph needs a *caption*, and
+ *  captions are the owner's, never an agent's). */
+async function reportLibDrift(rows) {
+  const libPath = path.join(ROOT, "src", "lib", "pictures.ts");
+  if (!existsSync(libPath)) return;
+  const src = await readFile(libPath, "utf8");
+  const lib = new Map();
+  const entry =
+    /id:\s*"([^"]+)",\s*group:\s*"([^"]+)",\s*width:\s*(\d+),\s*height:\s*(\d+),/g;
+  for (const m of src.matchAll(entry)) {
+    lib.set(m[1], { group: m[2], w: Number(m[3]), h: Number(m[4]) });
+  }
+
+  const problems = [];
+  for (const r of rows) {
+    const l = lib.get(r.id);
+    if (!l) {
+      problems.push(`${r.id} ships but is NOT in pictures.ts — it needs a caption`);
+      continue;
+    }
+    if (l.group !== r.group) problems.push(`${r.id} group ${l.group} ≠ ${r.group}`);
+    if (l.w !== r.w || l.h !== r.h) {
+      problems.push(`${r.id} size ${l.w}×${l.h} ≠ shipped ${r.w}×${r.h}`);
+    }
+  }
+  for (const id of lib.keys()) {
+    if (!rows.some((r) => r.id === id)) {
+      problems.push(`${id} is in pictures.ts but no longer ships — the Gallery will 404`);
+    }
+  }
+
+  if (problems.length === 0) {
+    console.log(`  src/lib/pictures.ts agrees: ${lib.size} ids, groups and sizes all match.`);
+    return;
+  }
+  console.log(`\n  ⚠ src/lib/pictures.ts has drifted from this run (${problems.length}):`);
+  for (const p of problems) console.log(`      ${p}`);
+  console.log("    The Gallery reads that file, so fix it before committing.");
 }
 
 main().catch((err) => {

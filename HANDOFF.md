@@ -9,19 +9,26 @@
 > answers to the five §4 questions, is
 > **`docs/qa/3.3-camera-ride-checklist.md`**. **P3 is closed.**
 >
-> **Everything is committed and green.** `assets-src/` is now **gitignored**
-> rather than merely untracked, so the working tree is genuinely clean.
 > **P1, P2, P3, P4, P5 and P7 are all done**, gates 1.3, 2.4 and 3.3 are
-> owner-PASSED, and **P6 is most of the way** — 6.1 (the picture pipeline),
-> 6.3 (the Gallery glyph) and now **6.2 (the owner's picture-and-caption
-> review) are all landed.**
+> owner-PASSED, and **P6 now has one slice left**: 6.1 (the picture pipeline),
+> 6.3 (the Gallery glyph), 6.2 (the owner's picture-and-caption review) and
+> **6.4 (the Gallery app) are all landed**, leaving only 6.5 (the painter's
+> thumbnail-grid suggestion).
+>
+> **SLICE 6.4 IS BUILT AND IS *NOT YET COMMITTED*.** Lint, `tsc` and
+> `npm run build` are green, and it is verified in a browser both in
+> `?scene=shell` and **docked on the production export** — but it sits in the
+> working tree, so `git status` is dirty and the newest commit is still
+> `ea80f00`. Committing it is the first thing to do. See "What 6.4 actually
+> did".
 >
 > **GATE 6.2 IS ANSWERED, and it changed the set: 29 photographs → 23.** The
 > owner pulled six, renamed two ids and set the caption register; all 23
 > captions are drafted and in the gate document. **`6a56d7f` carries it.**
 > `docs/qa/6.2-picture-review.md` is the record — read §2 for the caption
 > strings, §3c for grid order, §3a/§3b for what the pulls and renames did.
-> **6.4 is unblocked** apart from the owner ticking the verdict box.
+> **6.4 transcribed all 23 captions from it**; that document, not ADR-013,
+> is what `src/lib/pictures.ts` is answerable to.
 >
 > **THE ONE THING TO KNOW BEFORE TOUCHING P6: "all 29 photographs ship" is
 > DEAD.** It is recorded as settled in ADR-013, in this file's own
@@ -35,9 +42,11 @@
 >
 > **Owner-closed since:** 5.2's tail wag (*"the tail wag is fine"*). **Still
 > owner-unseen:** 4.3's announced boot skip, built after their ride, so the
-> entry frame they passed is not quite the one that ships. Everything else
-> recorded here from sessions 20–21 was either owner-approved in the browser
-> or proved offline; say which is which when you report.
+> entry frame they passed is not quite the one that ships — and now **the whole
+> Gallery**, whose *words* the owner set and approved at gate 6.2 but whose
+> *app* nobody has looked at. Everything else recorded here from sessions 20–21
+> was either owner-approved in the browser or proved offline; say which is which
+> when you report.
 >
 > **The dock's recorded risk was overstated** and is now spot-checked — see
 > Unresolved Threads before treating 8.1 as the big job three handoffs called
@@ -58,8 +67,12 @@
   closed. **Read the caveat under "Unresolved Threads": the gate was passed
   as a whole, and the three specific questions this branch raised inside it
   were not answered one by one.** Do not treat them as decided.
-- **Working tree is clean.** Everything below is committed; lint, `tsc` and
-  `npm run build` are green at HEAD. Untracked `assets-src/` stays untracked.
+- **Working tree is NOT clean — slice 6.4 is in it, uncommitted.** Everything
+  in the commit list below is committed; lint, `tsc` and `npm run build` are
+  green *with* 6.4 applied. `assets-src/` is gitignored. The 6.4 files are:
+  `src/lib/pictures.ts` and `src/components/win98/apps/Gallery.tsx` +
+  `register54.ts` (new), and edits to `lazyApps.ts`, `shell/appDefs.ts`,
+  `src/lib/win98State.ts` and `scripts/build-pictures.mjs`.
 - **Gate 6.2 ANSWERED** (owner, 2026-07-30) — the set is **23 photographs at
   3.39 MB**, two ids corrected, 23 captions drafted and three of them rewritten
   to the owner's corrections. Record: `docs/qa/6.2-picture-review.md`. **The
@@ -820,6 +833,82 @@ taste, not a defect. It is the only open call on the gate.
 **Grid order, for 6.4: `cats` → `journey` → `desk` → `portrait`** (owner). Cats
 first reads warmest, and it puts the fourth-wall caption near the top.
 
+### What 6.4 actually did — the Gallery app
+
+`src/lib/pictures.ts` (content), `win98/apps/Gallery.tsx` (input and paint
+only), `register54.ts`, a `lazyApps.ts` loader, an `APP_DEFS` entry
+(`my-pictures` → appId `gallery`, 470×340 virtual) and a `DEFAULT_ICONS` entry
+at **col 0 row 5**. Thumbnail grid → click to view → prev/next → caption and
+count in a period status bar, exactly as plan-0010 §6.4 specifies.
+
+**The 23 caption strings were transcribed from the gate record, not written.**
+`pictures.ts`'s header carries the three rules gate 6.2 produced (a caption may
+only joke about what is visible in its own photograph; nothing is asserted about
+other people in frame; `cat-07-both` only works from inside the room), because
+those rules bind the next caption anyone adds and they lived nowhere in `src/`.
+
+**No dimension was typed by hand.** The 23 id/group/width/height rows were
+generated by reading `scripts/pictures-manifest.tsv` — the file 6.1 committed
+for exactly this — and the generator refused to emit unless every shipped id had
+a caption, every caption had a shipped id, and every id was URL-safe.
+
+**`npm run pictures` now cross-checks `src/lib/pictures.ts`** and reports id,
+group and size drift by name (`reportLibDrift`). Nothing in `npm run build` can
+catch that file disagreeing with what shipped: a pull leaves a thumbnail that
+404s and a re-encode at a different bound leaves a grid that shifts. It
+**reports rather than throws** — the images it just wrote are correct, and what
+needs a human is a *caption*, which is the owner's. Current state:
+*"src/lib/pictures.ts agrees: 23 ids, groups and sizes all match."*
+
+Three decisions worth not re-deriving:
+
+1. **One tab stop for the grid, not 23** — cells are `tabIndex -1` and the
+   container owns the arrows. Minesweeper's precedent and its reasoning.
+2. **A single click opens a photograph**, where Explorer wants a double-click.
+   A thumbnail is a picture, not a file icon, and it means touch needs no
+   second code path (`Icon.tsx` already treats one tap as an open).
+3. **Escape is a two-step: "back", then "close".** `Window.tsx` closes the
+   focused window on Escape, so the viewer `stopPropagation()`s it and returns
+   to the grid; from the grid it bubbles and the window closes. Both readings
+   of the acceptance criterion are satisfied, in the order a visitor expects.
+
+**`revealRow` computes its own scroll offset rather than calling
+`scrollIntoView`** — that method is free to scroll *ancestors*, and one of this
+window's ancestors is the journey page. Which is why `GAP` and `PAD` are
+numbers in the module and the grid's inset is a `style`, not `p-2`: the first
+cut left the padding out of the math and the bottom row landed 8 units short of
+visible. **If you restyle the grid's spacing, move those two constants.**
+
+**How it was verified** — headless at 1440×900 against the **production static
+export** on `:3005`, plus the touch shell at 390×844:
+
+- **the chunk splits**: the caption strings live in one chunk
+  (`_next/static/chunks/067am8z-zp11u.js`, 7.1 KB) and `index.html` references
+  it **zero** times; Minesweeper's strings are in a different chunk again, so
+  the per-app split is real and not one shared lump;
+- **nothing is fetched until the window opens** — `img[src*="/pictures/"]`
+  counts **0** before the open and 23 after, all 23 loaded, all `loading="lazy"`;
+- exactly **one `[tabindex="0"]`** inside the window content;
+- click a thumbnail → viewer (one `<img>`, the grid unmounts), `ArrowRight`
+  advances 7 → 8 of 23, `Escape` returns to the grid **with the window still
+  standing** and the cursor where it was, and `Escape` again closes it;
+- `ArrowDown`×4 lands on cell 20 and the last row is **fully** visible
+  (`scrollTop` 51 of 59); `Home` returns to cell 0 and scrolls to 0; `End`
+  jumps to 23 of 23;
+- **docked at chapter 4 on the production export**: the window renders inside
+  the bezel over the CRT (scanlines and phosphor glow visible over live DOM),
+  taskbar button and all — screenshot taken, nothing outside the bezel;
+- **touch at 390×844**: solo maximized, 3 columns of 110×83 css px (each cell
+  well past the 44 px floor), all 23 thumbnails, nothing overflowing right.
+
+**Two harness notes.** (a) **`window.__experienceState` does not exist in a
+production build** — `experienceState.ts` guards it with a NODE_ENV literal
+("Never in prod"), so the QA-gotchas entry below that offers it as a way to read
+`docked` works on the **dev server only**. On the export, prove the dock from
+the DOM and the picture. (b) `agent-browser wait 45000` exceeds the daemon's own
+read timeout and reports `os error 10060` — **the wait still happens**, and the
+next command returns correctly, so that error is noise rather than a failure.
+
 ### What P7 actually did
 
 Gating logic in `ScrollHint.tsx` is **byte-for-byte unchanged** — it was never
@@ -847,12 +936,19 @@ reveal, 3.2 the room wide, gate 3.3 passed). **P4 is complete** (4.1
 scheduler, 4.2 the sip, 4.3 steam). **P5 is complete** (5.1 the cat tree and
 the cats, 5.2 the tail wag).
 
-**What is left is the back half of P6, and P8.** 6.1 (the picture pipeline), 6.3
-(the glyph) and **6.2 (the owner's review — answered, `6a56d7f`)** are done, which
-leaves **6.4 (the Gallery app)** and 6.5 (the painter's thumbnail-grid
-suggestion). P8 is 8.1 (the dock sweep — **spot-checked in session 21 and smaller
-than three handoffs implied**) and 8.2 (close-out docs, and **now carrying a real
-punch list** — see "Slice 8.2 has content now").
+**What is left is 6.5 and P8.** 6.1 (the picture pipeline), 6.3 (the glyph),
+**6.2 (the owner's review — answered, `6a56d7f`)** and **6.4 (the Gallery app —
+built, uncommitted)** are done, which leaves **6.5 (the painter's
+thumbnail-grid suggestion)**. P8 is 8.1 (the dock sweep — **spot-checked in
+session 21 and smaller than three handoffs implied**) and 8.2 (close-out docs,
+and **now carrying a real punch list** — see "Slice 8.2 has content now").
+
+**6.5 is now the only build work left, and 6.4 leaves it a clean seam.** The
+painter draws every window body as a sunken white field with the appId in grey
+(`painter.ts` around the `fillText(win.appId, …)` line) — that is what the CRT
+shows for the Gallery in cinematic mode today. 6.5's suggestion is a thumbnail
+grid there. Note the painter's `switch` is **non-exhaustive** and will silently
+draw nothing, unlike `pixelIcons.tsx`'s `Record<IconGlyph, …>`.
 
 ## Decisions already made — do not re-litigate
 
@@ -1013,10 +1109,11 @@ at a gate written for exactly that purpose.
 
 - **Gate 6.2 is answered** (2026-07-30) — pulled forward as this thread kept
   recommending, and it earned it: it cut six photographs and rewrote three
-  captions before 6.4 could hard-code any of them. **P6 is still the only package
-  left with build work in it — and 6.4 is now that work.** The one thing the gate
-  did not settle is `q84` vs `q88`; the one thing it did not *ask* is the owner's
-  tick in the verdict box.
+  captions before 6.4 could hard-code any of them. **6.4 has now hard-coded
+  them**, so the two calls the gate left open have a cost attached: `q84` vs
+  `q88` would rewrite all 23 dimension rows in `src/lib/pictures.ts` (the
+  cross-check in `npm run pictures` will name every one of them), and the verdict
+  box is still the owner's tick. **P6's remaining build work is 6.5 only.**
 - **The dock: spot-checked in session 21, and the recorded risk was
   overstated.** Three handoffs have called 2.1's runway change (660 →
   **750 vh**) this branch's biggest regression risk, because `ENGAGE_EPS`
@@ -1134,7 +1231,20 @@ Unchanged from session 13 except where ADR-013 amends them.
   `catIdle.ts` differs only in casing — fine on Linux, ambiguous on Windows
   and macOS, and tsc refuses it (TS1149). Hence `CatMotion.tsx`.
 - Lazy apps: `lazyApps.ts` → `registerNN.ts` chunks, each **verified split
-  out of the initial bundle in `out/`**. The Gallery must clear the same bar.
+  out of the initial bundle in `out/`**. The Gallery cleared that bar at 6.4
+  (`register54`, 7.1 KB, zero references from `index.html`) — the cheap check is
+  to grep `out/` for a caption string and then grep `index.html` for the chunk
+  filename it lands in.
+- **The Gallery's content (ADR-013 §9, slice 6.4):** `src/lib/pictures.ts` is
+  the single source for the 23 ids, groups, shipped dimensions and captions, and
+  it is answerable to `docs/qa/6.2-picture-review.md` §2 rather than to ADR-013.
+  **The dimensions belong to `scripts/pictures-manifest.tsv`** — never type
+  them; `npm run pictures` cross-checks the two and names any drift. Captions
+  are the **owner's voice**: three of them were corrected by the owner at the
+  gate, one is sourced from `aboutMe.ts` deliberately so it says nothing about
+  the other people in that photograph, and `cat-07-both`'s fourth-wall line only
+  works while the Gallery is opened **from inside the room**. An agent adding a
+  photograph adds a caption slot, not a caption.
 - Conventions: figure faces **-Z**; `DESK_TOP_Y` 0.72; tower power button at
   world `(-0.05, 0.777, -0.518)`; `assets-src/` stays untracked and unshipped.
 - **The room's own triangle budget is small — 4,632 at high before the cats,
@@ -1296,7 +1406,11 @@ Unchanged from session 13 except where ADR-013 amends them.
   first warms the session and makes the real open fast.
 - Useful state without any UI driving: `window.__experienceState` exposes
   `scrollProgress`, `chapterIndex`, `docked`, `duskDeepen`, `runwayStart`,
-  `runwaySpan`, `fidelityTier`, `perf`.
+  `runwaySpan`, `fidelityTier`, `perf`. **DEV SERVER ONLY** —
+  `experienceState.ts` guards the assignment with a NODE_ENV literal ("Never in
+  prod"), exactly like `__armPose` and `__sipNow`, so on a production export
+  every read of it throws `Cannot read properties of undefined`. Found the hard
+  way at 6.4. On the export, `window.scrollY` and the DOM are what you have.
 - **`window.scrollTo(0, y)` moves the journey** — Lenis picks it up, so you can
   jump to any chapter instead of wheeling there. **The scrollable span is
   `RUNWAY_LENGTH_VH − 100vh`**, not the runway height: the trigger runs
@@ -1352,6 +1466,16 @@ Unchanged from session 13 except where ADR-013 amends them.
   not assume one line.
 - Reset before any first-run test: `w98-intro-seen`, `w98-muted`,
   `w98-fidelity-floor`.
+- **The Gallery (6.4) answers a single click, not a double-click**, and its
+  thumbnails are **not** tab stops — the grid is one `[tabindex="0"]` and the
+  cursor is an inline `outline` on a cell, so a script looking for
+  `document.activeElement` to move will see nothing. Find the cursor with
+  `[...cells].findIndex(b => b.style.outline)`. **Escape in the viewer returns
+  to the grid rather than closing the window**; it takes a second Escape, from
+  the grid, to close. And dispatching several `keydown`s in one JS turn moves
+  the cursor **once** — the handler closes over `cursor` and React does not
+  flush between statements (the same trap as every other keyboard surface here),
+  so put a wait between presses.
 
 ## Key References
 
@@ -1399,32 +1523,42 @@ Unchanged from session 13 except where ADR-013 amends them.
       `docs/qa/6.2-picture-review.md` §2, and that document outranks ADR-013 on
       what ships.** One call left open (`q84` → `q88`?) and the verdict box
       itself still wants the owner's tick.
-- [ ] **SLICE 6.4 IS THE WORK — nothing blocks it.** The Gallery app itself.
-      **Transcribe the 23 ids and captions from the 6.2 record's §2**, order the
-      groups `cats → journey → desk → portrait` (§3c), and note that
-      `cat-07-both`'s approved caption breaks the fourth wall — *"That cat tree
-      is in this room. They had it first."* — so **the Gallery must be something
-      the visitor opens from inside the room**, or the line stops making sense.
-      `src/lib/pictures.ts` for content (dimensions are
-      in `scripts/pictures-manifest.tsv` — do not transcribe them by hand),
-      a `DEFAULT_ICONS` entry at **col 0 row 5** (free, and the glyph was
-      already proved rendering there in both renderers), an `APP_DEFS` entry,
-      `apps/Gallery.tsx`, a `register54.ts` chunk and its `lazyApps.ts` loader.
-      **Verify the chunk actually splits out of the initial bundle in `out/`** —
-      that criterion has caught regressions before. Reuse `IEFrame.tsx`'s
-      period image chrome and `Explorer.tsx`'s grid + `w98-sunken` status line
-      rather than reinventing either.
+- [x] ~~**SLICE 6.4 IS THE WORK.**~~ **BUILT** — grid, viewer, prev/next,
+      caption-and-count status bar, the 23 captions transcribed from the gate
+      record, the chunk proved split, and verified docked on the production
+      export and on the touch shell. See "What 6.4 actually did".
+- [ ] **COMMIT 6.4 FIRST.** It is green but uncommitted, so `git status` is
+      dirty and `ea80f00` is still HEAD. Nothing else in this list should start
+      on top of an uncommitted slice.
+- [ ] **6.5 — the painter's thumbnail grid.** The last build work on the branch.
+      In cinematic mode the CRT draws the Gallery window as a blank field with
+      `gallery` in grey, like every other app; 6.5 replaces that with a
+      thumbnail grid. Two things to carry in: the painter's `switch` is
+      **non-exhaustive** (it fails silently, unlike `pixelIcons.tsx`), and the
+      painter is **event-driven only** — an image-decode path that repaints on
+      load must fire once per load, never per frame.
+- [ ] **Two owner calls are still open on P6, neither blocking:** gate 6.2's
+      **verdict box** (everything it asks is answered; the tick is the owner's)
+      and **`q84` → `q88`** now that 23 photographs spend 3.39 MB against
+      ADR-013 §9's 4–5 MB band. The second re-encodes all 23 files and is taste,
+      not a defect — and it would move every number in `pictures.ts`, so it is
+      cheaper to decide **before** 8.2 writes the budget down.
 - [x] ~~**Spot-check the dock early**~~ **Done, session 21 — and the risk was
       overstated.** The latch mechanics are re-proved at 750 vh and the
       constants are scale-invariant by construction; see Unresolved Threads for
       the four checks and for the one thing still owner-only (the momentum
       case). **8.1 is now a smaller job than the handoffs implied**, but it is
       not closed.
-- [ ] **Fold two cheap owner glances into the next browser session** rather
-      than opening one for either alone: **4.3's announced skip** on the entry
+- [ ] **Fold three cheap owner glances into the next browser session** rather
+      than opening one for each: **4.3's announced skip** on the entry
       frame (one muted line, and the three-lines-for-returning-visitors
-      overlap), and **the sip in `?scene=full`**. Both are "look once", not
-      sittings. *(5.2's wag is closed — the owner called it fine. Its **ear
+      overlap), **the sip in `?scene=full`**, and now **the Gallery** — the
+      fastest look is `?scene=shell` and one double-click on My Pictures, no
+      boot and no scrolling required. The captions are already the owner's; what
+      wants their eyes is the *app* (thumbnail size, whether the white
+      letterbox around a portrait photograph reads right, and whether a single
+      click to open feels correct where Explorer wants two). All three are "look
+      once", not sittings. *(5.2's wag is closed — the owner called it fine. Its **ear
       flick** was never commented on and at 14–40 s apart was probably never
       seen; treat as untested, not approved.)* See Unresolved Threads.
 

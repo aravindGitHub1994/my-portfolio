@@ -76,6 +76,7 @@ const DEFAULT_ICONS: Win98Icon[] = [
   { id: "resume-doc", label: "resume.doc", glyph: "document", col: 0, row: 2 },
   { id: "about-me", label: "ABOUT_ME.txt", glyph: "notepad", col: 0, row: 3 },
   { id: "outlook", label: "Outlook Express", glyph: "envelope", col: 0, row: 4 },
+  { id: "my-pictures", label: "My Pictures", glyph: "gallery", col: 0, row: 5 },
   { id: "linkedin", label: "LinkedIn", glyph: "globe", col: 1, row: 0 },
   { id: "github", label: "GitHub", glyph: "globe", col: 1, row: 1 },
   { id: "minesweeper", label: "Minesweeper", glyph: "mine", col: 1, row: 2 },
