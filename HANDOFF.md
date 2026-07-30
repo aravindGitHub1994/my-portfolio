@@ -1083,9 +1083,43 @@ dimension rows in `src/lib/pictures.ts` are not rewritten. The consequence for
 8.2 is that **ADR-013 §9's 4–5 MB band moves down to match what ships** — the
 band is now the stale number, not the directory.
 
-**OPEN, and owner-eyes work rather than a defect:**
+**OPEN — one owner call, raised by slice 6.5 and not decidable by an agent.**
 
-- *(Nothing. Every item that was in this list has been answered.)*
+**The painter's window body is unreachable in the shipping journey.** 6.5 built
+the thumbnail-grid suggestion plan-0010 §6.5 asks for, and then verification
+found that no visitor can arrive at a frame that shows it. The proof is three
+facts that were each deliberate on their own:
+
+1. Undocking requires `allWindowsIdle()` — every window closed or minimized
+   (`crt/DockSwap.tsx:265`, the dock contract's exit).
+2. `paintDesktop` skips minimized windows (`painter.ts`, `if (win.minimized)
+   continue`).
+3. Every path that opens a window — `Icon.tsx`, `StartMenu.tsx`,
+   `Explorer.tsx` → `launchApp` — lives in the DOM shell, which exists only
+   while docked.
+
+So whenever the CRT is the renderer on screen, there is provably no window on
+it; and whenever there is a window, the opaque DOM shell is over the glass.
+**Confirmed in a dev build, not just read:** with the Gallery open the dock
+refused to release however the wheel was driven; minimizing it undocked on the
+next gesture. The `fillText(win.appId)` fallback the last handoff said "is what
+the CRT shows for the Gallery in cinematic mode today" was therefore **never
+visible either** — that sentence was wrong, and it is why 6.5 looked like it had
+a visible payoff.
+
+**6.5 ships as built** — it is ~90 lines, allocates nothing, cannot flicker
+(indexed tones, byte-identical repaints), and is defensive if any of the three
+facts above ever change. But the owner should decide which of these it is:
+
+- **accept it** as dead-but-correct code, the plan built as approved; or
+- **make it reachable**, which means changing the dock contract (a window
+  surviving an undock) — that is ADR-012 §4 and gate 9.2 territory, so not an
+  agent's call; or
+- **revert it** and let the painter keep drawing the appId, on the grounds that
+  unreachable code is a liability.
+
+**Do not "fix" this by painting minimized windows.** Minimized means hidden, and
+the taskbar button is already how the painter represents one.
 
 **New, from earlier in this branch:**
 
