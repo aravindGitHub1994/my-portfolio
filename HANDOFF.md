@@ -1,4 +1,4 @@
-# HANDOFF — `opening-and-fit`, all AFK work built (2026-07-31, session 27)
+# HANDOFF — `opening-and-fit` merged to `main` (2026-07-31, session 27)
 
 **This file is a pointer, not a narrative.** It was trimmed at the owner's request at
 session 23 and is kept short deliberately. Git history holds the story (`git log`, and
@@ -17,7 +17,8 @@ citation.
 records in `docs/qa/`). Gate 3.3 §4 settled a set of numbers in the opening — **four
 of its five answers were "leave it"**, so those are chosen values, not placeholders.
 
-**Branch `opening-and-fit` is cut from `b341735` and open.** It implements
+**`opening-and-fit` is MERGED to `main`** (`--no-ff`), gate 11.1 PASSED on
+everything reachable without a tablet. It implements
 **[ADR-014](docs/decisions/ADR-014-chapter-zero-recomposition-and-viewport-adaptation.md)**
 (nine decisions) to **[plan-0011](docs/plans/implementation-plan-0011.md)** (17 slices,
 seven packages). Plan-0011 **supersedes gate 10.1's worklist** — its five open items
@@ -33,49 +34,38 @@ are all now built, and item 6 shipped earlier as `ladder-pacing`.
 | | **P5 + P6** — the mug opens; `WAG_RATE` |
 | | **P7.1 / 7.2** — docs reconciled, regression sweep green |
 
-**Every AFK slice in plan-0011 is built. Lint + build green, working tree clean.**
+**plan-0011 is complete. Gates 2.4, 4.3, 6.2 and the full ride all PASSED**, so the
+things they settle are settled: the hand no longer clips, the wide opening is the
+right shot, the boot pan's `PAN_HOLD_MS` / `PAN_DURATION_S` survive the new move
+unretuned, and **`WAG_RATE = 1.2` is now a chosen value, not a candidate**.
 
-## What is left: the gates, and only the gates
+## What shipped to `main` UNVERIFIED — read this before touching P1
 
-Four HITL gates are open and they are all the owner's eyes. Nothing else blocks a
-merge except them.
+**Gate 11.1 §1 was not run.** The owner passed everything reachable on their desktop
+and merged with the tablet section outstanding; that is their call, recorded in the
+checklist's verdict box. What it means concretely:
 
-**Gate 1.4 — the iPad.** Deferred to the end by the owner's decision (session 26):
-both orientations, and a rotation mid-ride, *once the whole branch is done*. It is
-done. Two things to carry in:
+- **ADR-014 §3 and §4 — the entire viewport-adaptation half of this branch — shipped
+  proved by arithmetic and have never been seen on a tablet.** §0 of the checklist
+  says exactly what the arithmetic covers. `headless-qa-notes.md`'s standing lesson
+  says why that is not the same thing: *a viewport matrix is only as wide as its
+  widest entry*, and this branch exists because of that lesson.
+- `FOV_MAX_DEG = 75` in `viewport.ts` is the one number in P1 that is taste rather
+  than arithmetic, and it is **unconfirmed by eyes**.
+- **iOS Safari's dynamic viewport is still unhandled**: `750vh` against an
+  `innerHeight` trigger, and nothing in the repo uses `dvh`/`svh` or `visualViewport`.
+- Three touch behaviours are unchecked: the coarse-pointer copy, tapping the backdrop
+  to skip, and the skip taking the title card without an orphaned fade.
 
-- The portrait lens is **still unconfirmed by eyes**. `FOV_MAX_DEG = 75` in
-  `viewport.ts` is the one number in P1 that is taste rather than arithmetic.
-- **iOS Safari's dynamic viewport is unhandled** and no headless run can see it. The
-  runway is `750vh` against an `innerHeight` trigger and nothing in the repo uses
-  `dvh`/`svh` or `visualViewport`. If progress jumps when the toolbar collapses, that
-  is a second defect with its own slice, not a P1 failure.
+**If any of these bites, it is a new slice off `main` — not a regression of something
+that passed.** Nothing here is known-broken; it is known-unwitnessed, which is a
+different and more honest claim.
 
-**Gate 2.4 — the first twenty seconds.** Judges P2 and P3 *together*. `PAN_HOLD_MS`
-and `PAN_DURATION_S` were settled at gate 3.3 §4.2 and are **not retuned here** — but
-they were tuned against a move that no longer exists, so ADR-014 §2 requires a fresh
-ask. The seven questions are in plan-0011 §2.4.
-
-**Gate 4.3 — the lamp**, and **gate 6.2 — the wag.** `WAG_RATE = 1.2` is explicitly a
-starting candidate: headless renders this scene at 2–6 fps and cannot judge a cadence.
-
-**Gate 7.3 — the full ride**, which absorbs 1.4's questions. Its checklist is
-`docs/qa/11.1-opening-and-fit-checklist.md`; §0 already holds everything proved
-offline, so do not re-run those.
-
-## One thing owed before gate 2.4, and not claimed
-
-**The opening as a composition.** §2.1 turns four of its properties into numbers and
-every one of them can pass on a frame that is simply bad. Gate 2.4 is the real
-acceptance, and plan-0011 risk 1 budgets for a second pass.
-
-The other item that was owed — **the title card's contrast over the real backdrop** —
-is now measured and is in `11.1-…-checklist.md` §0.6. `SITE.name` clears AA on every
-pixel (worst 9.69:1). `SITE.role` clears AA on 95 % and AA-large on all of it; its
-99 sub-threshold pixels are all at x 529–541, where the line's first characters cross
-**the corner lamp's bloom** — the exact interaction ADR-014 §9 named in advance, and
-the reason the measurement waited for P4. Not retuned: the levers are the lamp's
-brightness (gate 4.3) and the card's position (gate 2.4), and both are the owner's.
+The other thing plan-0011 flagged and did not close: **the title card's role line dips
+under WCAG AA on 5 % of its pixels** (4.06:1 worst, all above AA-large's 3:1), where
+its first characters cross the corner lamp's bloom — checklist §0.6. Measured, not
+retuned; the levers are the lamp's brightness and the card's position, both owner
+calls, and the card is `aria-hidden` decoration duplicating the DOM floor.
 
 ## What the numbers already say, so nobody re-derives them
 
