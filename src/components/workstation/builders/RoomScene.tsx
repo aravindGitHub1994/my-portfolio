@@ -26,6 +26,7 @@ import { buildCables } from "./cables";
 import { buildChair } from "./chair";
 import { buildPoster } from "./poster";
 import { buildCatTree, CAT_TREE_X, CAT_PERCHES } from "./catTree";
+import { buildLamp, LAMP_X, LAMP_Z } from "./lamp";
 import { buildCat } from "./cat";
 import { WINDOW } from "./room";
 
@@ -76,6 +77,10 @@ export function RoomScene({
       [buildCables(opts), 0, 0, 0, 0],
       [buildChair(opts), 0, 0, 0.1, 0],
       [buildPoster(opts), 0.35, 1.6, -1.044, 0],
+      // ADR-014 §5: the back-left corner, the one corner of the three built
+      // walls nothing occupies. Its x/z are derived in `lamp.ts` from the
+      // room and its baseboards, not chosen here.
+      [buildLamp(opts), LAMP_X, 0, LAMP_Z, 0],
       // 5.1: the cat tree stands against the +X wall beside the window, its
       // x derived from the sill so it cannot grow into the ledge. Ivy takes
       // the perch — she is the bigger cat and it is her spot in the
@@ -146,7 +151,7 @@ export function RoomScene({
   return (
     <>
       <Lighting screenPosition={[-0.22, TOWER_TOP + 0.19, -0.5]} />
-      <Atmosphere detail={detail} />
+      <Atmosphere />
       {/* 4.3: steam off the mug. Reads `propHandles.mug` lazily each frame,
           so it does not care that the publish happens in an effect below —
           and it emits in world space, so the wisps stay put when the sip

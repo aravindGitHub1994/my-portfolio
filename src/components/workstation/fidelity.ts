@@ -17,7 +17,7 @@
 // reversible knob by design; this one is not.
 //
 // **Only the last rung asks** (ADR-010 §2's opt-in principle, restated in
-// ADR-012 §8). Shedding dust is invisible; leaving for the 2D floor is a
+// ADR-012 §8). Shedding a light shaft is invisible; leaving for the 2D floor is a
 // different experience, and ADR-012 §9 lists "watchdog-declined" beside
 // prefers-reduced-motion as a route to it. So the garnish rungs are silent
 // and the terminal rung is an offer the visitor can refuse — refusing ends
@@ -71,8 +71,11 @@ const GRACE_FRAMES = 90;
  *
  *  It is a separate deadline rather than a faster ladder because the walk
  *  cannot be compressed to 30 s without gutting the two protections above
- *  it: MOUNT_GRACE_FRAMES is 12 s at 20 fps and the ten EMA re-crossings
- *  are another 17.5 s, so the walk costs 29.5 s with GRACE_FRAMES at ZERO.
+ *  it: MOUNT_GRACE_FRAMES is 12 s at 20 fps and the nine EMA re-crossings
+ *  are another 15.75 s, so the walk costs 27.75 s with GRACE_FRAMES at ZERO.
+ *  (Ten and 17.5 s before ADR-014 §5 deleted the `dust` rung. The deadline
+ *  is in MILLISECONDS and does not depend on the ladder's length, so the
+ *  ~30 s offer is unaffected — the walk simply got one crossing shorter.)
  *  Reaching 30 s by shrinking the mount grace and quickening EMA_ALPHA
  *  would re-introduce exactly what the reseed comment below was written
  *  for — shedding rungs off a machine that was only compiling shaders.
@@ -86,10 +89,18 @@ const GRACE_FRAMES = 90;
  *  5.9 s spread across 10–27 fps, against 57 s before), because a deadline
  *  in milliseconds does not care how many frames the device drew.
  *
- *  Note what the visitor gets at 10 and 27 fps: only 2 garnish rungs walk
- *  before the deadline, then the remaining 8 land at once. That is the
- *  intended trade — the owner asked to stop making people wait, and on the
- *  slowest hardware that means less gradual shedding, not more.
+ *  Note what the visitor gets on slow hardware: at 10 and 27 fps **one**
+ *  garnish rung walks before the deadline and the other eight land at once
+ *  (three walk at 20 fps). That is the intended trade — the owner asked to
+ *  stop making people wait, and on the slowest hardware that means less
+ *  gradual shedding, not more.
+ *
+ *  **ADR-013 §7a says "two" there, and it was already wrong when written.**
+ *  Simulated against `main`'s own ten-rung module, 10 and 27 fps walk one
+ *  rung, not two. Recorded rather than quietly corrected because the number
+ *  that matters — the offer's arrival at 34.6 / 32.5 / 38.4 s — is
+ *  bit-identical between ten rungs and nine, which is the actual proof that
+ *  ADR-014 §5's deletion did not move this deadline.
  *
  *  Only ever consulted at a shed decision point, and that is load-bearing:
  *  a decision point is proof the device is slow RIGHT NOW (post-grace, EMA
@@ -238,7 +249,7 @@ export function sampleFidelity(
   // Shedding the rest rather than jumping straight to the offer is what
   // makes a DECLINE safe: `declineFloor` ends the ladder for the session,
   // so a visitor who says no to the floor at 30 s would otherwise be left
-  // on a struggling device with seven rungs of garnish still burning frames
+  // on a struggling device with six rungs of garnish still burning frames
   // and no path left to shed them.
   if (state.renderedMs >= OFFER_AFTER_MS) {
     let rung: Rung = LADDER[state.next];
